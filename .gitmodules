@@ -1,0 +1,6 @@
+[submodule "assets/ebpf_exporter"]
+	path = assets/ebpf_exporter
+	url = git@github.com:cloudflare/ebpf_exporter.git
+[submodule "assets/apk-tools"]
+	path = assets/apk-tools
+	url = https://git.alpinelinux.org/apk-tools

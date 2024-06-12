@@ -1,0 +1,3 @@
+artifacts/bzImage
+artifacts/netpowered.cpio.gz
+*.svg
