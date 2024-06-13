@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  bcc_export:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./trace/bcc/Dockerfile"
+      tags:
+        - "localhost:5000/export_bcc:latest"
+    stop_signal: SIGINT
+  ayaya:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./trace/ayaya/Dockerfile"
+      tags:
+        - "localhost:5000/export_bee:latest"
+    stop_signal: SIGINT
+  isogen:
+    build:
+      context: "."
+      dockerfile: "./Dockerfile"
+      tags:
+        - "localhost:5000/isogen:latest"
+    stop_signal: SIGINT

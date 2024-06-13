@@ -1,3 +1,11 @@
+# include kernel and initramfs
 artifacts/bzImage
 artifacts/netpowered.cpio.gz
+artifacts/vmlinux.h
+
+# include submodules for nvim-telescope
+assets/apk-tools
+assets/ebpf_exporter
+
+# misc file formats
 *.svg

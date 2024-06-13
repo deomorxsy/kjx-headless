@@ -1,4 +1,4 @@
-name: ISO9660gen
+name: parse.bpf.c
 
 # This rule triggers when the workflow will run
 on:
