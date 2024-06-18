@@ -6,6 +6,12 @@ artifacts/vmlinux.h
 # include submodules for nvim-telescope
 assets/apk-tools
 assets/ebpf_exporter
+assets/FlameGraph
 
 # misc file formats
 *.svg
+trace/ayaya/dsds/
+
+# sparse files
+mount-point
+foo.*

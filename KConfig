@@ -1,0 +1,8 @@
+choice SELECT_ISOLATION_PLATFORM
+    prompt "Select Isolation Platform"
+    default SIP_K3S
+
+config SELECT_CONTAINER_RUNTIME
+    bool "show container runtime at console"
+
+config SELECT_

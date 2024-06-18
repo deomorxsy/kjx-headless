@@ -4,3 +4,6 @@
 [submodule "assets/apk-tools"]
 	path = assets/apk-tools
 	url = https://git.alpinelinux.org/apk-tools
+[submodule "assets/FlameGraph"]
+	path = assets/FlameGraph
+	url = git@github.com:brendangregg/FlameGraph.git
