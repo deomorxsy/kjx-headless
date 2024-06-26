@@ -1,4 +1,4 @@
-name: Generate bzImage
+name: bzImage
 
 # This rule triggers when the workflow will run
 on:

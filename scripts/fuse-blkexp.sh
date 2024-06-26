@@ -63,8 +63,8 @@ fuse_uao_check=$(grep -n '#user_allow_other' /etc/fuse.conf | tail -1)
 if [ -n "$fuse_uao_check" ]; then
 
 # d. run qsd on background; SIGKILL when finished
-image_path=./artifacts/foo.qcow2
-new_fmt_mp=$image_path
+#image_path=./artifacts/foo.qcow2
+#new_fmt_mp=$image_path
 qemu-storage-daemon \
     --blockdev node-name=prot-node,driver=file,filename=$image_path \
     --blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
@@ -78,7 +78,7 @@ qsd_pid=!$
 mount | grep foo.qcow2
 
 # f. add partition mappings, verbose
-sudo kpartx -av foo.qcow2
+sudo kpartx -av "$image_path"
 
 # g. get info from mounted qcow2 device mapping
 qemu-img info foo.qcow2
@@ -104,33 +104,39 @@ sudo losetup -fP ./artifacts/foo.qcow2
 
 losetup -a # list status of all loop devices
 
+# mount loopback device into the mountpoint to setup rootfs
+upper_loopdev=$(losetup -a | awk -F: 'NR==1 {print $1}')
+upper_base_img=$(losetup -a | awk -F: 'NR==1 {print $3}')
+upper_mountpoint=./artifacts/qcow2-rootfs
+
 check_loopdevfs=$(blkid ./artifacts/foo.qcow2 | awk 'NR==1 {print $4}' | grep ext4)
 if [ -z "$check_loopdevfs" ]; then
     # actually create the filesystem for the already created partition
-    sudo mkfs.ext4 /dev/loop0p1
+    sudo mkfs.ext4 "$upper_loopdev" #/dev/loop0p1
+else
+    echo "The provided qcow2 image $check_loopdevfs is already formatted with a filesystem mounted as Loop Device at $upper_base_img."
 fi
 
-# mount loopback device into the mountpoint to setup rootfs
-upper_loopdev=$(losetup -a | awk -F: 'NR==1 {print $1}')
-upper_mountpoint=./artifacts/qcow2-rootfs
+mkdir -p "$upper_mountpoint"/rootfs # mkdir a directory for the rootfs
+sudo mount "$upper_loopdev" "$upper_mountpoint"/rootfs # mount loop device into the generic dir
 
-mkdir -p "$upper_mountpoint" # mkdir a directory for the rootfs
-sudo mount "$upper_loopdev" "$upper_mountpoint" # mount loop device into the generic dir
-
-
+# =============
 # populate rootfs directory using the
 # busybox directory tree from the initramfs
-cp ./artifacts/netpowered.cpio.gz "$upper_mountpoint"
+# =============
+
+initramfs_base="./artifacts/netpowered.cpio.gz"
+
+cp "$initramfs_base" "$upper_mountpoint"
 cd "$upper_mountpoint" || return
-gzip ./netpowered.cpio.gz
-cpio -itv < ./netpowered.cpio
-cd - || return
+sudo gzip -dc netpowered.cpio.gz | (cd ./rootfs/ || return && sudo cpio -idmv && cd - || return)
 
 # LFS packaging: fakeroot+diff hint strategy
-cp -r ./artifacts/netpowered/ mount-point-fuse
-cp -r ./artifacts/deps mount-point-fuse/rootfs
+mkdir -p "$upper_mountpoint"/rootfs
+cp -r "$upper_mountpoint"/netpowered/* "$upper_mountpoint"/rootfs
+cp -r ./artifacts/deps "$upper_mountpoint"
 
-
+diff --brief --recursive "$upper_mountpoint" "$upper_mountpoint"/rootfs
 
 cp -a rootfs/* /mnt/qcow2/ # copy files, etc
 #
@@ -142,6 +148,11 @@ losetup -d /dev/loop0 # detach the loop device
 }
 
 packaging() {
+
+
+groupadd kjx
+useradd -sR /bin/bash -g kjx -m -k /dev/null kjx
+
 # start fakeroot
 fakeroot
 # apk-tools

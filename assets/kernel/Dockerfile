@@ -46,17 +46,14 @@ cd ./utils/kernel/linux-${KERNEL_VERSION}/ || exit
 make defconfig
 #make kvmconfig removed after Linux 5.10
 
-# add BTF parameters
-
-# Setting BTF parameters
-./scripts/config --module CONFIG_VIDEO_SONY_BTF_MPX
+# set BTF parameters
 ./scripts/config --enable CONFIG_DEBUG_INFO_BTF
 ./scripts/config --enable CONFIG_PAHOLE_HAS_SPLIT_BTF
 ./scripts/config --enable CONFIG_DEBUG_INFO_BTF_MODULES
 ./scripts/config --disable CONFIG_MODULE_ALLOW_BTF_MISMATCH
 ./scripts/config --enable CONFIG_PROBE_EVENTS_BTF_ARGS
 
-# Setting BPF parameters
+# set BPF parameters
 ./scripts/config --enable CONFIG_BPF
 ./scripts/config --enable CONFIG_HAVE_EBPF_JIT
 ./scripts/config --enable CONFIG_ARCH_WANT_DEFAULT_BPF_JIT

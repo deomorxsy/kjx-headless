@@ -2,6 +2,9 @@
 artifacts/bzImage
 artifacts/netpowered.cpio.gz
 artifacts/vmlinux.h
+artifacts/out.stackcount.*
+changes.patch
+outro/
 
 # include submodules for nvim-telescope
 assets/apk-tools

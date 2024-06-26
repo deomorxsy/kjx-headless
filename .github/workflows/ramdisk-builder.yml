@@ -1,5 +1,4 @@
-
-name: Generate ramdisk
+name: initramfs
 
 # This rule triggers when the workflow will run
 on:
