@@ -7,10 +7,16 @@ artifacts/vmlinux.h
 assets/apk-tools
 assets/ebpf_exporter
 assets/FlameGraph
+assets/builda.sh
 
 # misc file formats
 *.svg
 trace/ayaya/dsds/
+
+# misc trace
+trace/hello.bpf.c
+trace/vmlinux.h
+
 
 # sparse files
 mount-point
