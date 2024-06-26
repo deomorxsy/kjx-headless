@@ -24,4 +24,18 @@ services:
       dockerfile: "./Dockerfile"
       tags:
         - "localhost:5000/isogen:latest"
+  busybox:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./assets/busybox/Dockerfile"
+      tags:
+        - "localhost:5000/bubo_builder:latest"
+    stop_signal: SIGINT
+  kernel:
+    build:
+      context: "./assets/kernel/"
+      tags:
+        - "localhost:5000/linux_build:latest"
     stop_signal: SIGINT

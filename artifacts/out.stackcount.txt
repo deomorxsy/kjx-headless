@@ -1,0 +1,816 @@
+Attaching 1 probe...
+
+
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0xf851240
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x56d81cd9cb90
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0xf3869a1
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x133dad9e
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x56d81ce722e9
+    0x56d8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x101bd971
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b92a3140
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b8453d30
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81bd48d23
+    0x56d8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x56d81c2b20bc
+    0x56d8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x109468da
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b84dbac0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x12627db1
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x12627db1
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b9363a30
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b86c2020
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b8c27d00
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x121a0158
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b841a250
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81c2b20bc
+    0x56d8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x1
+    0x3030303030303030
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x56d81ceba333
+    0x56d8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x121a0158
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b8f088a0
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b97570e0
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b8306b30
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x101bd971
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b884fae0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81da41b58
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b8b86bf0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0xf851240
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x56d81ce33962
+    0x56d8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x13c7d25d
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x118f20f0
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b971ff80
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc4ce6c7
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x109468da
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x133dad9e
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x10415ae8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b97570c0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x10415ae8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x10415ae8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b9363b10
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81cde5430
+    0x56d8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b8862240
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81bcea44a
+    0x56d8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480bfcfe750
+    0xfde93f8b08778b48
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x56d81da41b58
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b8ed0180
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x44b82fa09b5a53
+    0xf68
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x44b82fa09b5a53
+    0xf68
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x121a0158
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480b90a2590
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x56d81cd9cb90
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x137c81a2
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x10e4e0ff
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    openat64+200
+    0x7480b83c92c0
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b8166820
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b90ddc10
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x118f20f0
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480b90a2590
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x12627db1
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x13df193a
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b833ede0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81bd48d23
+    0x56d8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0xf3869a1
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b8892f30
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b8fde2b0
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b8335bb0
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b88b3ce0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc64c77b
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc4ce6c7
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x13c7d25d
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x56d81ce33962
+    0x56d8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b91d7900
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480bfcfe750
+    0xfde93f8b08778b48
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x56d81bcea44a
+    0x56d8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x56d81cde5430
+    0x56d8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b9757060
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x13c7d25d
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x56d81ceba333
+    0x56d8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x56d81ce722e9
+    0x56d8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0xf851240
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x56d81c2b20bc
+    0x56d8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x44b82fa09b5a53
+    0xf68
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x109468da
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x11bb57cb
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b894af30
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81bd48d23
+    0x56d8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x13df193a
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x13df193a
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x1137192d
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc64c77b
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b8375940
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x1137192d
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x133dad9e
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x1
+    0x3030303030303030
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc4ce6c7
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc64c77b
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x137c81a2
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x56d81b9cbca0
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x56d81cde5430
+    0x56d8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480bfcfe750
+    0xfde93f8b08778b48
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x11bb57cb
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x11bb57cb
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x10e4e0ff
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x1
+    0x3030303030303030
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x56d81b9cbca0
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x1137192d
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0xf3869a1
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b96a7970
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b8b86690
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b860be20
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81da41b58
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b872c8e0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81cd9cb90
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x56d81b9cbca0
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x137c81a2
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x56d81ce722e9
+    0x56d8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x7480b90a2590
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    fstatat+14
+    0x56d81ceba333
+    0x56d8
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    openat64+200
+    0x7480b84cb1e0
+, listen-wait_thr, vfs_open]: 1
+@[
+    openat64+200
+    0x7480b89a6cf0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x10e4e0ff
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x56d81ce33962
+    0x56d8
+, listen-wait_thr, vfs_getattr_nosec]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x118f20f0
+, listen-wait_thr, vfs_fstat]: 1
+@[
+    fstatat+14
+    0x7480cc78ba80
+    0x101bd971
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b97570a0
+, listen-wait_thr, vfs_open]: 1
+@[
+    fstatat+14
+    0x56d81bcea44a
+    0x56d8
+, listen-wait_thr, vfs_fstatat]: 1
+@[
+    openat64+200
+    0x7480b94a59c0
+, listen-wait_thr, vfs_open]: 2
+@[
+    openat64+200
+    0x7480b94b4d40
+, listen-wait_thr, vfs_open]: 2
+@[
+    openat64+200
+    0x7480b8b3a680
+, listen-wait_thr, vfs_open]: 2
+@[
+    fstatat+14
+    0x7480cc648103
+    0x56d81cc24db8
+    0x56d81cc41d00
+, listen-wait_thr, vfs_fstat]: 2
+@[
+    openat64+200
+    0x7480b9363ae0
+, listen-wait_thr, vfs_open]: 2
+@[
+    fstatat+14
+    0x7480cc648103
+    0x56d81cc24db8
+    0x56d81cc41d00
+, listen-wait_thr, vfs_fstatat]: 2
+@[
+    openat64+200
+    0x7480b9366a40
+, listen-wait_thr, vfs_open]: 2
+@[
+    openat64+200
+    0x7480b8fa2d90
+, listen-wait_thr, vfs_open]: 2
+@[
+    fstatat+14
+    0x7480cc648103
+    0x56d81cc24db8
+    0x56d81cc41d00
+, listen-wait_thr, vfs_getattr_nosec]: 2
+@[
+    openat64+200
+    0x7480b94ca440
+, listen-wait_thr, vfs_open]: 3
+@[
+    openat64+200
+    0x7480b9757080
+, listen-wait_thr, vfs_open]: 3
+@[
+    openat64+200
+    0x7480b9363af0
+, listen-wait_thr, vfs_open]: 3
+@[
+    openat64+200
+    0x7480b9074500
+, listen-wait_thr, vfs_open]: 4
+@[
+    openat64+200
+    0x7480cc67a7e7
+, listen-wait_thr, vfs_open]: 4
+@[
+    openat64+200
+    0x7480b8a18890
+, listen-wait_thr, vfs_open]: 4
+@[
+    openat64+200
+    0x7480b97578f0
+, listen-wait_thr, vfs_open]: 5
+@[
+    fstatat+14
+    0x7480cc1cbb29
+    0x56d81ba57590
+, listen-wait_thr, vfs_fstat]: 6
+@[
+    fstatat+14
+    0x7480bfcfe784
+, listen-wait_thr, vfs_getattr_nosec]: 6
+@[
+    fstatat+14
+    0x7480bfcfe784
+, listen-wait_thr, vfs_fstatat]: 6
+@[
+    fstatat+14
+    0x7480bfcfe784
+, listen-wait_thr, vfs_fstat]: 6
+@[
+    fstatat+14
+    0x7480cc1cbb29
+    0x56d81ba57590
+, listen-wait_thr, vfs_fstatat]: 6
+@[
+    fstatat+14
+    0x7480cc1cbb29
+    0x56d81ba57590
+, listen-wait_thr, vfs_getattr_nosec]: 6
+@[
+    fstatat+14
+    0xe3712e0c8c8f0b00
+, listen-wait_thr, vfs_fstatat]: 7
+@[
+    fstatat+14
+    0xe3712e0c8c8f0b00
+, listen-wait_thr, vfs_getattr_nosec]: 7
+@[
+    fstatat+14
+    0xe3712e0c8c8f0b00
+, listen-wait_thr, vfs_fstat]: 7
+@[
+    openat64+200
+    0x7480b9363b30
+, listen-wait_thr, vfs_open]: 9
+@[
+    openat64+200
+    0x7480b9591de0
+, listen-wait_thr, vfs_open]: 10
+@[
+    openat64+200
+    0x7480b9363ab0
+, listen-wait_thr, vfs_open]: 15
+@[
+    openat64+200
+    0x7480b9363ad0
+, listen-wait_thr, vfs_open]: 15
+@[
+    copy_file_range+107
+, listen-wait_thr, vfs_copy_file_range]: 30
+@[
+    unlink+11
+, listen-wait_thr, vfs_unlink]: 30
+@[
+    utimensat+19
+, listen-wait_thr, vfs_utimes]: 30
+@[
+    openat64+200
+    0x7480b9bebec0
+, listen-wait_thr, vfs_open]: 30
+@[
+    openat64+200
+    0x7480b9bebee0
+, listen-wait_thr, vfs_open]: 37
+@[
+    fstatat+14
+    0x7480cc5ebb99
+, listen-wait_thr, vfs_getattr_nosec]: 39
+@[
+    fstatat+14
+    0x7480cc5ebb99
+, listen-wait_thr, vfs_fstat]: 39
+@[
+    fstatat+14
+    0x7480cc5ebb99
+, listen-wait_thr, vfs_fstatat]: 39
+@[
+    __open64_nocancel+66
+, listen-wait_thr, vfs_open]: 57
+@[
+    fstatat+14
+, listen-wait_thr, vfs_fstat]: 60
+@[
+    fstatat+14
+, listen-wait_thr, vfs_getattr_nosec]: 60
+@[
+    fstatat+14
+, listen-wait_thr, vfs_fstatat]: 60
+@[
+    fstatat+14
+, listen-run_thre, vfs_getattr_nosec]: 63
+@[
+    fstatat+14
+, listen-run_thre, vfs_statx]: 63
+@[
+    fstatat+14
+, listen-run_thre, vfs_fstatat]: 63
+@[
+    writev+77
+    0x7480cc4e7c1e
+, listen-wait_thr, vfs_writev]: 66
+@[
+    copy_file_range+107
+, listen-wait_thr, vfs_splice_read]: 92
+@[
+    copy_file_range+107
+, listen-wait_thr, vfs_iter_write]: 92
+@[
+    __write+79
+, listen-wait_thr, vfs_write]: 168
+@[
+    fstatat+14
+, listen-wait_thr, vfs_fstatat]: 186
+@[
+    fstatat+14
+, listen-wait_thr, vfs_fstat]: 186
+@[
+    fstatat+14
+, listen-wait_thr, vfs_getattr_nosec]: 186
+@[
+    fstatat+14
+, listen-wait_thr, vfs_fstat]: 187
+@[
+    __read+76
+, listen-run_thre, vfs_read]: 586
+@[
+    __read+76
+, listen-wait_thr, vfs_read]: 609
+@[
+    __open64+208
+    0x6f7453617461642f
+, listen-wait_thr, vfs_open]: 615
+@[
+    fstatat+14
+, listen-wait_thr, vfs_getattr_nosec]: 1589
+@[
+    fstatat+14
+, listen-wait_thr, vfs_statx]: 1950
+@[
+    fstatat+14
+, listen-wait_thr, vfs_fstatat]: 2137

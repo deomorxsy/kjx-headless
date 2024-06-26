@@ -96,5 +96,18 @@ $(OUTPUT)/%.skel.h: $(OUTPUT)/%.bpf.o | $(OUTPUT) $(BPFTOOL)
 
 #ebpf: ebpf.c config.h ebpf.skel.h
 #	gcc -Wall -O2 $< -o $@ -lbpf
+#
+load:
+	bpftool prog load hello.bpf.o /sys/fs/bpf/hello
+
+list:
+	bpftool prog list --pretty | tail
+
+dumpde: # dump before kernel rewrites
+	llvm-objdump -d hello.bpf.o
+	llvm-objdump -S hello.bpf.o
+
+dumpar: # dump after kernel rewrites
+	bpftool prog dump xlated name hello
 
 

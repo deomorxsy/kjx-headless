@@ -17,6 +17,7 @@ partit=$(parted -s foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}
 
 if [ "$partit" = "unknown" ]; then
 
+# define partition properties such as filesystem type.
 parted -s foo.img \
     mklabel msdos \
     mkpart primary ext4 2048s 100%
@@ -62,8 +63,8 @@ fuse_uao_check=$(grep -n '#user_allow_other' /etc/fuse.conf | tail -1)
 if [ -n "$fuse_uao_check" ]; then
 
 # d. run qsd on background; SIGKILL when finished
-#image_path=./foo.qcow2
-#new_fmt_mp=$image_path
+image_path=./artifacts/foo.qcow2
+new_fmt_mp=$image_path
 qemu-storage-daemon \
     --blockdev node-name=prot-node,driver=file,filename=$image_path \
     --blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
@@ -93,15 +94,44 @@ fi
 # 5.a mount using loopback mount and then fuse-blkexport
 rootfs_lp_setup() {
 #
-# mount the fuse-blkexport raw virtual disk file as a Loop Device
+# PS1: mount the fuse-blkexport raw virtual disk file as a Loop Device
 #
-# losetup won't see the shadowed/blanked/opaque raw virtual disk file,
+# PS2: losetup won't see the shadowed/blanked/opaque raw virtual disk file,
 # only the mounted version.
-sudo losetup -fP foo.qcow2 # both shadow/lower-dir and upperdir will be mounted
-sudo losetup -a # list status of all loop devices
-sudo mkfs.ext4 /dev/loop0p1 # upperdir gets formatted
-sudo mkdir -p /mnt/qcow2-rootfs # mkdir a generic directory
-sudo mount /dev/loop0p1 /mnt/qcow2 # mount loop device into the generic dir
+#
+# -f: find and -P: scan the partition table on newly created loop device
+sudo losetup -fP ./artifacts/foo.qcow2
+
+losetup -a # list status of all loop devices
+
+check_loopdevfs=$(blkid ./artifacts/foo.qcow2 | awk 'NR==1 {print $4}' | grep ext4)
+if [ -z "$check_loopdevfs" ]; then
+    # actually create the filesystem for the already created partition
+    sudo mkfs.ext4 /dev/loop0p1
+fi
+
+# mount loopback device into the mountpoint to setup rootfs
+upper_loopdev=$(losetup -a | awk -F: 'NR==1 {print $1}')
+upper_mountpoint=./artifacts/qcow2-rootfs
+
+mkdir -p "$upper_mountpoint" # mkdir a directory for the rootfs
+sudo mount "$upper_loopdev" "$upper_mountpoint" # mount loop device into the generic dir
+
+
+# populate rootfs directory using the
+# busybox directory tree from the initramfs
+cp ./artifacts/netpowered.cpio.gz "$upper_mountpoint"
+cd "$upper_mountpoint" || return
+gzip ./netpowered.cpio.gz
+cpio -itv < ./netpowered.cpio
+cd - || return
+
+# LFS packaging: fakeroot+diff hint strategy
+cp -r ./artifacts/netpowered/ mount-point-fuse
+cp -r ./artifacts/deps mount-point-fuse/rootfs
+
+
+
 cp -a rootfs/* /mnt/qcow2/ # copy files, etc
 #
 # populate the rootfs
@@ -109,15 +139,11 @@ cp -a rootfs/* /mnt/qcow2/ # copy files, etc
 #
 umount /mnt/qcow2 # umount the loop device passing the path
 losetup -d /dev/loop0 # detach the loop device
+}
 
-
-# copy the busybox tree as rootfs
-gzip ./artifacts/netpowered.cpio.gz
-cpio -itv < ./artifacts/netpowered.cpio
-
-cp -r ./artifacts/netpowered/ mount-point-fuse
-cp -r ./artifacts/deps mount-point-fuse/rootfs
-
+packaging() {
+# start fakeroot
+fakeroot
 # apk-tools
 cp -r ./artifacts/deps mount-point-fuse/bin
 chmod +x ./mount-point-fuse/bin
@@ -129,11 +155,10 @@ sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /usr/bin/apk
 sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /usr/sbin/apk
 
 
-fakeroot
 cp -r ./artifacts/deps/mount-point-fuse/
-exit
-
+exit # exit fakeroot
 }
+
 
 # 2. mount using libguestfs with guestmount
 # merge_with
