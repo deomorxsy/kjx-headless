@@ -9,8 +9,16 @@ hello.bpf.o: %.o: %.c
 		-g \
 		-O2 -c $< -o $@
 
+VMLINUX_PATH=./artifacts/vmlinux/x86/
+
 getvmlinux:
-	bpftool btf dump file /sys/kernel/btf/vmlinux format c > "./vmlinux.h"
+	#bpftool btf dump file /sys/kernel/btf/vmlinux format c > "./vmlinux.h"
+	touch $(VMLINUX_PATH)vmlinux.new.h && \
+	bpftool btf dump file /sys/kernel/btf/vmlinux format c > ./vmlinux.new.h && \
+	# DIR FILE && \
+	diff -Naru $(VMLINUX_PATH) ./vmlinux.new.h > $(VMLINUX_PATH)vmlinux.h.patch && \
+	rm $(VMLINUX_PATH)vmlinux.new.h && \
+	rm $(VMLINUX_PATH)vmlinux.h
 
 load:
 	bpftool prog load hello.bpf.o /sys/fs/bpf/hello

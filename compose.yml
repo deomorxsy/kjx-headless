@@ -24,12 +24,14 @@ services:
       dockerfile: "./Dockerfile"
       tags:
         - "localhost:5000/isogen:latest"
-  busybox:
+  initramfs:
     environment:
       - git_hash
     build:
       context: "."
       dockerfile: "./assets/busybox/Dockerfile"
+      args:
+        GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH}"
       tags:
         - "localhost:5000/bubo_builder:latest"
     stop_signal: SIGINT

@@ -5,6 +5,7 @@ artifacts/vmlinux.h
 artifacts/out.stackcount.*
 changes.patch
 outro/
+artifacts/qcow2-rootfs/*
 
 # include submodules for nvim-telescope
 assets/apk-tools

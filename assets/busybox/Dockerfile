@@ -1,7 +1,13 @@
+ARG GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
+
 FROM busybox:1.36.1-musl as builder
 # just to get the statically compiled files
 
+
 FROM alpine:3.18 as relay
+
+ARG GIT_CONTAINERFILE_HASH
+ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
 
 WORKDIR /ramdisk/
 RUN mkdir -p bin dev etc lib mnt/root proc root sbin sys tmp var
@@ -101,6 +107,10 @@ echo && echo
 ROOTFS=$(cat /proc/cmdline | awk -F= 'NR==1 {print $4}' | awk '{print $1}')
 exec /bin/busybox switch_root -c /dev/console $ROOTFS /usr/bin/init
 
+current_commit_hash = subprocess.run(["git", "rev-parse", "--short", "HEAD"], stdout=subprocess.PIPE, text=True)
+current_commit_hash = current_commit_hash.stdout.strip()
+print ("\033[93;1;4mCurrent Commit Hash    : " + current_commit_hash + "\033[0m")
+
 cat << 'asciiart'
  .-"``"-.
 /  _.-` (_) `-._
@@ -113,7 +123,7 @@ cat << 'asciiart'
    /_ |  | _\    /_/\_\_/ //_\_\
      |  | |          |___/         deomorxsy/kjx
      |__|__|  ----------------------------------------------
-     /_ | _\   Reboot (01.00.0, r3500-0f87d95)
+     /_ | _\   Reboot (01.00.0, ${GIT_CONTAINERFILE_HASH})
               ----------------------------------------------
 asciiart
 
