@@ -22,7 +22,7 @@ for binary in $(./ramdisk/busybox --list); do
 done
 EOF
 
-RUN cat > ./init <<EOF
+RUN cat > ./init <<"INIT_EOF"
 #!/bin/busybox sh
 
 # mount filesystems
@@ -35,65 +35,20 @@ mount -t tmpfs      tmpfs       /tmp
 mount -t tracefs tracefs /sys/kernel/tracing/
 mount -t debugfs debugfs /sys/kernel/debug/
 mount -t securityfs securityfs /sys/kernel/security/
-
-# ======== network setup ===========
-
+EOF && \
+#
+#
+#
 # set up hostname
-echo "kjx" > /etc/hostname
-hostname -F /etc/hostname
-
-# system hostname
-cat << "EOF" > /etc/hosts
-127.0.0.1       localhost
-127.0.1.1       $(hostname).localdomain $(hostname)
-::1             localhost ipv6-localhost ipv6-loopback
-fe00::0         ipv6-localnet
-ff00::0         ipv6-mcastprefix
-ff02::1         ipv6-allnodes
-ff02::2         ipv6-allrouters
-ff02::3         ipv6-allhosts
-EOF
-
-# DNS
-cat << "EOF" > /etc/resolv.conf
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
-
-# interfaces (network devices)
-cat << "EOF" > /etc/network/interfaces
-# loopback interface
-auto lo
-iface lo inet loopback
-
-# ethernet interface
-auto eth0
-
-# dynamic ipv4 assign with busybox udhcpc
-# iface eth0 inet dhcp
-
-# static ipv4 assign with iproute2
-iface eth0 inet static
-        address 192.168.1.150
-        netmask 255.255.255.0
-        gateway 192.168.1.1
-
-iface eth0 inet6 static
-        address 2001:470:ffff:ff::2
-        netmask 64
-        gateway 2001:470:ffff:ff::1
-        pre-up echo 0 > /proc/sys/net/ipv6/conf/eth0/accept_ra
-EOF
+echo "kjx" > /etc/hostname && hostname -F /etc/hostname
 
 # bring up the connection
 /sbin/ip link set lo up                         # bring up loopback interface
 /sbin/ip link set eth0 up                       # bring up ethernet interface
-/sbin/ip addr add 192.168.0.27 eth0
+/sbin/ip addr add 192.168.0.27 eth0             # static ipv4 assignment
 
-# sets up networking
-#ip link set lo up                                # Bring up loopback interface
-#ip link set eth0 up                              # Bring up Ethernet interface (replace eth0 with your network interface name)
-#udhcpc -i eth0
+# alternate method, built-in inside busybox
+#udhcpc -i eth0 # dynamic ipv4 assignment
 
 # ================================
 
@@ -137,7 +92,54 @@ printf "Boot took $(cut -d' ' -f1 /proc/uptime) seconds btw\n"
 
 # get a shell
 sh
+INIT_EOF
+
+# ======== NETWORK SETUP ===========
+
+
+# system hostname
+RUN cat > /etc/hosts <<"EOF"
+127.0.0.1       localhost
+127.0.1.1       $(hostname).localdomain $(hostname)
+::1             localhost ipv6-localhost ipv6-loopback
+fe00::0         ipv6-localnet
+ff00::0         ipv6-mcastprefix
+ff02::1         ipv6-allnodes
+ff02::2         ipv6-allrouters
+ff02::3         ipv6-allhosts
 EOF
+
+# DNS setup
+RUN cat > /etc/resolv.conf <<"EOF"
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF
+
+# interfaces (network devices)
+RUN cat > /etc/network/interfaces <<"EOF"
+# loopback interface
+auto lo
+iface lo inet loopback
+
+# ethernet interface
+auto eth0
+
+# dynamic ipv4 assign with busybox udhcpc
+# iface eth0 inet dhcp
+
+# static ipv4 assign with iproute2
+iface eth0 inet static
+        address 192.168.1.150
+        netmask 255.255.255.0
+        gateway 192.168.1.1
+
+iface eth0 inet6 static
+        address 2001:470:ffff:ff::2
+        netmask 64
+        gateway 2001:470:ffff:ff::1
+        pre-up echo 0 > /proc/sys/net/ipv6/conf/eth0/accept_ra
+EOF
+
 
 FROM alpine:3.18 as packer
 
