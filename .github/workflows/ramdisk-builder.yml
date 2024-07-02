@@ -27,19 +27,19 @@ jobs:
           docker run  -d -p 5000:5000 --name registry registry:2.7
           # env git_hash env goes into the compose.yml
           docker compose -f ./compose.yml --progress=plain build initramfs
-          docker push localhost:5000/bubo_builder:latest
-          #podman build -t bubo_builder:latest -f ./utils/busybox/Dockerfile
+          docker push localhost:5000/initramfs:latest
+          #podman build -t initramfs:latest -f ./utils/busybox/Dockerfile
 
 
       - name: Retrieve artifact from docker image
         run: |
-          docker run -it --name bubo -d localhost:5000/bubo_builder:latest
-          docker cp bubo:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/
+          docker run -it --name initramfs -d localhost:5000/initramfs:latest
+          docker cp initramfs:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v3
         with:
-          name: bubo
+          name: initramfs
           # image size: 8.48MB
           # artifact size: 829.6K
           path: ${{ github.workspace }}/artifacts/initramfs.cpio.gz

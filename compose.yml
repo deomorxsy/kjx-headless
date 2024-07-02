@@ -33,7 +33,7 @@ services:
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH}"
       tags:
-        - "localhost:5000/bubo_builder:latest"
+        - "localhost:5000/initramfs:latest"
     stop_signal: SIGINT
   kernel:
     build:
