@@ -10,14 +10,14 @@ qemu-img create -f raw foo.img 3G
 fi
 }
 
-# 2. manipulate sparse file patition table
+# 2. manipulate sparse file partition table
 checkpart(){
 
 partit=$(parted -s foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
 
 if [ "$partit" = "unknown" ]; then
 
-# define partition properties such as filesystem type.
+# 2. define partition properties such as filesystem type.
 parted -s foo.img \
     mklabel msdos \
     mkpart primary ext4 2048s 100%
@@ -40,7 +40,7 @@ qemu-img convert -p \
 
 file foo.qcow2
 
-# list partition mappings as a block device
+# 4. list partition mappings as a block device
 sudo kpartx -l foo.qcow2
 }
 
@@ -99,6 +99,7 @@ rootfs_lp_setup() {
 # PS2: losetup won't see the shadowed/blanked/opaque raw virtual disk file,
 # only the mounted version.
 #
+# 5. mount the loop device
 # -f: find and -P: scan the partition table on newly created loop device
 sudo losetup -fP ./artifacts/foo.qcow2
 
@@ -117,6 +118,7 @@ else
     echo "The provided qcow2 image $check_loopdevfs is already formatted with a filesystem mounted as Loop Device at $upper_base_img."
 fi
 
+# 7. mount the loop device into the rootfs
 mkdir -p "$upper_mountpoint"/rootfs # mkdir a directory for the rootfs
 sudo mount "$upper_loopdev" "$upper_mountpoint"/rootfs # mount loop device into the generic dir
 

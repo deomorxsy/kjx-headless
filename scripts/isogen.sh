@@ -38,9 +38,17 @@ EOF
 isolinux_config() {
 cat <<"EOF" > ./artifacts/burn/isolinux/isolinux.cfg
 DEFAULT linux
+
 LABEL linux
     KERNEL /boot/vmlinuz
-    APPEND initrd=/boot/initrd.img
+    APPEND initrd=/boot/initrd.img security=selinux
+
+LABEL fallback
+    MENU LABEL KJX Linux Fallback
+    LINUX ../vmlinuz-6.6.22-lfs-12.1
+    APPEND root=/dev/sa3 rw
+    INITRD ../initramfs-linux-fallback.img
+
 EOF
 
 # search workdir: /boot/syslinux directory

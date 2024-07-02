@@ -31,9 +31,10 @@ mount -t proc       none        /proc
 mount -t sysfs      none       /sys
 mount -t tmpfs      tmpfs       /tmp
 
-# mount pseudo-filesystems for tracing
+# mount tracefs and securityfs pseudo-filesystems
 mount -t tracefs tracefs /sys/kernel/tracing/
 mount -t debugfs debugfs /sys/kernel/debug/
+mount -t securityfs securityfs /sys/kernel/security/
 
 # ======== network setup ===========
 

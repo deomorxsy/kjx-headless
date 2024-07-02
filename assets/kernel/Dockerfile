@@ -79,6 +79,11 @@ make defconfig
 ./scripts/config --enable CONFIG_BPF_KPROBE_OVERRIDE
 ./scripts/config --disable CONFIG_TEST_BPF
 
+# enable SELinux as LSM; PS: also mount the securityfs at boot
+./scripts/config --enable CONFIG_SECURITY_SELINUX
+./scripts/config --enable CONFIG_SECURITY_SELINUX_BOOTPARAM
+./scripts/config --set-str CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE 1
+
 make kvm_guest.config
 echo "kvm_guest.config done"
 make olddefconfig
