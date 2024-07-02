@@ -10,7 +10,53 @@ ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
 
 WORKDIR /ramdisk/
-RUN mkdir -p bin dev etc lib mnt/root proc root sbin sys tmp var
+RUN mkdir -p bin dev etc lib mnt/root proc root sbin sys tmp var && \
+# ======== NETWORK SETUP ===========
+# system hostname
+cat > /ramdisk/etc/hosts <<"EOF"
+127.0.0.1       localhost
+127.0.1.1       $(hostname).localdomain $(hostname)
+::1             localhost ipv6-localhost ipv6-loopback
+fe00::0         ipv6-localnet
+ff00::0         ipv6-mcastprefix
+ff02::1         ipv6-allnodes
+ff02::2         ipv6-allrouters
+ff02::3         ipv6-allhosts
+EOF && \
+#
+# DNS setup
+cat > /ramdisk/etc/resolv.conf <<"EOF"
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF && \
+#
+# interfaces (network devices)
+RUN cat > /ramdisk/etc/network/interfaces <<"EOF"
+# loopback interface
+auto lo
+iface lo inet loopback
+
+# ethernet interface
+auto eth0
+
+# dynamic ipv4 assign with busybox udhcpc
+# iface eth0 inet dhcp
+
+# static ipv4 assign with iproute2
+iface eth0 inet static
+        address 192.168.1.150
+        netmask 255.255.255.0
+        gateway 192.168.1.1
+
+iface eth0 inet6 static
+        address 2001:470:ffff:ff::2
+        netmask 64
+        gateway 2001:470:ffff:ff::1
+        pre-up echo 0 > /proc/sys/net/ipv6/conf/eth0/accept_ra
+EOF
+
+
+
 COPY --from=builder / .
 #RUN ln -s /bin/busybox ./linuxrc
 RUN <<"EOF"
@@ -94,51 +140,7 @@ printf "Boot took $(cut -d' ' -f1 /proc/uptime) seconds btw\n"
 sh
 INIT_EOF
 
-# ======== NETWORK SETUP ===========
 
-
-# system hostname
-RUN cat > /etc/hosts <<"EOF"
-127.0.0.1       localhost
-127.0.1.1       $(hostname).localdomain $(hostname)
-::1             localhost ipv6-localhost ipv6-loopback
-fe00::0         ipv6-localnet
-ff00::0         ipv6-mcastprefix
-ff02::1         ipv6-allnodes
-ff02::2         ipv6-allrouters
-ff02::3         ipv6-allhosts
-EOF
-
-# DNS setup
-RUN cat > /etc/resolv.conf <<"EOF"
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
-
-# interfaces (network devices)
-RUN cat > /etc/network/interfaces <<"EOF"
-# loopback interface
-auto lo
-iface lo inet loopback
-
-# ethernet interface
-auto eth0
-
-# dynamic ipv4 assign with busybox udhcpc
-# iface eth0 inet dhcp
-
-# static ipv4 assign with iproute2
-iface eth0 inet static
-        address 192.168.1.150
-        netmask 255.255.255.0
-        gateway 192.168.1.1
-
-iface eth0 inet6 static
-        address 2001:470:ffff:ff::2
-        netmask 64
-        gateway 2001:470:ffff:ff::1
-        pre-up echo 0 > /proc/sys/net/ipv6/conf/eth0/accept_ra
-EOF
 
 
 FROM alpine:3.18 as packer

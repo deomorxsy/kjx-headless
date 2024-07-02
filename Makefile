@@ -3,10 +3,10 @@
 GIT_SHA=$(shell git rev-parse HEAD)
 # if changes are detected, append "-local" to hash
 GIT_DIFF=$(shell git diff -s --exit-code || echo "-local")
-GIT_COMMIT_HASH=$(GIT_SHA)$(GIT_DIFF)
+GIT_COMMIT_HASH := $(GIT_SHA)$(GIT_DIFF)
 
 
-BUILD_USER := $(shell id -u -n)@$(shell hostname)
+BUILD_USER := $(shell id -u -n)@$(shell id -u)
 BUILD_DATE := $(shell date --iso-8601=seconds)
 
 FAKEROOT=/usr/fakeroot/$pkg-$ver
@@ -28,13 +28,13 @@ $(BUILD_DIR)/disk.bin: $(SRC_DISC)/btl.asm
 
 
 all:
-    $(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules
+	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules
 
 clean:
-    $(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
 
 menuconfig:
-    $(MAKE) -C $(KERNEL_SRC) M=$(PWD) menuconfig
+	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) menuconfig
 
 vmlinux:
 	chmod +x ./scripts/getvml.sh && \
@@ -45,6 +45,7 @@ KERNEL_SRC := ./assets/kernel/linux-6.6.22/
 
 
 initramfs:
+	. ./scripts/ccr.sh; checker & \
 	docker compose -f ./compose.yml --progress=plain build initramfs
 kernel:
 	docker compose -f ./compose.yml --progress=plain build kernel
