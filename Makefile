@@ -5,6 +5,7 @@ GIT_SHA=$(shell git rev-parse HEAD)
 GIT_DIFF=$(shell git diff -s --exit-code || echo "-local")
 GIT_COMMIT_HASH := $(GIT_SHA)$(GIT_DIFF)
 
+KERNEL_SRC := ./assets/kernel/linux-6.6.22/
 
 BUILD_USER := $(shell id -u -n)@$(shell id -u)
 BUILD_DATE := $(shell date --iso-8601=seconds)
@@ -36,16 +37,20 @@ clean:
 menuconfig:
 	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) menuconfig
 
+
 vmlinux:
-	chmod +x ./scripts/getvml.sh && \
-	. ./scripts/getvml.sh
-
-
-KERNEL_SRC := ./assets/kernel/linux-6.6.22/
-
+	$(MAKE) -C $(TRACE_SRC) M=$(PWD) getvmlinux
+	#chmod +x ./scripts/getvml.sh; \
+	#. ./scripts/getvml.sh
 
 initramfs:
-	. ./scripts/ccr.sh; checker & \
+	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build initramfs
+
 kernel:
+	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build kernel
+
+exporter:
+	. ./scripts/ccr.sh; checker; \
+	docker compose -f ./compose.yml --progress=plain build exporter

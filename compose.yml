@@ -1,13 +1,13 @@
-version: "3.8"
+#version: "3.8"
 services:
-  bcc_export:
+  libbpf:
     environment:
       - git_hash
     build:
       context: "."
-      dockerfile: "./trace/bcc/Dockerfile"
+      dockerfile: "./trace/libbpf/Dockerfile"
       tags:
-        - "localhost:5000/export_bcc:latest"
+        - "localhost:5000/libbpf:latest"
     stop_signal: SIGINT
   ayaya:
     environment:
@@ -31,7 +31,7 @@ services:
       context: "."
       dockerfile: "./assets/busybox/Dockerfile"
       args:
-        GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH}"
+        GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
         - "localhost:5000/initramfs:latest"
     stop_signal: SIGINT
@@ -41,3 +41,12 @@ services:
       tags:
         - "localhost:5000/linux_build:latest"
     stop_signal: SIGINT
+  exporter:
+    build:
+      context: "./assets/ebpf_exporter/"
+      # Dockerfile's location is relative to the context field (the base directory).
+      dockerfile: "../../trace/exporter-libbpfgo/Dockerfile"
+      tags:
+        - "localhost:5000/exporter-static:latest"
+    stop_signal: SIGINT
+

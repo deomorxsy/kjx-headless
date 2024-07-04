@@ -12,6 +12,7 @@ assets/apk-tools
 assets/ebpf_exporter
 assets/FlameGraph
 assets/builda.sh
+/sample/
 
 # misc file formats
 *.svg

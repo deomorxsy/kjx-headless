@@ -1,7 +1,8 @@
 .DEFAULT_GOAL := all
 
-all: getvmlinux hello.bpf.o
+#all: getvmlinux hello.bpf.o
 
+# first get the dev_headers, then the source, then the object file
 hello.bpf.o: %.o: %.c
 	clang \
 		-target bpf \
@@ -9,7 +10,7 @@ hello.bpf.o: %.o: %.c
 		-g \
 		-O2 -c $< -o $@
 
-VMLINUX_PATH=./artifacts/vmlinux/x86/
+VMLINUX_PATH=../artifacts/vmlinux/x86/
 
 getvmlinux:
 	#bpftool btf dump file /sys/kernel/btf/vmlinux format c > "./vmlinux.h"
@@ -19,6 +20,27 @@ getvmlinux:
 	diff -Naru $(VMLINUX_PATH) ./vmlinux.new.h > $(VMLINUX_PATH)vmlinux.h.patch && \
 	rm $(VMLINUX_PATH)vmlinux.new.h && \
 	rm $(VMLINUX_PATH)vmlinux.h
+
+# loads vmlinux into ram (inside a tmpfs) using memfd_create, directly from diff patch
+dev_headers:
+	gcc -Wall -o vmlinux_tmpfs_stub ./vmlinux.stub.c && \
+	chmod +x ./vmlinux_tmpfs_stub && \
+	. ./vmlinux_tmpfs_stub $(VMLINUX_PATH) 30000000 sw & | awk 'NR==2 {print substr($2, 1, length($2)-1), substr($4, 1, length($4)-1)}') > ./pidfd && \
+	readpath=$$( readlink /proc/$(cat ./pidfd | awk {'print $1'})/fd/$(cat ./pidfd | awk {'print $2'}) ) && \
+	. ./vmlinux_tmpfs_cons $$readpath && \
+	echo "VMLINUX=$$readpath" > readpath.mk
+
+# kill (SIGINT) the memfd_create file descriptor
+kill_dev_headers:
+	pidtokill=$$(cat .pidfd | awk {'print $1'}) && \
+	kill -l 2 $$pidtokill
+
+# clean the temp files from dev_headers only after memfd_create file descriptor is killed
+clean_headers: kill_dev_headers
+	rm ./readpath.mk && rm ./pidfd
+
+memcrab
+	cargo run ./memcrab/src/main.rs
 
 load:
 	bpftool prog load hello.bpf.o /sys/fs/bpf/hello
@@ -32,3 +54,5 @@ dumpde: # dump before kernel rewrites
 
 dumpar: # dump after kernel rewrites
 	bpftool prog dump xlated name hello
+
+
