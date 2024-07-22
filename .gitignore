@@ -6,12 +6,14 @@ artifacts/out.stackcount.*
 changes.patch
 outro/
 artifacts/qcow2-rootfs/*
+ebpf_exporter.x86_64
 
 # include submodules for nvim-telescope
 assets/apk-tools
 assets/ebpf_exporter
 assets/FlameGraph
 assets/builda.sh
+assets/zstd-test
 /sample/
 
 # misc file formats
@@ -20,9 +22,34 @@ trace/ayaya/dsds/
 
 # misc trace
 trace/hello.bpf.c
+trace/hello.yaml
 trace/vmlinux.h
 
 
 # sparse files
 mount-point
 foo.*
+
+# gcc dump for graph generation
+# (-fdump-tree-all-graph)
+*.original
+*.gimple
+*.omplower
+*.lower
+*.eh
+*.cfg
+*.cfg.dot
+*.ompexp
+*.ompexp.dot
+*.profile_estimate
+*.statistics
+*.earlydebug
+*.debug
+
+# clang dump for graph generation
+# (-Xclang -ast-dump -fsyntax-only) > file.txt
+ast.txt
+graph.c
+trace/graphs
+main.png
+outro.1

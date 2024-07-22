@@ -42,5 +42,6 @@ FROM alpine:3.18 as relay
 WORKDIR /app
 
 COPY --from=examples_builder /build/ebpf_exporter/ /app
+COPY --from=ebpf_exporter_builder build/ebpf_exporter/ebpf_exporter /app
 
 ENTRYPOINT ["/bin/sh"]

@@ -1,0 +1,47 @@
+.TH vmlstub 1 "Jul 22, 2024" "Version 1.0"
+.nh
+.ad left
+.SH NAME
+vmlstub \- This program loads the vmlinux header diff patch into memory, so it can be recognized by LSP servers such as clangd. By doing this, the environment both supports: 1) the pattern of not including direct headers (the patch) into the git repository, and 2) Any language server protocol (LSP) that needs the header. It maps via a parent-server and fork-execve which is the child-client.
+
+.SH SYNTAX
+.B vmlstub
+.RI [ options ]
+.SH OPTIONS
+Executed binary options.
+.TP
+.B \-h, \-\-help
+Show help message and exit.
+.TP
+.B \-v, \-\-version
+Show version information and exit.
+.TP
+.B \-name, \-\-name
+Specify the name
+.SH EXIT CODE
+The command \fBvmlstub\fR returns the following exit codes:
+.TP
+.B 0
+Success.
+.TP
+.B 1
+General error.
+.TP
+.B 2
+Invalid command syntax.
+.TP
+.B 130
+Script terminated by Control-C (SIGINT).
+.SH EXAMPLE
+.PP
+To run example with an input file and output the results to a file:
+.PP
+.B vmlstub \-n name
+.SH SEE ALSO
+.PP
+.BR memfd_create (2),
+.BR ftruncate (2),
+.BR fcntl (2)
+.SH AUTHOR
+.PP
+deomorxsy <your.email@example.com>

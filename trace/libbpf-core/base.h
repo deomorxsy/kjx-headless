@@ -7,6 +7,9 @@
 #define TASK_COMM_LEN 16
 #define MAX_FILENAME_LEN 127
 
+// filename: executable file path
+// pid: process id
+// comm: process name
 struct event {
     int pid;
     int ppid;
