@@ -1,0 +1,14 @@
+FROM jaegertracing/jaeger-query:1.59.0
+
+ADD file ... in /
+CMD ["/bin/sh"]
+COPY /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt # buildkit
+COPY /etc/mime.types /etc/mime.types # buildkit
+ARG TARGETARCH=amd64
+ARG USER_UID=10001
+
+COPY query-linux-amd64 /go/bin/query-linux # buildkit
+EXPOSE map[16686/tcp:{}]
+ENTRYPOINT ["/go/bin/query-linux"]
+
+USER 10001

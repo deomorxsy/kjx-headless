@@ -26,4 +26,10 @@ resource "aws_instance" "kjx_headless_base" {
   }
 }
 
-output ""
+output "instance_id" {
+    value = aws_instance.${AWS_INSTANCE_ID}.id
+}
+
+output "bucket_arn" {
+    value = aws.s3.bucket.${AWS_BUCKET}.arn
+}
