@@ -160,15 +160,18 @@ fakeroot
 # apk-tools
 cp -r ./artifacts/deps mount-point-fuse/bin
 chmod +x ./mount-point-fuse/bin
- ln -s ./artifacts/mount-point-fuse/bin/x mount-point-fuse/sbin/x
+ln -s ./artifacts/mount-point-fuse/bin/x mount-point-fuse/sbin/x
 
 # soft links
 sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /sbin/apk
 sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /usr/bin/apk
 sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /usr/sbin/apk
 
+. ./scripts/virt-platforms/firecracker-startup.sh
+. ./scripts/virt-platforms/gvisor-startup.sh
+. ./scripts/virt-platforms/kata-startup.sh
 
-cp -r ./artifacts/deps/mount-point-fuse/
+#cp -r ./artifacts/deps/mount-point-fuse/
 exit # exit fakeroot
 }
 

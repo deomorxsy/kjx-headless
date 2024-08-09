@@ -32,7 +32,7 @@ jobs:
           docker cp kernel:/app/artifacts/bzImage ${{ github.workspace }}/artifacts/
 
       - name: Archive the build artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           # 12.80MB artifact
           name: kernel

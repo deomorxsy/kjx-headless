@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kjx-headless
+  namespace: kjx-app
+  labels:
+    role: kjx-headless
+    env: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: kjx-headless
+  template:
+    metadata:
+      labels:
+        role: kjx-headless
+    spec:
+      containers:
+      - name: kjx-app
+        image: localhost:5000/kjx:{{ .Values.image.tag }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
