@@ -7,6 +7,17 @@ changes.patch
 outro/
 artifacts/qcow2-rootfs/*
 ebpf_exporter.x86_64
+*/unused/*
+
+artifacts/wget-list-dynamic.txt
+
+# valgrind related
+callgrind.*
+cap_example
+prometheus-grafana.yaml
+
+# flamegraph related
+out.*
 
 # include submodules for nvim-telescope
 assets/apk-tools
@@ -29,6 +40,7 @@ trace/vmlinux.h
 # sparse files
 mount-point
 foo.*
+utils/storage/eulab-hd
 
 # gcc dump for graph generation
 # (-fdump-tree-all-graph)

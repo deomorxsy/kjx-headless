@@ -14,6 +14,7 @@ FAKEROOT=/usr/fakeroot/$pkg-$ver
 
 SRC_DIR="./first-stage"
 BUILD_DIR="./artifacts"
+TRACE_SRC="./trace"
 
 ASM=nasm
 
@@ -34,15 +35,22 @@ all:
 clean:
 	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
 
+# ====================
+# kernel-bound tasks
+#
+# - kbuild system
 menuconfig:
 	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) menuconfig
-
-
+#
+# - eBPF symbols support: kallsyms request (vmlinux)
 vmlinux:
 	$(MAKE) -C $(TRACE_SRC) M=$(PWD) getvmlinux
 	#chmod +x ./scripts/getvml.sh; \
 	#. ./scripts/getvml.sh
 
+# =============================
+# Custom LFS build requirements
+#
 initramfs:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build initramfs
@@ -51,6 +59,37 @@ kernel:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build kernel
 
+# ============================
+# Observability and Monitoring
+#
 exporter:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build exporter
+
+heatmap:
+	../assets/HeatMap/trace2heatmap.pl \
+		--unitstime=us \
+		--unitslabel=latency \
+		--grid \
+		--maxlat=15000 \
+		--title="Latency Heat Map: 15ms max" \
+		out.lat_us > out.latzoom.svg
+
+monitor: exporter heatmap
+
+# ================
+# Integration Tests
+#
+tf_test:
+	tofu test -test-directory=./modules
+
+qemu_bridge:
+	gcc -Wl,--no-as-needed -lcap -o ./scripts/cap-test ./scripts/capng.c
+	#CAP_PID=$(./scripts/virt-platforms/qemu-myifup.sh getcap) &
+	#sudo setcap 'cap_fsetid=ep cap_net_admin=ep' $(CAP_PID) &
+	#wait
+# ===========================
+# Infrastructure Provisioning
+#
+k8s:
+	kubectl apply -f ./deploy/

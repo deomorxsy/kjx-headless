@@ -12,6 +12,7 @@ hello.bpf.o: %.o: %.c
 
 VMLINUX_PATH=../artifacts/vmlinux/x86/
 
+# generate vmlinux from diff patch
 getvmlinux:
 	#bpftool btf dump file /sys/kernel/btf/vmlinux format c > "./vmlinux.h"
 	touch $(VMLINUX_PATH)vmlinux.new.h && \

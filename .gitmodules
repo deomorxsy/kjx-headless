@@ -7,3 +7,6 @@
 [submodule "assets/FlameGraph"]
 	path = assets/FlameGraph
 	url = git@github.com:brendangregg/FlameGraph.git
+[submodule "assets/HeatMap"]
+	path = assets/HeatMap
+	url = git@github.com:brendangregg/HeatMap.git

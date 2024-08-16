@@ -46,6 +46,10 @@ cd ./utils/kernel/linux-${KERNEL_VERSION}/ || exit
 make defconfig
 #make kvmconfig removed after Linux 5.10
 
+# code coverage
+./scripts/config --enable CONFIG_DEBUG_FS=y
+./scripts/config --enable CONFIG_GCOV_KERNEL=y
+
 # set BTF parameters
 ./scripts/config --enable CONFIG_DEBUG_INFO_BTF
 ./scripts/config --enable CONFIG_PAHOLE_HAS_SPLIT_BTF
@@ -83,6 +87,7 @@ make defconfig
 ./scripts/config --enable CONFIG_SECURITY_SELINUX
 ./scripts/config --enable CONFIG_SECURITY_SELINUX_BOOTPARAM
 ./scripts/config --set-str CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE 1
+
 
 make kvm_guest.config
 echo "kvm_guest.config done"
