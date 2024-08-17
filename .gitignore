@@ -15,6 +15,7 @@ artifacts/wget-list-dynamic.txt
 callgrind.*
 cap_example
 prometheus-grafana.yaml
+dot-dump-valgrind
 
 # flamegraph related
 out.*

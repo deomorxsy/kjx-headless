@@ -1,8 +1,15 @@
 #!/bin/sh
 #
+# ISO9660 image phase 1-5: bootloader config
+#
+cd ./artifacts/ || return
+
 # 1. create sparse file if doesn't exist
 sparse_file() {
-if  ! [ -f "./artifacts/mount-point" ]; then
+printf "=============|> [STEP 1]: create sparse file if doesn't exist \n=============\n"
+
+# about the mount-point: read part 4 a. and b.: you can mount the image into itself.
+if  ! [ -f "foo.img" ]; then
 
 #touch ./artifacts/mount-point
 qemu-img create -f raw foo.img 3G
@@ -12,12 +19,15 @@ fi
 
 # 2. manipulate sparse file partition table
 checkpart(){
+printf "=============|> [STEP 2]: a. manipulate sparse file partition table \nb. define partition properties such as filesystem type. \n=============\n"
 
 partit=$(parted -s foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
 
 if [ "$partit" = "unknown" ]; then
 
 # 2. define partition properties such as filesystem type.
+
+
 parted -s foo.img \
     mklabel msdos \
     mkpart primary ext4 2048s 100%
@@ -31,6 +41,7 @@ fi
 
 # 3. convert virtual disk sparse file to the qcow2 image
 show_as_block() {
+printf "=============|> [STEP 3]: convert virtual disk sparse file to the qcow2 image \n=============\n"
 
 qemu-img convert -p \
     -f raw \
@@ -47,6 +58,8 @@ sudo kpartx -l foo.qcow2
 
 # 4. mount image into itself with qemu-storage-daemon
 qsd_up() {
+
+printf "=============|> [STEP 4]: mount image into itself with qemu-storage-daemon \n=============\n"
 
 # a. use an auxiliar mount point (replace the mountpoint sub-arg later)
 # touch ./mount-point && fmt_mp=./mount-point
@@ -91,8 +104,12 @@ fi
 
 # 5. merge both boot directories and the LFS rootfs
 #
-# 5.a mount using loopback mount and then fuse-blkexport
+# 5.a mount using loop mount and then fuse-blkexport (some call it oopback mount, but the
+# loopback is related to the network interface in network devices.
+# A whole other abstraction layer.)
+#
 rootfs_lp_setup() {
+printf "=============|> [STEP 5]: LFS rootfs pt. 1: mount loop and fuse-blkexport \n============="
 #
 # PS1: mount the fuse-blkexport raw virtual disk file as a Loop Device
 #
@@ -118,7 +135,9 @@ else
     echo "The provided qcow2 image $check_loopdevfs is already formatted with a filesystem mounted as Loop Device at $upper_base_img."
 fi
 
-# 7. mount the loop device into the rootfs
+# 6. mount the loop device into the rootfs
+printf "=============|> [STEP 6]: mount the loop device into the rootfs.\n============="
+
 mkdir -p "$upper_mountpoint"/rootfs # mkdir a directory for the rootfs
 sudo mount "$upper_loopdev" "$upper_mountpoint"/rootfs # mount loop device into the generic dir
 
@@ -131,6 +150,7 @@ initramfs_base="./artifacts/netpowered.cpio.gz"
 
 cp "$initramfs_base" "$upper_mountpoint"
 cd "$upper_mountpoint" || return
+
 sudo gzip -dc netpowered.cpio.gz | (cd ./rootfs/ || return && sudo cpio -idmv && cd - || return)
 
 # LFS packaging: fakeroot+diff hint strategy
@@ -142,40 +162,21 @@ diff --brief --recursive "$upper_mountpoint" "$upper_mountpoint"/rootfs
 
 cp -a rootfs/* /mnt/qcow2/ # copy files, etc
 #
-# populate the rootfs
-# generate iso
+# populate the rootfs; generate iso
+#
+# 7. packaging: call ./scripts/rootfs.sh
+. ./scripts/rootfs.sh
+#
+#LFS=/mnt/kjxh
+#LFS_UUID=$()
+#LFS_UUID=/dev/sda1/
+#QCOW_FILE="./utils/storage/kjxh.qcow2"
 #
 umount /mnt/qcow2 # umount the loop device passing the path
 losetup -d /dev/loop0 # detach the loop device
 }
 
-packaging() {
 
-
-groupadd kjx
-useradd -sR /bin/bash -g kjx -m -k /dev/null kjx
-
-# get software
-wget --input-file=wget-list-sysv --continue --directory-prefix="$LFS/sources"
-
-# start fakeroot
-fakeroot
-# apk-tools
-cp -r ./artifacts/deps mount-point-fuse/bin
-chmod +x ./mount-point-fuse/bin
-ln -s ./artifacts/mount-point-fuse/bin/x mount-point-fuse/sbin/x
-
-# soft links
-sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /sbin/apk
-sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /usr/bin/apk
-sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /usr/sbin/apk
-
-. ./scripts/virt-platforms/firecracker-startup.sh
-. ./scripts/virt-platforms/gvisor-startup.sh
-. ./scripts/virt-platforms/kata-startup.sh
-#cp -r ./artifacts/deps/mount-point-fuse/
-exit # exit fakeroot
-}
 
 
 # 2. mount using libguestfs with guestmount

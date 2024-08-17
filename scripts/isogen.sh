@@ -1,5 +1,7 @@
 #!/usr/bin/sh
 #
+# ISO9660 image phase 9: bootloader config
+#
 # scaffold project for a
 # ISO9660 compressed distro
 scaff_burn() {

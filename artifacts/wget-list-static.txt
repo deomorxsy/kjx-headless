@@ -1,1 +1,2 @@
 https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-1.2.70.tar.gz
+https://github.com/k3s-io/k3s/releases/download/v1.29.7%2Bk3s1/k3s

@@ -24,7 +24,7 @@ getvmlinux:
 
 # loads vmlinux into ram (inside a tmpfs) using memfd_create, directly from diff patch
 dev_headers:
-	gcc -Wall -o vmlinux_tmpfs_stub ./vmlinux.stub.c && \
+	gcc -Wall -o vmlinux_tmpfs_stub ../scripts/libkjx/vmlinux.stub.c && \
 	chmod +x ./vmlinux_tmpfs_stub && \
 	. ./vmlinux_tmpfs_stub $(VMLINUX_PATH) 30000000 sw & | awk 'NR==2 {print substr($2, 1, length($2)-1), substr($4, 1, length($4)-1)}') > ./pidfd && \
 	readpath=$$( readlink /proc/$(cat ./pidfd | awk {'print $1'})/fd/$(cat ./pidfd | awk {'print $2'}) ) && \

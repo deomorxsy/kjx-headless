@@ -59,6 +59,10 @@ kernel:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build kernel
 
+isogen:
+	. ./scripts/ccr.sh; checker; \
+	docker compose -f .compose.yml --progress=plain build isogen
+
 # ============================
 # Observability and Monitoring
 #
