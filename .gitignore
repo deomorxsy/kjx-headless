@@ -8,8 +8,9 @@ outro/
 artifacts/qcow2-rootfs/*
 ebpf_exporter.x86_64
 */unused/*
-
+distro/
 artifacts/wget-list-dynamic.txt
+artifacts/sources
 
 # valgrind related
 callgrind.*

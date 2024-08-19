@@ -10,4 +10,17 @@ Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 
 This proof-of-concept monorepo gathers concepts from several constrained systems to create a *NIX Distro, Linux-based. Composed by Busybox/LFS, it applies CI/CD for infrastructure automation. Aimed to explore the performance of virtualized environments.
 
+Check the [Gitlab mirror]() for an example using Jenkins instead of Github Actions.u
 
+
+eBPF envp vs argp, sec, kprobe
+```
+          ---------
+      ---|program.c|---
+      |   ---------   |
+      v               v
+    -------          -------------
+   | eBPF  |   IPC  | k3s service |
+   | child |========| child       |
+    -------          -------------
+```

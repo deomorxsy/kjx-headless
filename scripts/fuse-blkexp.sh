@@ -2,33 +2,34 @@
 #
 # ISO9660 image phase 1-5: bootloader config
 #
-cd ./artifacts/ || return
+#cd ./artifacts/ || return
 
-# 1. create sparse file if doesn't exist
+RVDSF_IMG_PATH=./artifacts/foo.img # raw virtual disk sparse file
+RVDSF_QCOW2_PATH=./artifacts/foo.qcow2 # qcow2 image format
+
+# 1. create a "raw virtual disk sparse file" if doesn't exist
 sparse_file() {
-printf "=============|> [STEP 1]: create sparse file if doesn't exist \n=============\n"
+printf "=============|> [STEP 1]: create a 'raw virtual disk sparse file' if doesn't exist \n=============\n"
 
 # about the mount-point: read part 4 a. and b.: you can mount the image into itself.
-if  ! [ -f "foo.img" ]; then
+if  ! [ -f "./artifacts/foo.img" ]; then
 
 #touch ./artifacts/mount-point
-qemu-img create -f raw foo.img 3G
+qemu-img create -f raw ./artifacts/foo.img 3G
 
 fi
 }
 
-# 2. manipulate sparse file partition table
+# 2. manipulate the raw virtual disk sparse file partition table
 checkpart(){
-printf "=============|> [STEP 2]: a. manipulate sparse file partition table \nb. define partition properties such as filesystem type. \n=============\n"
+printf "=============|> [STEP 2]: a. manipulate the raw virtual disk sparse file partition table \nb. define partition properties such as filesystem type. \n=============\n"
 
-partit=$(parted -s foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
+partit=$(parted -s ./artifacts/foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
 
 if [ "$partit" = "unknown" ]; then
 
-# 2. define partition properties such as filesystem type.
-
-
-parted -s foo.img \
+# 2.a define partition properties such as filesystem type.
+parted -s ./artifacts/foo.img \
     mklabel msdos \
     mkpart primary ext4 2048s 100%
 
@@ -39,20 +40,20 @@ fi
 }
 
 
-# 3. convert virtual disk sparse file to the qcow2 image
+# 3. convert raw virtual disk sparse file to the qcow2 image
 show_as_block() {
 printf "=============|> [STEP 3]: convert virtual disk sparse file to the qcow2 image \n=============\n"
 
 qemu-img convert -p \
     -f raw \
     -O qcow2 \
-    foo.img foo.qcow2 \
-    && rm foo.img
+    ./artifacts/foo.img ./artifacts/foo.qcow2 \
+    && rm ./artifacts/foo.img
 
-file foo.qcow2
+file ./artifacts/foo.qcow2
 
 # 4. list partition mappings as a block device
-sudo kpartx -l foo.qcow2
+sudo kpartx -l ./artifacts/foo.qcow2
 }
 
 
@@ -65,7 +66,7 @@ printf "=============|> [STEP 4]: mount image into itself with qemu-storage-daem
 # touch ./mount-point && fmt_mp=./mount-point
 #
 # b. or just mount the image on itself
-image_path=./foo.qcow2
+image_path=./artifacts/foo.qcow2
 new_fmt_mp=$image_path
 
 # c. check if user_allow_other is enabled on
@@ -86,7 +87,7 @@ qemu-storage-daemon \
     &
 
 # e. get pid of qsd
-qsd_pid=!$
+#qsd_pid=!$
 
 mount | grep foo.qcow2
 
@@ -94,7 +95,8 @@ mount | grep foo.qcow2
 sudo kpartx -av "$image_path"
 
 # g. get info from mounted qcow2 device mapping
-qemu-img info foo.qcow2
+qemu-img info "$image_path"
+#foo.qcow2
 
 else
     echo: "Could not start qemu-storage-daemon process since user_allow_other is not enabled at /etc/fuse.conf."
@@ -132,7 +134,7 @@ if [ -z "$check_loopdevfs" ]; then
     # actually create the filesystem for the already created partition
     sudo mkfs.ext4 "$upper_loopdev" #/dev/loop0p1
 else
-    echo "The provided qcow2 image $check_loopdevfs is already formatted with a filesystem mounted as Loop Device at $upper_base_img."
+    echo "Error: The provided qcow2 image $check_loopdevfs is already formatted with a filesystem mounted as Loop Device at $upper_base_img."
 fi
 
 # 6. mount the loop device into the rootfs
@@ -149,18 +151,18 @@ sudo mount "$upper_loopdev" "$upper_mountpoint"/rootfs # mount loop device into 
 initramfs_base="./artifacts/netpowered.cpio.gz"
 
 cp "$initramfs_base" "$upper_mountpoint"
-cd "$upper_mountpoint" || return
+#cd "$upper_mountpoint" || return
 
 sudo gzip -dc netpowered.cpio.gz | (cd ./rootfs/ || return && sudo cpio -idmv && cd - || return)
 
 # LFS packaging: fakeroot+diff hint strategy
-mkdir -p "$upper_mountpoint"/rootfs
+#mkdir -p "$upper_mountpoint"/rootfs
 cp -r "$upper_mountpoint"/netpowered/* "$upper_mountpoint"/rootfs
 cp -r ./artifacts/deps "$upper_mountpoint"
 
 diff --brief --recursive "$upper_mountpoint" "$upper_mountpoint"/rootfs
 
-cp -a rootfs/* /mnt/qcow2/ # copy files, etc
+#cp -a rootfs/* /mnt/qcow2/ # copy files, etc
 #
 # populate the rootfs; generate iso
 #

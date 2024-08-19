@@ -6,6 +6,7 @@ LFS=/mnt/kjxh
 #LFS_UUID=$()
 LFS_UUID=/dev/sda1/
 QCOW_FILE="./utils/storage/kjxh.qcow2"
+rootfs_path=./artifacts/qcow2-rootfs/rootfs
 
 packaging() {
 
@@ -18,22 +19,22 @@ useradd -sR /bin/bash -g kjx -m -k /dev/null kjx
 wget --input-file=./artifacts/wget-list-sysv.txt --continue --directory-prefix="$LFS/sources"
 # =============================
 # runit/runsv/runsvdir stup
-mkdir -p rootfs/etc/runit
-mkdir -p rootfs/etc/runit/runsvdir/default
-mkdir -p rootfs/service
+mkdir -p "$rootfs_path/etc/runit"
+mkdir -p "$rootfs_path/etc/runit/runsvdir/default"
+mkdir -p "$rootfs_path/service"
 
 # runit: symbolic link convention
-ln -s /etc/runit/runsvdir/default/ rootfs/service/
+ln -s "$rootfs_path/etc/runit/runsvdir/default/" "$rootfs_path/service/"
 
 # runit: service scripts, get a shell
-mkdir -p rootfs/etc/runit/runsvdir/default/getty-tty1
+mkdir -p "$rootfs_path/etc/runit/runsvdir/default/getty-tty1"
 
-cat <<EOF > rootfs/etc/runit/runsvdir/default/getty-tty1/run
+cat <<EOF > "$rootfs_path/etc/runit/runsvdir/default/getty-tty1/run"
 #!/bin/sh
 #
 exec /sbin/getty 38400 tty1
 EOF
-chmod +x rootfs/etc/runit/runsvdir/default/getty-tty1/run
+chmod +x "$rootfs_path/etc/runit/runsvdir/default/getty-tty1/run"
 
 # runit: initialization
 #cat <<EOF > rootfs/etc/runit/1
@@ -102,15 +103,22 @@ printf "System config: $(uname -a) \n"
 #sh
 
 exec /bin/busybox runsvdir /etc/runit/runsvdir/default
+
+# load early bpf program
+/bin/runqlat
+
 INIT_EOF
 
-chmod +x ./rootfs/etc/runit/1
+chmod +x "$rootfs_path/etc/runit/1"
 
-ln -sf ./rootfs/etc/runit/1 ./rootfs/sbin/init
+ln -sf "$rootfs_path/etc/runit/1" "$rootfs_path/sbin/init"
 
+# setup sandbox (1 for each image)
 . ./scripts/sandbox/firecracker-startup.sh
 . ./scripts/sandbox/gvisor-startup.sh
 . ./scripts/sandbox/kata-startup.sh
+. ./scripts/sandbox/qemu-startup.sh
+. ./scripts/sandbox/youki-startup.sh
 
 }
 
@@ -143,6 +151,8 @@ sudo ln -s ./artifacts/mount-point-fuse/usr/local/bin/apk /usr/sbin/apk
 . ./scripts/sandbox/firecracker-startup.sh
 . ./scripts/sandbox/gvisor-startup.sh
 . ./scripts/sandbox/kata-startup.sh
+. ./scripts/sandbox/qemu-startup.sh
+. ./scripts/sandbox/youki-startup.sh
 #cp -r ./artifacts/deps/mount-point-fuse/
 #exit # exit fakeroot
 }
