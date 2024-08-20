@@ -24,6 +24,7 @@ services:
       dockerfile: "./Dockerfile"
       tags:
         - "localhost:5000/isogen:latest"
+    stop_signal: SIGINT
   initramfs:
     environment:
       - git_hash

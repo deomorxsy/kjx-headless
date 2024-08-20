@@ -3,8 +3,8 @@ name: Cron
 
 on:
   schedule:
-    # run build steps every sunday at midnight
-    - cron:  '0 0 * * *'
+    # run build steps every friday at midnight
+    - cron:  '0 0 * * 5'
 
 permissions:
   contents: read # to fetch code (actions/checkout)

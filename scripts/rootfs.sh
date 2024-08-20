@@ -5,15 +5,20 @@
 LFS=/mnt/kjxh
 #LFS_UUID=$()
 LFS_UUID=/dev/sda1/
-QCOW_FILE="./utils/storage/kjxh.qcow2"
+#QCOW_FILE="./utils/storage/kjxh.qcow2"
 rootfs_path=./artifacts/qcow2-rootfs/rootfs
 
 packaging() {
 
 printf "=============|> [STEP 8]: rootfs script \n============="
 
-groupadd kjx
-useradd -sR /bin/bash -g kjx -m -k /dev/null kjx
+# alpine
+addgroup kjx
+adduser -sR /bin/bash -g kjx -m -k /dev/null kjx
+
+#debian family
+#groupadd
+#useradd
 
 # get software
 wget --input-file=./artifacts/wget-list-sysv.txt --continue --directory-prefix="$LFS/sources"

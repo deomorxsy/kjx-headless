@@ -17,5 +17,5 @@ busybox-1.36.1.tar.bz2
 */logs/*
 
 # misc scripts
-run.sh
-Dockerfile
+#run.sh
+#Dockerfile

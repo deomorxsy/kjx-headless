@@ -1,4 +1,4 @@
-### kjx-headless
+### kjx-headless // WIP
 > POC for a custom headless LFS distro setup, deploy and monitoring
 
 [![initramfs](https://github.com/deomorxsy/kjx-headless/actions/workflows/ramdisk-builder.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ramdisk-builder.yml)
@@ -10,7 +10,7 @@ Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 
 This proof-of-concept monorepo gathers concepts from several constrained systems to create a *NIX Distro, Linux-based. Composed by Busybox/LFS, it applies CI/CD for infrastructure automation. Aimed to explore the performance of virtualized environments.
 
-Check the [Gitlab mirror]() for an example using Jenkins instead of Github Actions.u
+Check the [Gitlab mirror]() for an example using Jenkins instead of Github Actions.
 
 
 eBPF envp vs argp, sec, kprobe

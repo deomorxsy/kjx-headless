@@ -121,50 +121,78 @@ EOF
 
 }
 
+
+
 # ================
 #
 # Dependency Check
 #
 # =================
 
+
+WGET_MAX_RETRIES=5
+RETRY_DELAY=10
+
+retry_wget(){
+    attempt=1
+    success=0
+
+    while attempt <= MAX_RETRIES; do
+        if wget -nc --input-file=./artifacts/wget-list-static.txt --continue --directory-prefix=./artifacts/sources ; then
+            success=1
+            break
+        else
+            echo "Attempt $attempt failed, retrying in $RETRY_DELAY seconds..."
+            sleep "$RETRY_DELAY"
+            attempt=$(( attempt+1 ))
+        fi
+    done
+
+    if [ $success = 0 ]; then
+        echo "Failed to download files after $MAX_RETRIES attempts."
+        exit 1
+    fi
+
+}
+
 # 1. directories in place
 # 2. needed packages
 
-deps_check() {
+sources() {
 # isogen sources
 mkdir -p ./artifacts/sources
 #cd ./artifacts/sources || return
 
 src_contents=$(ls -1 ./artifacts/sources)
-#; echo $src_contents
-#grub-2.12.tar.gz k3s libcap-1.2.70.tar.gz qemu-9.0.2.tar.xz syslinux-4.04.tar.gz syslinux-6.03.tar.gz
-#;
 
-# if there is grub, syslinux or efi sources present,
 #
-
-# implement exponencial backoff algorithm to
-# retry wget X number of times on the following
-# for-case-for control-flow iteration
-
-
+# iterate over contents of the directory
 for slice in $src_contents; do
+    # if there is grub, syslinux or efi sources present,
     case $slice in
         *grub*|*syslinux*|*efi*)
             printf "\n===========\n|> One or more sources missing. Wgetting...\n"
             cd ./artifacts/source || return
             # remove failed checksums and download it again
-            failed_sums=$(sha256sum -c ./sha256sums.asc | grep "FAILED" | awk '{print $1}' | cut -d : -f 1)
+            failed_sums=$(sha256sum -c ./sha256sums_isogen.asc | grep "FAILED" | awk '{print $1}' | cut -d : -f 1)
             for index in $failed_sums; do
                 rm ./"$index"
-                wget -nc --input-file=./artifacts/wget-list-static.txt --continue --directory-prefix=./artifacts/sources
 
-                # if specific slice exists, then decompress it
+                retry_wget
+                #wget -nc \
+                #    --input-file=./artifacts/wget-list-static.txt \
+                #    --continue --directory-prefix=./artifacts/sources \
+                #    -retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0
+
+                # if specific slice exists, decompress it
                 if [ -f "$slice" ]; then
                     tar -xvf "$slice"
+                else
+                    echo "$slice file don't exist after download"
                 fi
             done
-            cd - || return
+            #rm ./sha256sums.asc
+            cd - || { echo "Failed to change directory back"; exit 1; }
             ;;
     esac
 done
@@ -172,11 +200,17 @@ done
 
 }
 
+# 1. Scaffolding and check sources
 
+# call scaff_burn config function
+scaff_burn
+
+# call sources config function
+sources
 
 # ==============================================
 #
-# prepare final distro's ISO directory structure
+# 2. prepare final distro's ISO directory structure
 #
 # ==============================================
 
@@ -190,6 +224,7 @@ grub_config
 # =========
 # boot/isolinux
 
+#isolinux_config
 
 # =========
 # kernel
@@ -220,7 +255,7 @@ system_info
 
 # =====================
 #
-#      Build step
+#   3. Build step
 #
 # =====================
 mbr_bin_path=./artifacts/sources/syslinux-6.03/bios/mbr/isohdpfx.bin
@@ -237,12 +272,12 @@ xorriso -as mkisofs -o output.iso \
 
 
 
-
 # ======================
 # chore: functions to
 # create patches or checksums
 # =====================
 
-checkgen() {
+SHA() {
 
+    sha256sum ./artifacts/sources > ./artifacts/sources/sha256sums_isogen.asc
 }
