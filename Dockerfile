@@ -13,10 +13,10 @@ WORKDIR /app
 COPY ["./artifacts/", "./scripts/", "."]
 
 ENTRYPOINT ["/bin/sh"]
-#RUN . ./scripts/fuse-blkexp.sh
+RUN ./scripts/fuse-blkexp.sh "./artifacts/foo.img"
 
 
-#FROM alpine:3.20 as relay
+FROM alpine:3.20 as relay
 
-#WORKDIR /app
-#COPY --from-builder=./artifacts/image.iso
+WORKDIR /app
+COPY --from-builder=./artifacts/image.iso

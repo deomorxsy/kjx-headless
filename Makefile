@@ -4,6 +4,7 @@ GIT_SHA=$(shell git rev-parse HEAD)
 # if changes are detected, append "-local" to hash
 GIT_DIFF=$(shell git diff -s --exit-code || echo "-local")
 GIT_COMMIT_HASH := $(GIT_SHA)$(GIT_DIFF)
+#USER=${USER}
 
 KERNEL_SRC := ./assets/kernel/linux-6.6.22/
 
@@ -61,7 +62,9 @@ kernel:
 
 isogen:
 	. ./scripts/ccr.sh; checker; \
-	docker compose -f ./compose.yml --progress=plain build isogen
+	perf trace -e 'tracepoint:syscalls:sys_enter_open*' docker compose -f ./compose.yml --progress=plain build isogen
+	#sudo --preserve-env=USER,HOME perf trace -e 'syscalls:sys_enter_open*' -- \
+	#	sudo -u ${USER} docker compose -f ./compose.yml --progress=plain build isogen
 
 # ============================
 # Observability and Monitoring

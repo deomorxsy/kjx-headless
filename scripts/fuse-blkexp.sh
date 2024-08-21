@@ -1,4 +1,5 @@
 #!/bin/sh
+# ...(POSIX shell, busybox port)
 #
 # ISO9660 image phase 1-5: bootloader config
 #
@@ -12,29 +13,35 @@ sparse_file() {
 printf "=============|> [STEP 1]: create a 'raw virtual disk sparse file' if doesn't exist \n=============\n"
 
 # about the mount-point: read part 4 a. and b.: you can mount the image into itself.
-if  ! [ -f "./artifacts/foo.img" ]; then
+if  ! [ -f "./artifacts/foo.img" ] && ! [ -f "$1" ]; then
 
 #touch ./artifacts/mount-point
-qemu-img create -f raw ./artifacts/foo.img 3G
+#qemu-img create -f raw ./artifacts/foo.img 3G
+qemu-img create -f raw "$1" 3G
 
 fi
 }
 
 # 2. manipulate the raw virtual disk sparse file partition table
 checkpart(){
-printf "=============|> [STEP 2]: a. manipulate the raw virtual disk sparse file partition table \nb. define partition properties such as filesystem type. \n=============\n"
+printf "\n=============|> [STEP 2]: \na. manipulate the raw virtual disk sparse file partition table \nb. define partition properties such as filesystem type. \n=============\n\n"
 
-partit=$(parted -s ./artifacts/foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
+#partit=$(parted -s ./artifacts/foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
+partit=$(parted -s "$1" print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
 
 if [ "$partit" = "unknown" ]; then
 
 # 2.a define partition properties such as filesystem type.
-parted -s ./artifacts/foo.img \
+#parted -s ./artifacts/foo.img \
+parted -s "$1" \
     mklabel msdos \
     mkpart primary ext4 2048s 100%
 
+#partit=$(parted -s ./artifacts/foo.img print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
+partit=$(parted -s "$1" print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
+
 else
-    printf "It seems there is already a partition in this file.\n"
+    printf "[EXIT]: It seems there is already a partition in this file.\n"
 
 fi
 }
@@ -179,6 +186,15 @@ losetup -d /dev/loop0 # detach the loop device
 }
 
 
+if [ "$1" = "checkpart" ]; then
+    checkpart "$@"
+elif [ "$1" = "function2" ]; then
+    function2
+elif [ "$1" = "function3" ]; then
+    function3
+else
+    echo "Invalid function name. Please specify one of: function1, function2, function3"
+fi
 
 
 # 2. mount using libguestfs with guestmount
