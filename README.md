@@ -24,3 +24,11 @@ eBPF envp vs argp, sec, kprobe
    | child |========| child       |
     -------          -------------
 ```
+
+System/Integration [Tests](https://bats-core.readthedocs.io/) use bats-core and leverages Linux Namespaces API to interact with an ext4 filesystem:
+1. create userns
+2. create mountns through unshare
+3. bound userns to the newly created mountns
+4. setup a tmpfs (RAM-based filesystem for fast access)
+5. assert test
+6. clean artifacts

@@ -3,6 +3,7 @@ artifacts/bzImage
 artifacts/netpowered.cpio.gz
 artifacts/vmlinux.h
 artifacts/out.stackcount.*
+artifacts/bar.img
 changes.patch
 outro/
 artifacts/qcow2-rootfs/*

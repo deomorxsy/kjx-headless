@@ -113,7 +113,7 @@ fi
 
 # 5. merge both boot directories and the LFS rootfs
 #
-# 5.a mount using loop mount and then fuse-blkexport (some call it oopback mount, but the
+# 5.a mount using loop mount and then fuse-blkexport (some call it loopback mount, but the
 # loopback is related to the network interface in network devices.
 # A whole other abstraction layer.)
 #

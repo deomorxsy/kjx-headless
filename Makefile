@@ -66,6 +66,18 @@ isogen:
 	#sudo --preserve-env=USER,HOME perf trace -e 'syscalls:sys_enter_open*' -- \
 	#	sudo -u ${USER} docker compose -f ./compose.yml --progress=plain build isogen
 
+#system-test-iso, STI
+sti:
+	chmod +x ./scripts/fuse-blkexp.sh
+	. ./scripts/ccr.sh; checker; \
+	docker compose -f ./compose.yml --progress=plain build iso_system_test
+
+mock_sti:
+	chmod +x ./scripts/fuse-blkexp.sh
+	. ./scripts/ccr.sh; checker; \
+	docker compose -f ./compose.yml --progress=plain build mock_ist
+
+
 # ============================
 # Observability and Monitoring
 #
