@@ -30,7 +30,7 @@ services:
       context: "."
       dockerfile: "./tests/Dockerfile"
       tags:
-        - "localhost:5000/iso-system-test"
+        - "localhost:5000/iso-system-test:01"
     stop_signal: SIGINT
   mock_ist:
     build:
@@ -38,6 +38,9 @@ services:
       dockerfile: "./tests/Dockerfile"
       tags:
         - "localhost:5000/mock_ist:latest"
+    cap_add:
+      - SYS_ADMIN
+      - DAC_OVERRIDE
     stop_signal: SIGINT
   initramfs:
     environment:

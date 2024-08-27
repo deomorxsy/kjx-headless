@@ -34,8 +34,12 @@ RUN printf "\n===== Entering test directory ======\n\n"
 RUN ls -allht
 RUN go get
 RUN go mod tidy
-RUN go test
-RUN go test -v > /app/test_result.txt
+
+# unit test
+RUN go test -v > /app/test_result.txt; getcap /usr/sbin/parted >> /app/test_result.txt && cat /app/test_result.txt
+
+# coverage
+RUN go test -coverprofile=/app/artifacts/coverage_go.out || cat /app/artifacts/coverage_go.out
 
 
 ENTRYPOINT ["/bin/sh"]
@@ -51,6 +55,10 @@ FROM alpine:3.20 as relay
 WORKDIR /tests
 
 COPY --from=builder /app/test_result.txt .
+COPY --from=builder /app/artifacts/coverage_go.out .
 
-CMD cat /app/test_result.txt
-ENTRYPOINT ["/bin/sh"]
+# set command to be executed when the container starts
+ENTRYPOINT ["/bin/sh", "-c"]
+
+# set argument to be fed to the entrypoint
+CMD ["printf \"===== UNIT TEST =====\\n\\n\" && cat /tests/test_result.txt && printf \"\\n\\n===== FUZZA =======\\n\\n\" && cat /tests/coverage_go.out"]

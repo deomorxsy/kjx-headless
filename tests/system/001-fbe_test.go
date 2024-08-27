@@ -43,7 +43,7 @@ func TestCheckPart(t *testing.T) {
     }
 
     // 6. validate: check partition / assign
-    output, err = exec.Command("/bin/busybox", "parted", "-s", testImg, "print").Output()
+    output, err = exec.Command("parted", "-s", testImg, "print").Output()
     if err != nil {
         //f.Fatalf("Failed to check partition: %v", err)
         t.Fatalf("Failed to check partition: %v", err)

@@ -12,6 +12,8 @@ ebpf_exporter.x86_64
 distro/
 artifacts/wget-list-dynamic.txt
 artifacts/sources
+artifacts/html_cov_rust
+artifacts/coverage_go.out
 
 # valgrind related
 callgrind.*
