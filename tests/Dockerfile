@@ -18,9 +18,9 @@ COPY "./scripts/" /app/scripts/
 COPY "./tests/" /app/tests/
 
 # Set capabilities
-RUN setcap cap_sys_admin,cap_dac_override+ep /usr/bin/qemu-img \
-    && setcap cap_sys_admin+ep /usr/sbin/parted \
-    && setcap cap_sys_admin+ep /usr/sbin/kpartx
+RUN setcap cap_sys_admin,cap_dac_override+ep /usr/bin/qemu-img; \
+    setcap cap_sys_admin+eip /usr/sbin/parted; \
+    setcap cap_sys_admin+eip /usr/sbin/kpartx
 
 #COPY ["./artifacts/", "./scripts/", "./tests/", "."]
 #"./tests/", "."]

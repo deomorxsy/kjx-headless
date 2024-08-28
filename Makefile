@@ -73,25 +73,43 @@ sti:
 	docker compose -f ./compose.yml --progress=plain build iso_system_test
 
 #docker run -d -p 5000:5000 --name registry registry:latest \
+#&& registry \
 
 mock_sti:
 	chmod +x ./scripts/fuse-blkexp.sh;
-	. ./scripts/ccr.sh; checker && registry \
+	. ./scripts/ccr.sh; checker && \
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build mock_ist && \
 	docker compose images | awk 'NR==2 { print $4 }' && \
-	docker push localhost:5000/linux_build:latest && \
+	docker push localhost:5000/mock_ist:latest && \
 	docker stop registry
 
+#podman create -rm --name mock_ist localhost:5000/mock_ist:latest 2>&1 | grep "already in use"
+# solve  ImagePullBackOff
 kube_mock:
-	podman create -rm --name mock_ist localhost:5000/mock_ist:latest
-	echo
-	ps -a
-	echo && echo
+	. ./scripts/ccr.sh; checker; \
+	docker create --name mock_ist localhost:5000/mock_ist:latest 2>&1 | grep "already in use";  \
+	if [ $? -eq 0 ]; then echo hmmm && \
+	docker start registry && \
+	curl -s -i -X GET http://registry.localhost:5000/v2/_catalog && \
+	docker push mock_ist localhost:5000/mock_ist:latest && \
 	podman generate kube mock_ist > ./artifacts/mock_ist.yaml
-	sudo k3s kubectl apply -f ./artifacts/mock_ist.yaml
-	podman images | head && ec
-	k3s kubectl apply -f ./artifacts/mock_ist.yaml -n=gotests
+	sudo k3s kubectl create namespace gotests && \
+	k3s kubectl apply -f ./artifacts/mock_ist.yaml -n=gotests && \
+	k3s crictl pods | head; \
+	k3s crictl pods | awk 'NR==2 {print $1}' \
+	k3s kubectl get pods -n=gotests \
+	k3s kubectl cluster-info
+	printf "\n ===== Cleaning now... ======\n\n" && \
+	sudo k3s kubectl delete -f ./artifacts/mock_ist.yaml -n=gotests && \
+	docker stop registry \
+	else echo yo wtf; fi
+
+	#echo && echo
+	#podman generate kube mock_ist > ./artifacts/mock_ist.yaml
+	#sudo k3s kubectl apply -f ./artifacts/mock_ist.yaml
+	#podman images | head && ec
+	#k3s kubectl apply -f ./artifacts/mock_ist.yaml -n=gotests
 
 
 # ============================

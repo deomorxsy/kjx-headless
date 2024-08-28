@@ -16,4 +16,9 @@ spec:
       FUZZA =======\n\n" && cat /tests/coverage_go.out
     image: localhost:5000/mock_ist:latest
     name: mockist
+    securityContext:
+      capabilities:
+        add:
+          - SYS_ADMIN
+          - DAC_OVERRIDE
 

@@ -4,7 +4,19 @@
 #
 
 registry() {
-    checker
+    #checker
+    exists_command=$(command -v podman &>/dev/null)
+
+    if [ $? -eq 1 ]; then
+        podman run -d -p 5000:5000 --name registry registry:latest
+        podman start registry
+    else
+        docker run -d -p 5000:5000 --name registry registry:latest
+        docker start registry
+    fi
+
+    curl -s -i -X GET http://registry.localhost:5000/v2/_catalog | grep mock_ist
+
 }
 
 dddsad(){
