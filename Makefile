@@ -72,10 +72,26 @@ sti:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build iso_system_test
 
+#docker run -d -p 5000:5000 --name registry registry:latest \
+
 mock_sti:
-	chmod +x ./scripts/fuse-blkexp.sh
-	. ./scripts/ccr.sh; checker; \
-	docker compose -f ./compose.yml --progress=plain build mock_ist
+	chmod +x ./scripts/fuse-blkexp.sh;
+	. ./scripts/ccr.sh; checker && registry \
+	docker start registry && \
+	docker compose -f ./compose.yml --progress=plain build mock_ist && \
+	docker compose images | awk 'NR==2 { print $4 }' && \
+	docker push localhost:5000/linux_build:latest && \
+	docker stop registry
+
+kube_mock:
+	podman create -rm --name mock_ist localhost:5000/mock_ist:latest
+	echo
+	ps -a
+	echo && echo
+	podman generate kube mock_ist > ./artifacts/mock_ist.yaml
+	sudo k3s kubectl apply -f ./artifacts/mock_ist.yaml
+	podman images | head && ec
+	k3s kubectl apply -f ./artifacts/mock_ist.yaml -n=gotests
 
 
 # ============================

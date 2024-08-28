@@ -39,7 +39,7 @@ RUN go mod tidy
 RUN go test -v > /app/test_result.txt; getcap /usr/sbin/parted >> /app/test_result.txt && cat /app/test_result.txt
 
 # coverage
-RUN go test -coverprofile=/app/artifacts/coverage_go.out || cat /app/artifacts/coverage_go.out
+RUN go test -v -coverprofile=/app/artifacts/coverage_go.out || cat /app/artifacts/coverage_go.out
 
 
 ENTRYPOINT ["/bin/sh"]

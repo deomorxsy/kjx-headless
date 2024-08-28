@@ -3,6 +3,14 @@
 # ccr: check container runtime
 #
 
+registry() {
+    checker
+}
+
+dddsad(){
+    echo
+}
+
 checker() {
     exists_wgh=$(which podman 2>&1 | grep -o "no" | head -n 1)
     exists_command=$(command -v podman &>/dev/null)

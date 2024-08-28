@@ -1,0 +1,19 @@
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-5.1.1
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2024-08-28T01:12:19Z"
+  labels:
+    app: mockist-pod
+  name: mockist-pod
+spec:
+  containers:
+  - args:
+    - printf "===== UNIT TEST =====\n\n" && cat /tests/test_result.txt && printf "\n\n=====
+      FUZZA =======\n\n" && cat /tests/coverage_go.out
+    image: localhost:5000/mock_ist:latest
+    name: mockist
+

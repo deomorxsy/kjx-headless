@@ -14,6 +14,7 @@ artifacts/wget-list-dynamic.txt
 artifacts/sources
 artifacts/html_cov_rust
 artifacts/coverage_go.out
+artifacts/mock_ist.yaml
 
 # valgrind related
 callgrind.*
