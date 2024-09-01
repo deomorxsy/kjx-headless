@@ -61,4 +61,4 @@ COPY --from=builder /app/artifacts/coverage_go.out .
 ENTRYPOINT ["/bin/sh", "-c"]
 
 # set argument to be fed to the entrypoint
-CMD ["printf \"===== UNIT TEST =====\\n\\n\" && cat /tests/test_result.txt && printf \"\\n\\n===== FUZZA =======\\n\\n\" && cat /tests/coverage_go.out"]
+CMD ["printf \"===== UNIT TEST =====\\n\\n\" && cat /tests/test_result.txt && printf \"\\n\\n===== UNIT COVERAGE =======\\n\\n\" && cat /tests/coverage_go.out && printf \"\\n\\n===== FUZZA =======\\n\\n\" && printf \"no-file-yet\""]
