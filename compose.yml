@@ -67,4 +67,32 @@ services:
       tags:
         - "localhost:5000/exporter-static:latest"
     stop_signal: SIGINT
+  # =======================
+  # AWS provider emulation
+  # =======================
+  tofu_deps:
+    tags:
+      - "localhost:5000/tofu_deps:latest"
+    build:
+      context: "."
+      dockerfile: "./deploy/Dockerfile.lstf"
+  localstack:
+    tags:
+      - "localhost:5000/localstack:latest"
+    depends_on:
+      - tofu_deps
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      #- DEBUG=${DEBUG:-0}
+      - DEBUG=${1:-0}
+      - SERVICES=ec2,s3,vpc
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
 

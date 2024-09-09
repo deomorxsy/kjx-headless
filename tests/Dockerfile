@@ -22,11 +22,7 @@ RUN setcap cap_sys_admin,cap_dac_override+ep /usr/bin/qemu-img; \
     setcap cap_sys_admin+eip /usr/sbin/parted; \
     setcap cap_sys_admin+eip /usr/sbin/kpartx
 
-#COPY ["./artifacts/", "./scripts/", "./tests/", "."]
-#"./tests/", "."]
-
 RUN ls -allht
-#&& cd /app/tests/system/ || return
 
 WORKDIR /app/tests/system/
 
@@ -36,11 +32,13 @@ RUN go get
 RUN go mod tidy
 
 # unit test
-RUN go test -v > /app/test_result.txt; getcap /usr/sbin/parted >> /app/test_result.txt && cat /app/test_result.txt
+#RUN go test -v > /app/test_result.txt; getcap /usr/sbin/parted >> /app/test_result.txt && cat /app/test_result.txt
+RUN go test -v /app/tests/system/000-template.go > /app/test_result.txt; getcap /usr/sbin/parted >> /app/test_result.txt && cat /app/test_result.txt
 
-# coverage
-RUN go test -v -coverprofile=/app/artifacts/coverage_go.out || cat /app/artifacts/coverage_go.out
+# coverage; same file would be too
 
+#RUN go test -v -coverprofile=/app/artifacts/coverage_go.out || cat /app/artifacts/coverage_go.out
+RUN go test /app/tests/system/000-template.go -v -coverprofile=/app/artifacts/coverage_go.out || cat /app/artifacts/coverage_go.out
 
 ENTRYPOINT ["/bin/sh"]
 
