@@ -15,7 +15,7 @@
 
 Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 
-This proof-of-concept monorepo gathers concepts from several constrained systems to create a *NIX Distro, Linux-based. Composed by Busybox/LFS, it applies CI/CD for infrastructure automation. Aimed to explore the performance of virtualized environments.
+This proof-of-concept monorepo gathers concepts from several [1] constrained systems to create a *NIX Distro, Linux-based. Composed by Busybox/LFS, it applies CI/CD for infrastructure automation. Aimed to explore the performance of virtualized environments.
 
 Check the [Gitlab mirror]() for an example using Jenkins instead of Github Actions.
 
@@ -39,3 +39,19 @@ System/Integration [Tests](https://bats-core.readthedocs.io/) use bats-core and 
 4. setup a tmpfs (RAM-based filesystem for fast access)
 5. assert test
 6. clean artifacts
+
+## References
+
+[1] LFS, Sabotage, Alpine, Busybox OS, ALFS, PILFS, Cross Linux from Scratch, Embedded Linux from Scratch, Dragora Linux, Alpine Linux and Void Linux.
+
+- [Alpine Wiki](https://wiki.alpinelinux.org/)
+- [Sabotage](https://sabotage-linux.github.io/) && [devsonacid](https://sabotage-linux.neocities.org/blog/)
+- [Buildroot manual](https://buildroot.org/downloads/manual/manual.pdf)
+- [ALFS](https://www.linuxfromscratch.org/alfs/)
+- [Cross Linux from Scratch](https://trac.clfs.org/)
+- [Embedded Linux from Scratch](https://bootlin.com/doc/legacy/elfs/embedded_lfs.pdf)
+- Dragora Linux [Handbook](http://www.dragora.org/download/web-handbook/) || [archive](https://archive.fo/FQekg)
+- VoidLinux [docs](https://docs.voidlinux.org/)
+- Alpine User [Handbook](https://docs.alpinelinux.org/user-handbook/0.1a/index.html)
+- [TinyEmu](https://bellard.org/tinyemu/readme.txt)
+- [Hardened Gentoo](https://wiki.gentoo.org/wiki/Project:Hardened)

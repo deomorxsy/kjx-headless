@@ -325,9 +325,6 @@ func (f *DefaultOptionsFactory) NewOptions() *Options {
 
 // clean up strategy for instantiated variables from options
 type CleanupStrategy interface {
-        //Cleanup(ctx context.Context, cmd, rvdsfCmd,
-        //partedCmd, qemuImgCmd, kpartxCmd,
-        //qsdCmd *exec.Cmd,) error
 
         Cleanup(
             ctx context.Context, cmd, rvdsfCmd,
@@ -341,6 +338,19 @@ type CleanupStrategy interface {
             linkCmd, catCmd, chmodCmd,
             sleepCmd, exitCmd, shaSumCmd,
             cutCmd, tarCmd, xorrisoCmd *exec.Cmd,) error
+
+        CleanupOutput(
+            ctx context.Context, cmd, rvdsfCmd,
+            partedCmd, grepCmd, awkCmd,
+            printfCmd, QemuImgCmd, rmCmd,
+            fileCmd, kpartxCmd, tailCmd, qsdCmd,
+            mountCmd, losetupCmd, blkidCmd,
+            mkfsExt4Cmd, mkdirCmd, gzipCmd,
+            cpioCmd, diffCmd, umountCmd,
+            addGroupCmd, addUserCmd, wgetCmd,
+            linkCmd, catCmd, chmodCmd,
+            sleepCmd, exitCmd, shaSumCmd,
+            cutCmd, tarCmd, xorrisoCmd []byte,) error
 }
 
 type DefaultCleanupStrategy struct{}
@@ -385,18 +395,20 @@ func (s *DefaultCleanupStrategy) Cleanup( ctx context.Context,
 }
 
 func (s *DefaultCleanupStrategy) CleanupOutput( ctx context.Context,
-    cmd, rvdsfOutput, partedOutput, grepOutput, awkOutput, printfOutput,
+    cmdOutput, rvdsfOutput, partedOutput, grepOutput, awkOutput, printfOutput,
     qemuImgOutput, rmOutput, fileOutput, kpartxOutput, tailOutput, qsdOutput,
     mountOutput, losetupOutput, blkidOutput, mkfsExt4Output, mkdirOutput,
     gzipOutput, cpioOutput, diffOutput, umountOutput, addGroupOutput,
     addUserOutput, wgetOutput, linkOutput, catOutput, chmodOutput,
     sleepOutput, exitOutput, shaSumOutput, cutOutput, tarOutput,
-    xorrisoOutput *string,
+    xorrisoOutput []byte,
     ) error {
-    //
-    //
-    outputs := []*string{
-        cmd, rvdsfOutput, partedOutput, grepOutput, awkOutput, printfOutput,
+    // 1. a slice of bytes
+
+
+    // 2. a slice of byte slices
+    outputs := [][]byte{
+        cmdOutput, rvdsfOutput, partedOutput, grepOutput, awkOutput, printfOutput,
         qemuImgOutput, rmOutput, fileOutput, kpartxOutput, tailOutput, qsdOutput,
         mountOutput, losetupOutput, blkidOutput, mkfsExt4Output, mkdirOutput,
         gzipOutput, cpioOutput, diffOutput, umountOutput, addGroupOutput,
@@ -436,7 +448,8 @@ func Runna(ctx context.Context, optionsFactory OptionsFactory, cleaner CleanupSt
     var out bytes.Buffer
     cmd.Stdout = &out
 
-    err := cmd.Run()
+    //err := cmd.Run()
+    cmdOutput, err := cmd.Output()
     if err != nil {
         // golang type-switch
         switch e := err.(type) {
@@ -476,6 +489,7 @@ func Runna(ctx context.Context, optionsFactory OptionsFactory, cleaner CleanupSt
 
     // 2. parted
     partedCmd := exec.CommandContext(ctx, opts.PartedDefault, opts.PartedArgs...)
+    //partedCmd.Stdin = bytes.NewReader(opts.Stdin)
     partedCmd.Stdin = bytes.NewReader(opts.Stdin)
 
     //var out = bytes.Buffer{}
@@ -492,7 +506,9 @@ func Runna(ctx context.Context, optionsFactory OptionsFactory, cleaner CleanupSt
 
     // grep
     grepCmd := exec.CommandContext(ctx, opts.GrepDefault, opts.GrepArgs...)
-    grepCmd.Stdin = bytes.NewReader(opts.Stdin)
+    //grepCmd.Stdin = bytes.NewReader(opts.Stdin)
+    grepCmd.Stdin = bytes.NewReader(partedOutput)
+    // *[]byte
 
     out.Reset()
     grepCmd.Stdout = &out
@@ -730,9 +746,6 @@ func Runna(ctx context.Context, optionsFactory OptionsFactory, cleaner CleanupSt
 
     // cpio
     cpioCmd := exec.CommandContext(ctx, opts.CpioDefault, opts.CpioArgs...)
-    cpioCmd.Stdin = bytes.NewReader(opts.Stdin)
-
-    out.Reset()
     cpioCmd.Stdin = bytes.NewReader(opts.Stdin)
 
     out.Reset()
@@ -988,8 +1001,8 @@ func Runna(ctx context.Context, optionsFactory OptionsFactory, cleaner CleanupSt
         string(shaSumOutput) + "\n" + string(cutOutput) + "\n" + string(tarOutput) + "\n" + string(xorrisoOutput) + "\n",
     )
 
-    err = cleaner.CleanupOutput(
-        ctx, Output, rvdsfOutput, partedOutput, grepOutput, awkOutput, printfOutput,
+    err = cleaner.CleanupOutput(ctx,
+    cmdOutput, rvdsfOutput, partedOutput, grepOutput, awkOutput, printfOutput,
     qemuImgOutput, rmOutput, fileOutput, kpartxOutput, tailOutput, qsdOutput,
     mountOutput, losetupOutput, blkidOutput, mkfsExt4Output, mkdirOutput,
     gzipOutput, cpioOutput, diffOutput, umountOutput, addGroupOutput,
@@ -1246,16 +1259,19 @@ func main() {
             "ext4", "2048s", "100%",
         },
 
+        // 3. grep
         GrepDefault: "grep",
         GrepArgs: []string{},
 
+        // 4. awk
         AwkDefault: "awk",
         AwkArgs: []string{},
 
+        // 5. printf
         PrintfDefault: "printf",
         PrintfArgs: []string{},
 
-        // 3. qemu-img
+        // 6. qemu-img
         QemuImgDefault: "qemu-img",
         QemuImgArgs: []string{
             "convert", "-p", "-f",
@@ -1263,20 +1279,23 @@ func main() {
             "foo.img", "foo.qcow2",
         },
 
+        // 7. rm
         RmDefault: "rm",
         RmArgs: []string{},
 
+        // 8. file
         FileDefault: "file",
         FileArgs: []string{},
 
-        // 4. kpartx
+        // 9. kpartx
         KpartxDefault: "kpartx",
         KpartxArgs: []string{"-a", "foo.qcow2"},
 
+        // 10. tail
         TailDefault: "tail",
         TailArgs: []string{},
 
-        // 5. qemu-storage-daemon
+        // 11. qemu-storage-daemon
         QsdDefault: "qemu-storage-daemon",
         QsdArgs: []string{
             fmt.Sprintf(
@@ -1292,100 +1311,100 @@ func main() {
             ),
         },
 
-        // 6. mount-then-grep
+        // 12. mount-then-grep
         MountDefault: "mount",
         MountArgs: []string{},
 
-        // 7. kpartx again
+        // 13. kpartx again
         // args "-av", image_path
 
-        // 8. qemu-img "info", image_path
+        // 14. qemu-img "info", image_path
 
-        // 9. echo/fmt
+        // 15. echo/fmt
 
-        //10. losetup
+        // 16. losetup
         LosetupDefault: "losetup",
         LosetupArgs: []string{},
 
-        // 11. blkid
+        // 17. blkid
         BlkidDefault: "blkid",
         BlkidArgs: []string{},
 
-        // 12. mkfs.ext4
+        // 18. mkfs.ext4
         MkfsExt4Default: "mkfs.ext4",
         MkfsExt4Args: []string{},
 
-        // 13. mkdir?
+        // 19. mkdir?
         MkdirDefault: "mkdir",
         MkdirArgs: []string{},
 
-        // 14. cp?
+        // 20. cp?
 
-        // 15. gzip!
+        // 21. gzip!
         GzipDefault: "gzip",
         GzipArgs: []string{},
 
-        // 16. cpio!
+        // 22. cpio!
         CpioDefault: "cpio",
         CpioArgs: []string{},
 
-        // 17. diff!
+        // 23. diff!
         DiffDefault: "diff",
         DiffArgs: []string{},
 
-        // 18. umount
+        // 24. umount
         UmountDefault: "umount",
         UmountArgs: []string{},
 
-        // 19. losetup again
+        // 25. losetup again
 
         // ========== rootfs =========
-        // 20. addgroup, alpine
+        // 26. addgroup, alpine
         AddGroupDefault: "addgroup",
         AddGroupArgs: []string{},
 
-        // 21. adduser
+        // 27. adduser
         AddUserDefault: "adduser",
         AddUserArgs: []string{},
 
-        // 22. wget
+        // 28. wget
         WgetDefault: "wget",
         WgetArgs: []string{},
 
-        // 23. hard and soft links
+        // 29. hard and soft links
         LinkDefault: "ln",
         LinkArgs: []string{},
 
-        // 24. cat
+        // 30. cat
         CatDefault: "cat",
         CatArgs: []string{},
 
-        // 25. chmod
+        // 31. chmod
         ChmodDefault: "chmod",
         ChmodArgs: []string{},
 
         // ===== ISOGEN =====
 
-        // 26. sleep
+        // 32. sleep
         SleepDefault: "sleep",
         SleepArgs: []string{},
 
-        // 27. exit
+        // 33. exit
         //exitDefault int
 
-        // 28. sha256sum
+        // 34. sha256sum
         ShaSumDefault: "sha256sum",
         ShaSumArgs: []string{},
 
-        // 29. cut
+        // 35. cut
         CutDefault: "cut",
         CutArgs: []string{},
 
-        // 30. tar
+        // 36. tar
         TarDefault: "tar",
         TarArgs: []string{},
 
-        // 31. xorriso
+        // 37. xorriso
         XorrisoDefault: "xorriso",
         XorrisoArgs: []string{},
         }
