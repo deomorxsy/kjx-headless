@@ -1,4 +1,5 @@
-package system
+//package system
+//package other
 
 import (
     "fmt"
@@ -8,6 +9,70 @@ import (
     "strings"
 )
 
+// 00 . Dependency Injection skeleton
+type qsDaemon interface {
+    qsDae() (string, error)
+    start() (string, error)
+    stop() (string, error)
+}
+
+type systemDeps interface {
+    startQemu(args, ...string) error
+    startParted(args, ...string) error
+    //
+    runKpartx(args, ...string) error
+    //
+    runQSD()
+
+}
+
+type resource struct {
+    cmd systemDeps
+
+}
+
+
+func (dd *resource) Run() {
+    dd.cmd.startQemu
+    dd.cmd.startParted
+    dd.cmd.runKpartx
+    dd.cmd.runQSD
+}
+
+type idk func(*House)
+
+// constructor function
+func newHouse(opts ...idk) *House {
+    const (
+        defaultSmt = 2
+        defaultOther = true
+        defaultMm = "food"
+    )
+
+    h := &House {
+        Mm: defaultMm,
+        Other: defaultOther,
+        Smt: defaultSmt,
+    }
+
+    // loop through each option
+    for _, opt := range opts {
+        opt(h)
+    }
+
+    // modified house instance
+    return h
+}
+//qemu-img-create, parted, qemu-img-convert, kpartx, qemu-storage-daemon
+type qic struct {}
+
+func (dd *qic) Run()
+
+func qsDaemonSpec(t *testing.TB, qsd qsDaemon) {
+    output, err := qsd.qsDae()
+    assert.NoError(t, err)
+    asser.Equal(t, output, "Hello, world!")
+}
 
 
 

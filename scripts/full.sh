@@ -100,6 +100,8 @@ mount "$upper_loopdev" "$upper_mountpoint"/rootfs # mount loop device into the g
 
 initramfs_base="./artifacts/netpowered.cpio.gz"
 
+# squashfs logic
+
 cp "$initramfs_base" "$upper_mountpoint"
 #cd "$upper_mountpoint" || return
 
@@ -121,7 +123,7 @@ diff --brief --recursive "$upper_mountpoint" "$upper_mountpoint"/rootfs
 #. ./scripts/rootfs.sh
 
 ## 7.1 RAID+mount namespaces setup method to set the root filesystem environment in a cleaner way.
-
+## 7.2 squashfs + overlayfs inside a mount namespace.
 
 
 
@@ -130,47 +132,97 @@ diff --brief --recursive "$upper_mountpoint" "$upper_mountpoint"/rootfs
 #FLAG
 
 ## 2.6 sets up the LFS variable
+#lfsvar_setup() {
+KJX="/mnt/kjx"
 
-export KJX="/mnt/kjx"
-
-cat >> $HOME/.bashrc << EOF
+cat >> "$HOME/.bashrc" << EOF
 
 # sets up the LFS variable
 #
 export KJX=/mnt/kjx
 
 EOF
+#}
+#lsvar_setup
 
-# mount namespaces + mdadm
-unshare --mount --uts --ipc --net --fork --pid --mount-proc bash <<EOF
-#
-# mount tmpfs
-mount -t tmpfs none /dev
 
-# create md0 device
-mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sda1 /dev/sdb1
+
+# mount namespaces
+mountns_sasquatch() {
+
+unshare --mount --uts --ipc --net --fork --pid --mount-proc /bin/bash <<EOF
+# populating /dev for the kjx mount (before chroot)
+mount -t devtmpfs devtmpfs "$KJX/dev/" #
+mount -t tmpfs tmpfs "$KJX/tmp/"
+
+# mounting virtual kernel filesystems (before chroot)
+mount -vt devpts devpts -o gid=5,mode=0620 $LFS/dev/pts
+mount -vt proc proc $KJX/proc
+mount -vt sysfs sysfs $KJX/sys
+mount -vt tmpfs tmpfs $KJX/run
+
+# chapter 5 - fake the cross-compiler toolchain
+mkdir -p "$KJX/tools"
+
+# squashfs
+mkdir -p /tmp/kjx_rootfs
+mkdir -p /tmp/kjx_squashfs
+mkdir -p /tmp/kjx_overlay/upperdir
+mkdir -p /tmp/kjx_overlay/workdir
+mkdir -p /tmp/kjx_overlay/merged
+
+gzip -dc ./artifacts/netpowered.cpio.gz | (cd ./artifacts/rootfs/ || return && cpio -idmv && cd - || return)
+cp -r ./artifacts/rootfs/* /tmp/kjx_rootfs/
+
+
+# ================
+# squashfs logic
+# ================
+mksquashfs /tmp/kjx_rootfs /tmp/kjx_squashfs/busybox.squashfs -comp xz -b 256K -Xbcj x86
+
+### 4. use fuse-overlayfs to stack files and install additional programs
+mount -t squashfs /tmp/squashfs/busybox.squashfs /tmp/kjx_overlay/merged
+
+fuse-overlayfs -o lowerdir=/tmp/kjx_overlay/merged,upperdir=/tmp/kjx_overlay/upperdir,workdir=/tmp/kjx_overlay/workdir /tmp/kjx_overlay/merged
+
+# a. download the binaries
+fetch_binaries() {
+wget --input-file=./artifacts/wget-list-sysv.txt --continue --directory-prefix="$KJX/sources"
+tar -xvf "$KJX/sources/prebuilt-program.tar.gz"
+
+gpg --verify "$KJX/sources/prebuilt-program/pp.sig $KJX/sources/prebuilt-program.tar.gz"
+cp -r "$KJX/sources/prebuilt-program/*" "/tmp/kjx_overlay/upperdir/usr/local/bin/"
+}
+fetch_binaries
+
+# ====================
+# b. compilation step
+# ====================
+pre_compile() {
+}
+
+
+
+cp /tmp/overlay/merged ./artifacts/qcow2-rootfs/rootfs/
+
+### 5. package the final filesystem into an ISO9660 image using xorriso.
+
+# xorriso -as mkisofs -o /mnt/output/my_custom.iso /mnt/overlay/merged
+
+### 6. Copy the iso file outside the namespace
+
+cp /mnt/output/my_custom.iso "./artifacts/kjx-headless.iso"
+
+# exits the mount namespace
+exit
 
 EOF
+}
 
+initramfs_base="./artifacts/netpowered.cpio.gz"
+#mountns_sasquatch "$initramfs_base" "$upper_mountpoint"
+mountns_sasquatch
 
-# sets up the device inside the unshare
-truncate -s 2G disk1.img
-truncate -s 2G disk2.img
-
-sudo losetup /dev/loop1 disk1.img
-sudo losetup /dev/loop2 disk2.img
-
-sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/loop1 /dev/loop2
-sudo parted /dev/md0
-
-parted -s /dev/md0 \
-    mklabel msdos \
-    mkpart primary ext4 2048s 100% \
-    print
-
-mkfs.ext4 /dev/md0p1
-
-sudo parted
 # echo $KJX
 #
 #cat > $KJX/etc/group << EOF
@@ -183,34 +235,103 @@ sudo parted
 
 #bail()
 
-# create filesystem on the partition
+# chapter 2.7 Compile software dependencies setup: create user and group, check, build, move, link
+mkdir -pv "$KJX"
+mount -v -t ext4 /dev/kjxpart "$KJX"
 
-# create mount point
-mkdir -pv $KJX
-mount -v -t ext4 /dev/kjxpart $KJX
-
-
-mkdir -v $KJX/home
+mkdir -pv "$KJX/home"
 mount -v -t ext4 /dev/
 
-## setup user environment
-addgroup kjx
-adduser -sR /bin/bash -g kjx -m -k /dev/null kjx
+# chapter 3.1
 
+mkdir -pv "$KJX/sources"
 
-#chown -v kjx $KJX/{usr{,/*},lib,var,etc,bin,sbin,tools}
+# make it sticky
+chmod -v a+wt "$KJX/sources"
 
-dirs=$(ls / --format=single-column)
+wget --input-file=./artifacts/wget-list-sysv.txt --continue --directory-prefix="$KJX/sources"
 
-while [ $dirs -le 5 ]; do
+# check md5sums
+pushd "$KJX/sources"
+  md5sum -c md5sums
+popd
+
+chown root:root "$KJX/sources/*"
+
+## 3.2: all packages
+## 3.3: patches
+
+# chapter 4.
+
+mkdir -pv "$KJX/{etc,var}" "$KJX/usr/{bin,lib,sbin}"
+
+for i in bin lib sbin; do
+    ln -sv usr/$i $KJX/$i
 done
 
-case $(uname -m)
-    in x86_64) chown -v kjx $KJX/lib64;;
+case $(uname -m) in
+    x86_64) mkdir -pv "$KJX/lib64" ;;
+esac
+
+mkdir -pv "$KJX/tools"
+
+## 4.3 setup user environment, busybox-based
+# groupadd
+# useradd
+sudo addgroup kjx
+sudo adduser -s /bin/bash -g kjx -m -k /dev/null kjx
+
+#sudo passwd kjx
+cat <<EOF >~/.setuser.sh
+#!/usr/bin/expect
+
+log_user 0
+spawn /bin/passwd kjx
+expect "Password: "
+send "${KJX_USER_PASSWD}"
+EOF
+sudo ./setuser.sh
+
+# ==== user kjx =====
+cat > ~/.bash_profile << "EOF"
+exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
+EOF
+
+cat > ~/.bashrc << "EOF"
+set +h
+umask 022
+LFS=/mnt/kjx
+LC_ALL=POSIX
+LFS_TGT=$(uname -m)-lfs-linux-gnu
+PATH=/usr/bin
+if [ ! -L /bin ]; then PATH=/bin:$PATH; fi
+PATH=$LFS/tools/bin:$PATH
+CONFIG_SITE=$LFS/usr/share/config.site
+export LFS LC_ALL LFS_TGT PATH CONFIG_SITE
+EOF
+
+if [ "$(whoami)" = 'kjx' ]; then
+    exit
+fi
+# ===== exiting user kjx.... =====
+
+# grant kjx access to all directories and files under $KJX
+#chown -v kjx $KJX/{usr{,/*},lib,var,etc,bin,sbin,tools}
+chown -v kjx "$KJX/usr/"
+chown -v kjx "$KJX/usr/*"
+chown -v kjx "$KJX/lib/"
+chown -v kjx "$KJX/var/"
+chown -v kjx "$KJX/etc/"
+chown -v kjx "$KJX/bin/"
+chown -v kjx "$KJX/sbin/"
+chown -v kjx "$KJX/tools/"
+
+case $(uname -m) in
+    x86_64) chown -v kjx "$KJX/lib64";
 esac
 
 
-wget --input-file=./artifacts/wget-list-sysv.txt --continue --directory-prefix="$KJX/sources"
+
 # =============================
 # runit/runsv/runsvdir stup
 mkdir -p "$rootfs_path/etc/runit"
@@ -311,7 +432,7 @@ ln -sf "$rootfs_path/etc/runit/1" "$rootfs_path/sbin/init"
 . ./scripts/sandbox/youki-startup.sh
 
 ## ebpf program placement ///
-. ./scripts/libbpf.sh
+#. ./scripts/libbpf.sh
 
 #
 #KJX=/mnt/kjx
@@ -360,6 +481,8 @@ mkdir -p ./artifacts/sources
 #cd ./artifacts/sources || return
 
 src_contents=$(ls -1 ./artifacts/sources)
+
+fuse-overlayfs -o "lowerdir=$SASQUATCH/overlay/merged,upperdir=$SASQUATCH/overlay/upperdir,workdir=$SASQUATCH/overlay/workdir $SASQUATCH/overlay/merged"
 
 #
 # iterate over contents of the directory

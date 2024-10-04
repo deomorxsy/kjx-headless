@@ -20,7 +20,8 @@ COPY "./tests/" /app/tests/
 # Set capabilities
 RUN setcap cap_sys_admin,cap_dac_override+ep /usr/bin/qemu-img; \
     setcap cap_sys_admin+eip /usr/sbin/parted; \
-    setcap cap_sys_admin+eip /usr/sbin/kpartx
+    setcap cap_sys_admin+eip /usr/sbin/kpartx; \
+    setcap cap_sys_admin+eip /usr/bin/mkfs.ext4
 
 RUN ls -allht
 

@@ -1,0 +1,22 @@
+#version: "3.8"
+services:
+  binutils:
+    environment:
+      - git_hash
+    build:
+      context: "../../"
+      dockerfile: "./assets/cross-toolchain/Dockerfile"
+      tags:
+        - "localhost:5000/ct_binutils:latest"
+    command: ./scripts/cross-toolchain.sh binutils
+    stop_signal: SIGINT
+  gcc:
+    environment:
+      - git_hash
+    build:
+      context: "../../"
+      dockerfile: "./assets/cross-toolchain/Dockerfile"
+      tags:
+        - "localhost:5000/gcc:latest"
+    stop_signal: SIGINT
+
