@@ -83,6 +83,9 @@ make defconfig
 ./scripts/config --enable CONFIG_BPF_KPROBE_OVERRIDE
 ./scripts/config --disable CONFIG_TEST_BPF
 
+# Enable the securityfs filesystem
+./scripts/config --enable CONFIG_SECURITYFS=y
+
 # enable SELinux as LSM; PS: also mount the securityfs at boot
 ./scripts/config --enable CONFIG_SECURITY_SELINUX
 ./scripts/config --enable CONFIG_SECURITY_SELINUX_BOOTPARAM

@@ -81,7 +81,7 @@ mount -t tmpfs      tmpfs       /tmp
 mount -t tracefs tracefs /sys/kernel/tracing/
 mount -t debugfs debugfs /sys/kernel/debug/
 mount -t securityfs securityfs /sys/kernel/security/
-EOF && \
+INIT_EOF && \
 #
 #
 #
