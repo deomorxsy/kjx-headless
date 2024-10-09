@@ -52,6 +52,11 @@ vmlinux:
 # =============================
 # Custom LFS build requirements
 #
+
+localstack:
+	. ./scripts/ccr.sh; checker; \
+	docker compose -f ./compose.yml --progress=plain build localstack
+
 initramfs:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build initramfs
