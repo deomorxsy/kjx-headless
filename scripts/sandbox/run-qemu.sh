@@ -80,14 +80,14 @@ thirdver() {
 
     # clean up bridge
     . ./scripts/sandbox/net-qemu_myifup.sh clean_bridge
-    echo cade1
+    #echo runqemu1
 
 
     . ./scripts/sandbox/net-qemu_myifup.sh clean_cap
-    echo cade2
+    #echo runqemu2
     #printf "\n=========\nCleaning now...\n============\n"
 
-    echo HMMMMMMMMM
+    #echo HMMMMMMMMM
 }
 
 # Check the argument passed from the command line
