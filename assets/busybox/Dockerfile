@@ -102,7 +102,7 @@ echo "kjx" > /etc/hostname && hostname -F /etc/hostname
 sysctl -w kernel.printk="2 4 1 7"
 
 # sets up BRK keyboard
-setxkbmap -model abnt2 -layout br -variant abnt2
+#setxkbmap -model abnt2 -layout br -variant abnt2
 echo && echo
 
 # get rootfs UUID from kernel parameters on /proc/cmdline

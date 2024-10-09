@@ -1,3 +1,4 @@
+#include <bits/types/siginfo_t.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -9,14 +10,28 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void sighandler() {
+#define NUMCHLDS 10
+
+
+
+__attribute__((constructor)) void haha()
+{
+    puts("Hello, world!");
+}
+
+void sigchld_handler(int, siginfo_t*, void*);
+
+void sighandler(int signo, siginfo_t *sinfo, void *context) {
     pid_t pid;
 
-    sigempty(&set);
-    sigaddset(&set, SIGUSR1);
-    sigaddset(&set, SIGUSR2);
+    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
 
-    pthread_sigmask(SIG_BLOCK, &set, NULL);
+    }
+    //sigempty(&set);
+    //sigaddset(&set, SIGUSR1);
+    //sigaddset(&set, SIGUSR2);
+
+    //pthread_sigmask(SIG_BLOCK, &set, NULL);
 }
 
 void cleanup(int signal) {

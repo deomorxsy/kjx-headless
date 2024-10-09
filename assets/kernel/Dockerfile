@@ -84,14 +84,18 @@ make defconfig
 ./scripts/config --disable CONFIG_TEST_BPF
 
 # Enable the securityfs filesystem
-./scripts/config --enable CONFIG_SECURITYFS=y
+./scripts/config --enable CONFIG_SECURITYFS
 
 # enable SELinux as LSM; PS: also mount the securityfs at boot
 ./scripts/config --enable CONFIG_SECURITY_SELINUX
 ./scripts/config --enable CONFIG_SECURITY_SELINUX_BOOTPARAM
 ./scripts/config --set-str CONFIG_SECURITY_SELINUX_BOOTPARAM_VALUE 1
 
+# provide symbol table to debug startup
+./scripts/config --enable CONFIG_DEBUG_INFO
+./scripts/config --enable DEBUG_INFO
 
+# final make commands
 make kvm_guest.config
 echo "kvm_guest.config done"
 make olddefconfig

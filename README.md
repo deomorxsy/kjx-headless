@@ -20,7 +20,7 @@ This proof-of-concept monorepo gathers concepts from several [1] constrained sys
 Check the [Gitlab mirror]() for an example using Jenkins instead of Github Actions.
 
 
-The entire boot from kernel init scripts to k3s initialization:
+The entire boot flowchart, from kernel init scripts to k3s initialization:
 ```
                                           kernel
                                             |
@@ -60,7 +60,7 @@ The entire boot from kernel init scripts to k3s initialization:
             | (self-loop)                        | (self-loop)
             v                                    v
    +--------------------+             +--------------------+
-   | Start Monitoring   |<------------| Signal: Monitoring |
+   | Start Monitoring   |------------>| Signal: Monitoring |
    +--------------------+             | Started            |
             |                         +--------------------+
             |                                    |
@@ -101,7 +101,18 @@ The entire boot from kernel init scripts to k3s initialization:
                                                         +---+
 ```
 
-System/Integration [Tests](https://bats-core.readthedocs.io/) use bats-core and leverages Linux Namespaces API to interact with an ext4 filesystem:
+Unit and Integration tests use the go testing package with code coverage. Currently exploring fuzz tests. There is also a chore using [bats-core](https://bats-core.readthedocs.io/). The adopted strategy is composed by spinning up a container, setting permissions with libcap and
+```
+1. CommandExecutor (Strategy Pattern)
+2. Options (Functional Options Pattern)
+3. OptionsFactory (Abstract Factory Pattern)
+4. CleanupStrategy (Strategy Pattern)
+5. Runna (Dependency Injection)
+6. Tests (Mocking/Dependency Injection)
+7. Main (Composition Root)
+```
+
+and leverages Linux Namespaces API to interact with an ext4 filesystem:
 1. create userns
 2. create mountns through unshare
 3. bound userns to the newly created mountns
