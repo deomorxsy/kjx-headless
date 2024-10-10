@@ -1,7 +1,7 @@
-b30919fa5be280417c17ac561bb1650f60cfb80cc6237fa1e2b6f56154cb9c91  grub-2.12.tar.gz
-72802a6438d4433560565ff7c90f3d662dc8d5094748f35b5560f9ea77957c5c  k3s
-bebf218cafdc082476c7dabbcc5439aee6a41d6dda24dd3cfffbe0a6ae94e23d  kata-static-3.7.0-amd64.tar.xz
-991e9cac105f3baaaf3b9d62e55e34f7be2a3d485f632fe8c81c191e3a67571e  libcap-1.2.70.tar.gz
-a8c3f596aece96da3b00cafb74baafa0d14515eafb8ed1ee3f7f5c2d0ebf02b6  qemu-9.0.2.tar.xz
-c18ae89c5517984168810e25f6bbb35c360004b7336dfad2c070d44374895f73  release-20240807.0.tar.gz
-250b9bd90945d361596a7a69943d0bdc5fc0c0917aa562609f8d3058a2c36b3a  syslinux-6.03.tar.gz
+b30919fa5be280417c17ac561bb1650f60cfb80cc6237fa1e2b6f56154cb9c91  ./artifacts/sources/grub-2.12.tar.gz
+72802a6438d4433560565ff7c90f3d662dc8d5094748f35b5560f9ea77957c5c  ./artifacts/sources/k3s
+bebf218cafdc082476c7dabbcc5439aee6a41d6dda24dd3cfffbe0a6ae94e23d  ./artifacts/sources/kata-static-3.7.0-amd64.tar.xz
+991e9cac105f3baaaf3b9d62e55e34f7be2a3d485f632fe8c81c191e3a67571e  ./artifacts/sources/libcap-1.2.70.tar.gz
+a8c3f596aece96da3b00cafb74baafa0d14515eafb8ed1ee3f7f5c2d0ebf02b6  ./artifacts/sources/qemu-9.0.2.tar.xz
+c18ae89c5517984168810e25f6bbb35c360004b7336dfad2c070d44374895f73  ./artifacts/sources/release-20240807.0.tar.gz
+250b9bd90945d361596a7a69943d0bdc5fc0c0917aa562609f8d3058a2c36b3a  ./artifacts/sources/syslinux-6.03.tar.gz
