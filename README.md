@@ -101,24 +101,8 @@ The entire boot flowchart, from kernel init scripts to k3s initialization:
                                                         +---+
 ```
 
-Unit and Integration tests use the go testing package with code coverage. Currently exploring fuzz tests. There is also a chore using [bats-core](https://bats-core.readthedocs.io/). The adopted strategy is composed by spinning up a container, setting permissions with libcap and
-```
-1. CommandExecutor (Strategy Pattern)
-2. Options (Functional Options Pattern)
-3. OptionsFactory (Abstract Factory Pattern)
-4. CleanupStrategy (Strategy Pattern)
-5. Runna (Dependency Injection)
-6. Tests (Mocking/Dependency Injection)
-7. Main (Composition Root)
-```
+Unit and Integration tests use the go testing package with code coverage. Currently exploring fuzz tests. There is also a chore using [bats-core](https://bats-core.readthedocs.io/). The adopted strategy is composed by spinning up a container, setting permissions with libcap and switching between test scopes for different containerized environments.
 
-and leverages Linux Namespaces API to interact with an ext4 filesystem:
-1. create userns
-2. create mountns through unshare
-3. bound userns to the newly created mountns
-4. setup a tmpfs (RAM-based filesystem for fast access)
-5. assert test
-6. clean artifacts
 
 ### References
 
@@ -136,3 +120,10 @@ and leverages Linux Namespaces API to interact with an ext4 filesystem:
 - [TinyEmu](https://bellard.org/tinyemu/readme.txt)
 - [Hardened Gentoo](https://wiki.gentoo.org/wiki/Project:Hardened)
 - [Linux From Scratch on the Raspberry Pi](https://intestinate.com/pilfs/about.html)
+- [runit-for-lfs](https://github.com/inthecloud247/runit-for-lfs)
+- [containerd-rootless](https://github.com/containerd/nerdctl/blob/main/extras/rootless/containerd-rootless.sh)
+- [rootless containers initiative](https://rootlesscontaine.rs/)
+- [rhatdan's Podman in Action](https://www.manning.com/books/podman-in-action)
+- [qemu-fuse-disk-export script](https://gitlab.com/hreitz/qemu-scripts/-/blob/main/qemu-fuse-disk-export.py)
+- [youki tests!](https://github.com/containers/youki/blob/main/tests/k8s/Dockerfile)
+- [the cromwell runntime](https://github.com/guni1192/cromwell)

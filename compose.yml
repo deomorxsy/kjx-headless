@@ -89,7 +89,7 @@ services:
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
       #- DEBUG=${DEBUG:-0}
-      #- DEBUG=${1:-0}
+      - DEBUG=$${1:-0}
       - SERVICES=ec2,s3,vpc
       - DATA_DIR=/tmp/localstack/data
     volumes:
