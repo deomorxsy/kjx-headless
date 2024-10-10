@@ -11,7 +11,10 @@ ebpf_exporter.x86_64
 */unused/*
 distro/
 artifacts/wget-list-dynamic.txt
-artifacts/sources
+artifacts/sources/*.tar.*
+artifacts/sources/k3*
+artifacts/sources/*.asc
+
 artifacts/html_cov_rust
 artifacts/coverage_go.out
 artifacts/mock_ist.yaml
