@@ -67,7 +67,8 @@ kernel:
 
 isogen:
 	. ./scripts/ccr.sh; checker; \
-	perf trace -e 'tracepoint:syscalls:sys_enter_open*' docker compose -f ./compose.yml --progress=plain build isogen
+	docker compose -f ./compose.yml --progress=plain build isogen
+	#perf trace -e 'tracepoint:syscalls:sys_enter_open*' docker compose -f ./compose.yml --progress=plain build isogen
 	#sudo --preserve-env=USER,HOME perf trace -e 'syscalls:sys_enter_open*' -- \
 	#	sudo -u ${USER} docker compose -f ./compose.yml --progress=plain build isogen
 

@@ -1,22 +1,58 @@
-FROM alpine:3.20 as builder
+# ==================
+# 1. Builder Step
+# ==================
 
-WORKDIR /app
+FROM golang:1.23-alpine3.20 as builder
 
 RUN apk upgrade && apk update && \
-    apk add parted qemu qemu-img qemu-system-x86_64 \
-    file multipath-tools e2fsprogs wget=1.24.5-r0
-    #file kpartx losetup=2.40.2-r0 e2fsprogs=1.47.1-r0 blkid=2.40.2-r0 umount=2.40.2-r0 \
-
+    apk add libcap parted qemu qemu-img qemu-system-x86_64 \
+    file multipath-tools e2fsprogs
 
 WORKDIR /app
 
-COPY ["./artifacts/", "./scripts/", "."]
+#COPY ["./tests/system/go.sum", "./tests/system/go.mod", "."]
+#RUN go mod download
+
+COPY "./artifacts/" /app/artifacts/
+COPY "./scripts/" /app/scripts/
+COPY "./tests/" /app/tests/
+
+# Set capabilities
+RUN setcap cap_sys_admin,cap_dac_override+ep /usr/bin/qemu-img; \
+    setcap cap_sys_admin+eip /usr/sbin/parted; \
+    setcap cap_sys_admin+eip /usr/sbin/kpartx; \
+    setcap cap_sys_admin+eip /sbin/mkfs.ext4
+
+RUN ls -allht
+
+#WORKDIR /app/tests/system/
+WORKDIR /app/scripts/
+
+RUN printf "\n===== Entering scripts directory ======\n\n"
+RUN ls -allht
+#RUN go get
+#RUN go mod tidy
+RUN chmod +x ./squashed.sh && \
+    . ./squashed.sh
 
 ENTRYPOINT ["/bin/sh"]
-RUN ./scripts/fuse-blkexp.sh "./artifacts/foo.img"
 
 
+# ======================
+# 2. Relay Step
+#
+# Get only test results #
+# ======================
 FROM alpine:3.20 as relay
 
+RUN apk upgrade && apk add file
+
 WORKDIR /app
-COPY --from-builder=./artifacts/image.iso
+
+COPY --from=builder /app/scripts/output.iso .
+
+# set command to be executed when the container starts
+ENTRYPOINT ["/bin/sh", "-c"]
+
+# set argument to be fed to the entrypoint
+CMD ["file", "/app/output.iso" && "ls", "-allhtr" "/app/output.iso"]

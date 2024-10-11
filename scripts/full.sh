@@ -122,16 +122,10 @@ diff --brief --recursive "$upper_mountpoint" "$upper_mountpoint"/rootfs
 # 7. packaging: call ./scripts/rootfs.sh
 #. ./scripts/rootfs.sh
 
-## 7.1 RAID+mount namespaces setup method to set the root filesystem environment in a cleaner way.
-## 7.2 squashfs + overlayfs inside a mount namespace.
+## 7.1 squashfs + overlayfs inside a mount namespace.
 
 
-
-## 2.5 setup partitions and filesystems
-#mkfs -v -t ext4 /dev/mount
-#FLAG
-
-## 2.6 sets up the LFS variable
+### 7.1.1 sets up the LFS variable
 #lfsvar_setup() {
 KJX="/mnt/kjx"
 
@@ -202,7 +196,6 @@ pre_compile() {
 }
 
 
-
 cp /tmp/overlay/merged ./artifacts/qcow2-rootfs/rootfs/
 
 ### 5. package the final filesystem into an ISO9660 image using xorriso.
@@ -236,6 +229,8 @@ mountns_sasquatch
 #bail()
 
 # chapter 2.7 Compile software dependencies setup: create user and group, check, build, move, link
+
+fetch_compile() {
 mkdir -pv "$KJX"
 mount -v -t ext4 /dev/kjxpart "$KJX"
 
@@ -330,7 +325,8 @@ case $(uname -m) in
     x86_64) chown -v kjx "$KJX/lib64";
 esac
 
-
+}
+#fetch_compile
 
 # =============================
 # runit/runsv/runsvdir stup
@@ -617,8 +613,7 @@ cp ./artifacts/sources/syslinux-6.03/bios/com32/elflink/ldlinux/ldlinux.c32 "$is
 # rootfs
 cp -r "$rootfs_path" "$iso_dir/rootfs"
 
-#system_info
-#system_info() {
+system_info() {
 # Linux Standard Base (LSB)-based system status
 cat <<"EOF" > ./artifacts/burn/rootfs/etc/lsb-release
 DISTRIB_ID="LFS: kjx-headless"
@@ -637,7 +632,7 @@ VERSION_CODENAME="Mantis"
 HOME_URL="github.com/kijinix/kjx-headless"
 EOF
 
-#}
+}
 
 
 # =====================
