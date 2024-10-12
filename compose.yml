@@ -24,6 +24,9 @@ services:
       dockerfile: "./Dockerfile"
       tags:
         - "localhost:5000/isogen:latest"
+    cap_add:
+      - SYS_ADMIN
+      - DAC_OVERRIDE
     stop_signal: SIGINT
   iso_system_test:
     build:

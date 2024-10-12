@@ -1,0 +1,3 @@
+%{
+  "honey": {:git, "https://github.com/lac-dcc/honey-potion/", "83b35afc6cc6dd0282dddbddef74bbee95996f55", [submodules: true]},
+}

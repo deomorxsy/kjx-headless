@@ -76,3 +76,14 @@ graph.c
 trace/graphs
 main.png
 outro.1
+
+# c-tests
+/scripts/forkexec-idiom/*
+/tests/go.mod
+/tests/main.go
+
+# honeypotion clang code generation
+trace/hpota/lib/hpota/src/
+trace/hpota/lib/hpota/obj/
+
+

@@ -4,14 +4,9 @@
 
 FROM golang:1.23-alpine3.20 as builder
 
-RUN <<"EOF"
-apk upgrade && apk update
-apk add libcap parted qemu qemu-img qemu-system-x86_64 \
+RUN apk upgrade && apk update && \
+    apk add libcap parted qemu qemu-img qemu-system-x86_64 \
     file multipath-tools e2fsprogs
-EOF
-
-#apk upgrade && apk update && apk add qemu-img libcap
-
 
 WORKDIR /app
 
@@ -23,17 +18,10 @@ COPY "./scripts/" /app/scripts/
 COPY "./tests/" /app/tests/
 
 # Set capabilities
-RUN <<"EOF"
-setcap cap_sys_admin,cap_dac_override+eip /usr/bin/qemu-img;
-setcap cap_sys_admin+eip /usr/sbin/parted;
-setcap cap_sys_admin+eip /usr/sbin/kpartx;
-#RUN which mkfs.ext4
-#RUN ls -allhtr $(readlink -f $(which mkfs.ext4))
-#RUN echo $(readlink -f $(which mkfs.ext4))
-setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4))
-#RUN setcap cap_sys_admin+eip /sbin/mke2fs
-#/sbin/mkfs.ext4
-EOF
+RUN setcap cap_sys_admin,cap_dac_override+ep /usr/bin/qemu-img; \
+    setcap cap_sys_admin+eip /usr/sbin/parted; \
+    setcap cap_sys_admin+eip /usr/sbin/kpartx; \
+    setcap cap_sys_admin+eip /sbin/mkfs.ext4
 
 RUN ls -allht
 
@@ -47,7 +35,7 @@ RUN ls -allht
 RUN chmod +x ./squashed.sh && \
     . ./squashed.sh
 
-#ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["/bin/sh"]
 
 
 # ======================
