@@ -18,12 +18,25 @@ services:
       tags:
         - "localhost:5000/export_bee:latest"
     stop_signal: SIGINT
-  isogen:
+  isogen_new:
     build:
       context: "."
       dockerfile: "./Dockerfile"
+      #"./Dockerfile"
       tags:
-        - "localhost:5000/isogen:latest"
+        - "localhost:5000/isogen_new:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      apk upgrade && apk update &&
+      apk add libcap parted qemu qemu-img qemu-system-x86_64 \
+        file multipath-tools e2fsprogs &&
+      setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) &&
+      setcap cap_sys_admin+eip $(readlink -f $(which parted)) &&
+      setcap cap_sys_admin+eip $(readlink -f $(which kpartx)) &&
+      setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) &&
+      . /app/scripts/squashed.sh
+    cap_drop:
+      - ALL
     cap_add:
       - SYS_ADMIN
       - DAC_OVERRIDE

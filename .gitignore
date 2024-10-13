@@ -86,4 +86,8 @@ outro.1
 trace/hpota/lib/hpota/src/
 trace/hpota/lib/hpota/obj/
 
+# other assets
+assets/makefile2graph
+Dockerfile.stripped
+outfull.svg
 

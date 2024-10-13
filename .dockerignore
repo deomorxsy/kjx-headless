@@ -19,3 +19,96 @@ busybox-1.36.1.tar.bz2
 # misc scripts
 #run.sh
 #Dockerfile
+./artifacts/*.qcow2
+./artifacts/*.img
+./artifacts/bin/*
+
+# from gitignore
+# artifacts/bzImage
+#artifacts/netpowered.cpio.gz
+#artifacts/vmlinux.h
+artifacts/out.stackcount.*
+artifacts/bar.img
+changes.patch
+outro/
+artifacts/qcow2-rootfs/*
+ebpf_exporter.x86_64
+*/unused/*
+distro/
+artifacts/wget-list-dynamic.txt
+artifacts/sources/*.tar.*
+artifacts/sources/k3*
+artifacts/sources/*.asc
+
+artifacts/html_cov_rust
+artifacts/coverage_go.out
+artifacts/mock_ist.yaml
+artifacts/bzImage_with_selinux
+artifacts/extracted_vmlinux
+
+# valgrind related
+callgrind.*
+cap_example
+prometheus-grafana.yaml
+dot-dump-valgrind
+
+# flamegraph related
+out.*
+
+# include submodules for nvim-telescope
+assets/apk-tools
+assets/ebpf_exporter
+assets/FlameGraph
+assets/builda.sh
+assets/zstd-test
+/sample/
+
+# misc file formats
+*.svg
+trace/ayaya/dsds/
+
+# misc trace
+trace/hello.bpf.c
+trace/hello.yaml
+trace/vmlinux.h
+
+
+# sparse files
+mount-point
+foo.*
+utils/storage/eulab-hd
+
+# gcc dump for graph generation
+# (-fdump-tree-all-graph)
+*.original
+*.gimple
+*.omplower
+*.lower
+*.eh
+*.cfg
+*.cfg.dot
+*.ompexp
+*.ompexp.dot
+*.profile_estimate
+*.statistics
+*.earlydebug
+*.debug
+
+# clang dump for graph generation
+# (-Xclang -ast-dump -fsyntax-only) > file.txt
+ast.txt
+graph.c
+trace/graphs
+main.png
+outro.1
+
+# c-tests
+/scripts/forkexec-idiom/*
+/tests/go.mod
+/tests/main.go
+
+# honeypotion clang code generation
+trace/hpota/lib/hpota/src/
+trace/hpota/lib/hpota/obj/
+
+

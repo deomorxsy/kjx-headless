@@ -72,6 +72,8 @@ else
 
 fi
 
+echo "=======SQUASHING================= "
+which qemu-img
 # 4. convert raw sparse file to qcow2
 qemu-img convert -p \
     -f raw \
@@ -111,7 +113,7 @@ qemu-img info "$QCOW_PATH"
 #foo.qcow2
 
 else
-    echo: "Could not start qemu-storage-daemon process since user_allow_other is not enabled at /etc/fuse.conf."
+    echo "Could not start qemu-storage-daemon process since user_allow_other is not enabled at /etc/fuse.conf."
 fi
 
 
