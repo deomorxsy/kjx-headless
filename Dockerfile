@@ -21,10 +21,11 @@ ENTRYPOINT ["/bin/sh", "-c"]
 
 # set argument to be fed to the entrypoint
 CMD ["apk upgrade && apk update && \
-    apk add libcap parted qemu qemu-img qemu-system-x86_64 file multipath-tools e2fsprogs && \
+    apk add libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
+        file multipath-tools e2fsprogs xorriso && \
     setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) && \
     setcap cap_sys_admin+eip $(readlink -f $(which parted)) && \
-    setcap cap_sys_admin+eip $(readlink -f $(which kpartx)) && \
+    setcap cap_sys_admin,cap_mknod+eip $(readlink -f $(which kpartx)) && \
     setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) && \
     . /app/scripts/squashed.sh"]
 

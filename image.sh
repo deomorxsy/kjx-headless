@@ -1,0 +1,75 @@
+#!/bin/bash
+
+
+compose_ctx=$(docker images | grep isogen_new | awk 'NR==1 {print $3}')
+contname="isogen_new"
+
+
+check_registry() {
+#. ./scripts/ccr.sh; checker
+isrerun=$(docker ps | grep registry | awk '{print $7}')
+# if the output is not empty
+if [ -z "$isrerun" ]; then
+    if [[ "$isrerun" == *"Exited"* ]]; then
+        printf "\n====\ncheck_registry: starting registry...\n=====\n\n"
+        docker start registry
+    elif [[ "$isrerun" == *"Up"* ]]; then
+        printf "\n====\ncheck_registry: starting registry...\n=====\n\n"
+        docker stop registry
+    fi
+# if the output is empty, there is no registry.
+# So, create the registry.
+else
+    docker run -d -p 5000:5000 --name registry registry:latest
+fi
+}
+
+build() {
+. ./scripts/ccr.sh; checker && \
+    # check if the registry is started
+    #check_registry && \
+    docker start registry && \
+    docker compose -f ./compose.yml --progress=plain build --no-cache isogen_new && \
+    docker compose images | grep isogen | awk '{ print $4 }' && \
+    docker push localhost:5000/isogen_new:latest && \
+    # if the registry is started, stop it
+    #check_registry && \
+    docker stop registry && \
+    touch ./BUILD_MARKER && printf "\n========\nCreating build marker...\n========\n\n"
+}
+
+runtime() {
+compose_ctx=$(docker images | grep isogen_new | awk 'NR==1 {print $3}')
+contname="isogen_new"
+
+. ./scripts/ccr.sh; checker && \
+#docker start registry
+echo beforeeeeeeeeeeeeee && \
+podman create --userns=auto --cap-drop=ALL --cap-add=CAP_SYS_ADMIN,CAP_DAC_OVERRIDE,CAP_CHOWN,CAP_SETFCAP --rm --name "$contname" "$compose_ctx" 2>&1 && \
+echo afterrrrrrrrrr && \
+docker start "$contname" && docker logs -f "$contname"
+#docker cp "$contname":/app/output.iso ./artifacts/kjx-headless.iso
+#docker rm "$contname"
+#docker stop registry
+}
+
+# build based on a timestamp
+timed() {
+timestamp=$(date +%s)
+timecheck=$(stat -c %Y ./BUILD_MARKER)
+
+if [ $(("$timestamp" - "$timecheck")) -lt 60 ]; then
+    runtime
+else
+    build
+fi
+}
+
+# execute instantly
+instant() {
+    build
+    runtime
+}
+
+
+

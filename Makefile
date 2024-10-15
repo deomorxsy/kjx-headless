@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := all
+#.DEFAULT_GOAL := all
 
 GIT_SHA=$(shell git rev-parse HEAD)
 # if changes are detected, append "-local" to hash
@@ -6,7 +6,7 @@ GIT_DIFF=$(shell git diff -s --exit-code || echo "-local")
 GIT_COMMIT_HASH := $(GIT_SHA)$(GIT_DIFF)
 #USER=${USER}
 
-KERNEL_SRC := ./assets/kernel/linux-6.6.22/
+KERNEL_SRC="./assets/kernel/linux-6.6.22/"
 
 BUILD_USER := $(shell id -u -n)@$(shell id -u)
 BUILD_DATE := $(shell date --iso-8601=seconds)
@@ -34,25 +34,11 @@ $(BUILD_DIR)/disk.bin: $(SRC_DISC)/btl.asm
 	$(ASM) $(SRC_DIR)/btl.asm -f bin -o $(BUILD_DIR)/disk.bin
 
 
-all:
-	@if [ -d $(KERNEL_SRC) ]; then \
-		$(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules; \
-	else \
-		echo "kernel source dir '$(KERNEL_SRC)' don't exist, skipping kernel build."; \
-	fi
+#all:
+#	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules
 
-
-clean:
-	@if [ -d $(KERNEL_SRC) ]; then \
-		$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean; \
-	else \
-		echo "kernel source dir '$(KERNEL_SRC)' don't exist, skipping kernel build."; \
-	fi
-	@if [ -f $(MARKER) ]; then
-		rm -f $(MARKER); \
-	else \
-		echo "Marker '$(MARKER)' don't exist, skipping kernel build."; \
-	fi
+#clean:
+#	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
 
 
 # ====================
@@ -85,50 +71,58 @@ kernel:
 	docker compose -f ./compose.yml --progress=plain build kernel
 
 
+
+
 .PHONY: isogen
 isogen:
-	. ./scripts/ccr.sh; checker && \
+	. ./scripts/ccr.sh; checker; \
 	docker start registry && \
-	#docker-compose down --rmi all && \
-	#docker compose -f ./compose.yml --progress=plain build --no-cache isogen_new && \
 	docker compose -f ./compose.yml --progress=plain build --no-cache isogen_new && \
 	docker compose images | grep isogen | awk '{ print $4 }' && \
 	docker push localhost:5000/isogen_new:latest && \
 	docker stop registry
-	touch $(MARKER) # create marker file
-	#perf trace -e 'tracepoint:syscalls:sys_enter_open*' docker compose -f ./compose.yml --progress=plain build isogen
-	#sudo --preserve-env=USER,HOME perf trace -e 'syscalls:sys_enter_open*' -- \
-	#	sudo -u ${USER} docker compose -f ./compose.yml --progress=plain build isogen
 
-$(MARKER):
-	@touch $(MARKER)
+#	touch $(MARKER) # create marker file
+
+
+#$(MARKER):
+#	@touch $(MARKER)
 
 # avoid rebuilds
-check_build_timestamp:
-	@if [ -f $(MARKER) ] && [ $$(( $(TIMESTAMP) - $$(stat -c %Y $(MARKER)) )) -lt 60 ]; then \
-		echo "Target was just run, skipping ;D"; \
-		exit 0; \
-	else \
-		$(MAKE) $(isogen); \
-	fi
+#check_build_timestamp:
+#	@if [ -f $(MARKER) ] && [ $$(( $(TIMESTAMP) - $$(stat -c %Y $(MARKER)) )) -lt 60 ]; then \
+#		echo "Target was just run, skipping ;D"; \
+#		exit 0; \
+#	else \
+#		$(MAKE) $(isogen); \
+#	fi
 
-generate: check_build_timestamp
-	. ./scripts/ccr.sh; checker && \
-	docker start registry && \
-	docker create --userns=auto --cap-drop=ALL --cap-add=CAP_SYS_ADMIN,CAP_DAC_OVERRIDE --rm --name kjx_isogen $(podman images | head | grep isogen_new | awk 'NR==2 {print $3}') \
-		2>&1 | grep "already in use"; \
+
+counter="0"
+finalbase="kjx_isogen_"
+semver="$(eval tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo)"
+
+contname=$(finalbase)$(semver)
+
+#generate: check_build_timestamp
+generate:
+	. ./scripts/ccr.sh; checker;  \
+	docker start registry; \
+	docker create --userns=auto --cap-drop=ALL --cap-add=CAP_SYS_ADMIN,CAP_DAC_OVERRIDE --rm --name kjx_isogen $(podman images | head | grep isogen_new | awk 'NR==2 {print $3}') 2>&1 | grep "already in use"; \
 	if [ $$? -eq 0 ]; then \
 		printf "\n======\nContainer name available. Running it now...\n========="; \
-		docker start kjx_isogen && docker logs -f kjx_isogen
-		docker start kjx_isogen; \
-		docker logs -f kjx_isogen; \
-		docker cp kjx_isogen:/app/output.iso ./artifacts/kjx-headless.iso && \
+		docker start $(contname); \
+		docker logs -f $(contname); \
+		docker cp $(contname):/app/output.iso ./artifacts/kjx-headless.iso; \
+		docker rm $(contname); \
 		docker stop registry; \
-		$(MAKE) $(clean); \
+#		# $(MAKE) $(clean) \
 	else \
-		#echo hmmm; \
-		printf "\n========\nContainer name is already in use. Either pick another or stop the previous one.\n=======\n\n"; \
+		echo hmmm; \
+	#	printf "\n========\nContainer name is already in use. Stopping and removing the previous one...\n=======\n\n"; \
 	fi \
+	docker rm $(contname) && \
+	docker stop registry;
 
 
 #system-test-iso, STI
@@ -142,7 +136,7 @@ sti:
 
 mock_sti:
 	chmod +x ./scripts/fuse-blkexp.sh;
-	. ./scripts/ccr.sh; checker && \
+	. ./scripts/ccr.sh; checker; \
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build mock_ist && \
 	docker compose images | awk 'NR==2 { print $4 }' && \

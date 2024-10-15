@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 QCOW_PATH="./artifacts/foo.qcow2"
 IMAGE_PATH="./artifacts/foo.img"
@@ -48,8 +48,10 @@ lfsvar_setup
 #
 # ==================================================================
 
-# 1. if there is no IMAGE_PATH, create one
-if [ "$IMAGE_PATH" -eq "" ]; then
+# 1. if there is no file IMAGE_PATH, create one
+# workdir /app
+mkdir -p ./artifacts
+if ! [ -f "$IMAGE_PATH" ]; then
 
     qemu-img create -f raw "$IMAGE_PATH" 3G
 
@@ -91,6 +93,7 @@ kpartx -a "$QCOW_PATH"
 
 # 8. check if user_allow_other is enabled on /etc/fuse.conf for rootless passing
 IS_FUSE_ALLOWED=$(grep -n '#user_allow_other' /etc/fuse.conf | tail -1)
+# IS_FUSE_ALLOWED=$(grep -n -o 'user_allow_other' /etc/fuse.conf | tail -1 | cut -d: -f2-)
 
 if [ -n "$IS_FUSE_ALLOWED" ]; then
 
@@ -98,12 +101,12 @@ if [ -n "$IS_FUSE_ALLOWED" ]; then
 qemu-storage-daemon \
     --blockdev node-name=prot-node,driver=file,filename="$QCOW_PATH" \
     --blockdev node-name=fmt-node,driver=qcow2,file=prot-node \
-    --export type=fuse,id=exp0,node=name=fmt-node,mountpoint="$QCOW_PATH",writable=on \
+    --export type=fuse,id=exp0,node-name=fmt-node,mountpoint="$QCOW_PATH",writable=on \
     &
 
 
 # 10.
-mount | grep foo.qcow2
+mount | grep qcow2
 
 # 11. add partition mappings, verbose
 kpartx -av "$QCOW_PATH"
@@ -119,7 +122,7 @@ fi
 
 # 13. mount the loop device
 
-losetup -fP "$QCOW_PATH"
+sudo losetup -fP "$QCOW_PATH"
 # -f: find and -P: scan the partition table on newly created loop device
 
 # 14. list status of all loop devices
@@ -134,7 +137,21 @@ upper_base_img=$(losetup -a | awk -F: 'NR==1 {print $3}')
 check_loopdevfs=$(blkid ./artifacts/foo.qcow2 | awk 'NR==1 {print $4}' | grep ext4)
 if [ -z "$check_loopdevfs" ]; then
     # actually create the filesystem for the already created partition
-    mkfs.ext4 "$UPPER_LOOPDEV" #/dev/loop0p1
+    sudo mkfs.ext4 "$UPPER_LOOPDEV" #/dev/loop0p1
+
+    # this expect is to be run on a capability-enabled environment
+    # or adapted to include sudo
+    expect << "EOF"
+    #!/usr/bin/expect -f
+    set timeout 10
+    set PASSWORD ${{ secrets.EXPECT_PASSWD }}
+
+    log_user 0
+    spawn $(readlink -s $(which mkfs.ext4))
+    expect "Proceed anyway? (y,N) "
+    send "y"
+    interact
+    EOF
 else
     echo "Error: The provided qcow2 image $check_loopdevfs is already formatted with a filesystem mounted as Loop Device at $upper_base_img."
 fi
@@ -147,7 +164,7 @@ mount "$UPPER_LOOPDEV" "$UPPER_MOUNTPOINT"/rootfs # mount loop device into the g
 
 
 
-
+# sudo
 mkdir -p $KJX/sources/bin
 #
 # ==================================================================
@@ -159,7 +176,7 @@ mkdir -p $KJX/sources/bin
 # 25. fetch binaries
 # fetch binaries
 fetch_bin() {
-    mkdir -p "$KJX/sources/bin"
+    #mkdir -p "$KJX/sources/bin"
     wget --input-file="$WGET_BIN_FILES" \
         --continue --directory-prefix="./artifacts/sources/"
 }
@@ -182,9 +199,10 @@ done
 cd - || return
 }
 
+# busybox-sh based
 mountns_sasquatch() {
 
-unshare --mount --uts --ipc --net --fork --pid --mount-proc /bin/bash <<EOF
+unshare --mount --uts --ipc --net --fork --pid --mount-proc /bin/sh <<EOF
 # populating /dev for the kjx mount (before chroot)
 mount -t devtmpfs devtmpfs "$KJX/dev/" #
 mount -t tmpfs tmpfs "$KJX/tmp/"
@@ -543,4 +561,10 @@ xorriso -as mkisofs -o output.iso \
     -V "My Linux" ./artifacts/burn/
 
 
-
+if [ "$1" == "fetch_bin" ]; then
+    fetch_bin
+elif [ "$1" == "verify_bin" ]; then
+    verify_bin
+elif [ "$1" == "extract_bin" ]; then
+    extract_bin
+fi
