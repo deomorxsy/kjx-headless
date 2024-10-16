@@ -46,6 +46,7 @@ contname="isogen_new"
 #docker start registry
 echo beforeeeeeeeeeeeeee && \
 podman create --userns=auto --cap-drop=ALL --cap-add=CAP_SYS_ADMIN,CAP_DAC_OVERRIDE,CAP_CHOWN,CAP_SETFCAP --rm --name "$contname" "$compose_ctx" 2>&1 && \
+
 echo afterrrrrrrrrr && \
 docker start "$contname" && docker logs -f "$contname"
 #docker cp "$contname":/app/output.iso ./artifacts/kjx-headless.iso
@@ -72,4 +73,9 @@ instant() {
 }
 
 
+standalone (){
+
+podman run --userns=auto --cap-drop=ALL --cap-add=CAP_SYS_ADMIN,CAP_DAC_OVERRIDE,CAP_CHOWN,CAP_SETFCAP,CAP_MKNOD --device=/dev/mapper/control --device=/dev/loop-control --device=/dev/fuse --rm -it 324bc02ae123
+
+}
 

@@ -92,8 +92,9 @@ file "$QCOW_PATH"
 kpartx -a "$QCOW_PATH"
 
 # 8. check if user_allow_other is enabled on /etc/fuse.conf for rootless passing
-IS_FUSE_ALLOWED=$(grep -n '#user_allow_other' /etc/fuse.conf | tail -1)
-# IS_FUSE_ALLOWED=$(grep -n -o 'user_allow_other' /etc/fuse.conf | tail -1 | cut -d: -f2-)
+#IS_FUSE_ALLOWED=$(grep -n '#user_allow_other' /etc/fuse.conf | tail -1)
+IS_FUSE_ALLOWED=$(grep -n -o 'user_allow_other' /etc/fuse.conf | tail -1 | cut -d: -f2-)
+# this bypass but not parse the '#' symbol. It does not detect if it is allowed.
 
 if [ -n "$IS_FUSE_ALLOWED" ]; then
 
@@ -108,7 +109,7 @@ qemu-storage-daemon \
 # 10.
 mount | grep qcow2
 
-# 11. add partition mappings, verbose
+# 11. add partition mappings, verbose, under /dev/mapper/loopX
 kpartx -av "$QCOW_PATH"
 
 # 12. get info from mounted qcow2 device mapping
@@ -136,22 +137,20 @@ upper_base_img=$(losetup -a | awk -F: 'NR==1 {print $3}')
 # 16.
 check_loopdevfs=$(blkid ./artifacts/foo.qcow2 | awk 'NR==1 {print $4}' | grep ext4)
 if [ -z "$check_loopdevfs" ]; then
-    # actually create the filesystem for the already created partition
-    sudo mkfs.ext4 "$UPPER_LOOPDEV" #/dev/loop0p1
+# actually create the filesystem for the already created partition
+sudo mkfs.ext4 "$UPPER_LOOPDEV" #/dev/loop0p1
 
-    # this expect is to be run on a capability-enabled environment
-    # or adapted to include sudo
-    expect << "EOF"
-    #!/usr/bin/expect -f
-    set timeout 10
-    set PASSWORD ${{ secrets.EXPECT_PASSWD }}
+# this expect is to be run on a capability-enabled environment
+# or adapted to include sudo
+expect << "EOF"
+#!/usr/bin/expect -f
+log_user 0
+spawn $(readlink -f $(which mkfs.ext4))
+expect "Proceed anyway? (y,N) "
+send "y"
+interact
+EOF
 
-    log_user 0
-    spawn $(readlink -s $(which mkfs.ext4))
-    expect "Proceed anyway? (y,N) "
-    send "y"
-    interact
-    EOF
 else
     echo "Error: The provided qcow2 image $check_loopdevfs is already formatted with a filesystem mounted as Loop Device at $upper_base_img."
 fi

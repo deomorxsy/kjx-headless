@@ -25,7 +25,8 @@ CMD ["apk upgrade && apk update && \
         file multipath-tools e2fsprogs xorriso && \
     setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) && \
     setcap cap_sys_admin+eip $(readlink -f $(which parted)) && \
-    setcap cap_sys_admin,cap_mknod+eip $(readlink -f $(which kpartx)) && \
+    setcap cap_sys_admin,cap_dac_override,cap_dac_read_search+eip $(readlink -f $(which kpartx)) && \
     setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) && \
+    setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup))
     . /app/scripts/squashed.sh"]
 
