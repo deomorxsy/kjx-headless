@@ -98,6 +98,12 @@ IS_FUSE_ALLOWED=$(grep -n -o 'user_allow_other' /etc/fuse.conf | tail -1 | cut -
 
 if [ -n "$IS_FUSE_ALLOWED" ]; then
 
+# wget qemu, configure qemu-img to enable fuse
+mkdir -p /conta-down
+wget https://download.qemu.org/qemu-9.1.0.tar.bz2
+cd /conta-down
+tar -xvf qemu-9.1.0.tar.bz2
+
 # 9. run qsd on background; SIGKILL when finished
 qemu-storage-daemon \
     --blockdev node-name=prot-node,driver=file,filename="$QCOW_PATH" \
@@ -138,14 +144,16 @@ upper_base_img=$(losetup -a | awk -F: 'NR==1 {print $3}')
 check_loopdevfs=$(blkid ./artifacts/foo.qcow2 | awk 'NR==1 {print $4}' | grep ext4)
 if [ -z "$check_loopdevfs" ]; then
 # actually create the filesystem for the already created partition
-sudo mkfs.ext4 "$UPPER_LOOPDEV" #/dev/loop0p1
+#sudo
+printf "\n\n=====\nCreating filesystem...\n=======\n\n"
+#mkfs.ext4 -F "$UPPER_LOOPDEV" #/dev/loop0p1
 
 # this expect is to be run on a capability-enabled environment
 # or adapted to include sudo
-expect << "EOF"
+expect << EOF
 #!/usr/bin/expect -f
 log_user 0
-spawn $(readlink -f $(which mkfs.ext4))
+spawn "$(readlink -f "$(which mkfs.ext4)")" "$UPPER_LOOPDEV"
 expect "Proceed anyway? (y,N) "
 send "y"
 interact
@@ -189,12 +197,10 @@ extract_bin() {
 
 cp ./artifacts/sources/* "$KJX/sources/bin/"
 cd "$KJX/sources/bin/" || return
-for item in *.tar.gz
-do
-    [[ -e "$item" ]] || break
-    printf "\n\nFound compressed files. Extracting now...\n"
-    tar -xvf "$KJX/sources/bin/$item"
-done
+
+#printf "\n\nFound compressed files. Extracting now...\n"
+tar -xvf "$KJX/sources/bin/*.tar.gz"
+
 cd - || return
 }
 

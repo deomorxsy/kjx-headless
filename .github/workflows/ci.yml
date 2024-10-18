@@ -33,10 +33,14 @@ jobs:
           docker run -it --name bubo -d localhost:5000/bubo_builder:latest
           docker cp bubo:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/
 
-      - name: Build iso96
+      - name: Build iso9660
         run: |
-          #make isogen
-          docker compose -f ./compose.yml --progress=plain build isogen
+          . ./scripts/ccr.sh; checker && \
+          . ./scripts/image.sh build && \
+          . ./scripts/image.sh runtime && \
+          docker cp "$contname":/app/output.iso ./artifacts/kjx-headless.iso && \
+          docker rm "$contname" && \
+          docker stop registry
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
@@ -44,4 +48,4 @@ jobs:
           name: bubo
           # image size: 8.48MB
           # artifact size: 829.6K
-          path: ${{ github.workspace }}/artifacts/isogen.iso
+          path: ${{ github.workspace }}/artifacts/output.iso
