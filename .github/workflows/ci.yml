@@ -22,16 +22,31 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Retrieve bzImage from kernel docker image
+      - name: Build docker image
+        run: |
+          docker run -d -p 5000:5000 --name registry registry:latest
+          docker compose -f ./compose.yml --progress=plain build kernel
+          docker push localhost:5000/linux_build:latest
+
+      - name: Retrieve bzImage artifact from docker image
         run: |
           docker run -it --name kernel -d localhost:5000/linux_build:latest
           docker cp kernel:/app/artifacts/bzImage ${{ github.workspace }}/artifacts/
 
-
-      - name: Retrieve initramfs artifact from bubo_builder docker image
+      - name: Build docker image
         run: |
-          docker run -it --name bubo -d localhost:5000/bubo_builder:latest
-          docker cp bubo:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/
+          docker run -d -p 5000:5000 --name registry registry:2.7
+          # env git_hash env goes into the compose.yml
+          docker compose -f ./compose.yml --progress=plain build initramfs
+          docker push localhost:5000/initramfs:latest
+          #podman build -t initramfs:latest -f ./utils/busybox/Dockerfile
+
+
+      - name: Retrieve artifact from docker image
+        run: |
+          docker run -it --name initramfs -d localhost:5000/initramfs:latest
+          docker cp initramfs:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/
+
 
       - name: Build iso9660
         run: |

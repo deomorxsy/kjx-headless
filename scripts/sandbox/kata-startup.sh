@@ -1,8 +1,12 @@
 #!/bin/sh
 
+UPPER_MOUNTPOINT="./artifacts/qcow2-rootfs"
+KJX="/mnt/kjx"
+ROOTFS_PATH="$UPPER_MOUNTPOINT/rootfs"
 
 # Create runtime class for Kata Containers
-cat <<EOF | tee rootfs/etc/runit/runsvdir/kata/kataRC.yaml
+# future symlink to "$ROOTFS_PATH/etc/runit/runsvdir/kata/kataRC.yaml"
+cat <<EOF | tee "$ROOTFS_PATH/etc/sv/kata/kataRC.yaml"
 # RuntimeClass is defined in the node.k8s.io API group
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
@@ -14,7 +18,7 @@ metadata:
 handler: kata
 EOF
 
-cat << EOF | tee nginx-kata.yaml
+cat > nginx-kata.yaml <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
@@ -45,7 +49,8 @@ sed '/spec:/a \  runtimeClassName: kata' ./deploy/k8s/deployment.yaml
 #
 #EOF
 
-cat << EOF | tee rootfs/etc/runit/runsvdir/kata/kubectl.yaml
+# future symlink to $ROOTFS_PATH/etc/runit/runsvdir/kata/kubectl.yaml
+cat > "$ROOTFS_PATH/etc/sv/k3s/kata" <<EOF
 # create pod
 sudo -E kubectl apply -f ./nginx-kata.yaml
 
@@ -55,6 +60,10 @@ sudo -E k3s kubectl get pods -n kjx-kata
 # check type-1 vmm (hypervisor) state
 #ps aux | grep qemu
 pgrep -l qemu
+EOF
+
+cat > "$ROOTFS_PATH/etc/sv/kata/run" <<EOF
+exec /usr/bin/kata-runtime --log=/var/log/kata.log --agent-log=/var/log/kata-agent.log
 EOF
 
 delete_pod() {
