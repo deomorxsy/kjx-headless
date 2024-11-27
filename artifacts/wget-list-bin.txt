@@ -11,4 +11,7 @@ https://download.qemu.org/qemu-9.0.2.tar.xz
 https://github.com/kata-containers/kata-containers/releases/download/3.7.0/kata-static-3.7.0-amd64.tar.xz
 https://github.com/google/gvisor/archive/refs/tags/release-20240807.0.tar.gz
 
-
+# k3s-related
+https://get.helm.sh/helm-v3.16.2-linux-amd64.tar.gz
+https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz
+https://github.com/argoproj/argo-cd/releases/download/v2.7.3/argocd-linux-amd64

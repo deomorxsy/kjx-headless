@@ -24,3 +24,8 @@ hpota-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# honey-potion bpf co-re scaffolding
+/lib/obj/*
+/lib/bin/*
+/lib/src/*
