@@ -1,0 +1,66 @@
+kind: Pod
+metadata:
+  name: multi-low-level-container-runtime
+  namespace: kjx
+spec:
+  containers:
+    # High-level OCI Runtime (Podman/Docker)
+    - name: high-level-runtime
+      image: busybox:latest
+      command: ["/sbin/runit"]
+      args: ["run"]
+      securityContext:
+        runAsUser: 1000
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+      volumeMounts:
+        - name: busybox-config
+          mountPath: /etc/service
+      runtimeClassName: podman  # or docker
+
+    # Low-level OCI Runtime (containerd)
+    - name: low-level-runtime
+      image: busybox:latest
+      command: ["/sbin/runit"]
+      args: ["run"]
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+      volumeMounts:
+        - name: busybox-config
+          mountPath: /etc/service
+      runtimeClassName: containerd
+
+    # MicroVM (Kata Containers)
+    - name: microvm-runtime
+      image: busybox:latest
+      command: ["/sbin/runit"]
+      args: ["run"]
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+      volumeMounts:
+        - name: busybox-config
+          mountPath: /etc/service
+      runtimeClassName: kata
+
+  volumes:
+    - name: busybox-config
+      configMap:
+        name: busybox-config
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: busybox-config
+data:
+  # RunIt Service configuration - Adjust as per service needs
+  run: |
+    #!/bin/sh
+    echo "Starting BusyBox runit service..."
+    exec busybox sleep infinity
