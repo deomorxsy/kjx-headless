@@ -10,3 +10,7 @@
 [submodule "assets/HeatMap"]
 	path = assets/HeatMap
 	url = git@github.com:brendangregg/HeatMap.git
+[submodule "assets/libbpf-bootstrap"]
+	path = assets/libbpf-bootstrap
+	url = git@github.com:libbpf/libbpf-bootstrap.git
+
