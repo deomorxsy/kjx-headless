@@ -43,7 +43,7 @@ jobs:
       - name: Archive the build artifact
         uses: actions/upload-artifact@v3
         with:
-          name: bubo
+          name: libbpf_core
           # image size: 8.48MB
           # artifact size: 829.6K
           path: ${{ github.workspace }}/artifacts/bpfcore_examples.tar.gz
