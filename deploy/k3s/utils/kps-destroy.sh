@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# delete all crd (CustomResourceDefinition) related to the kube-prometheus-stack
 sudo k3s kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
 sudo k3s kubectl delete crd alertmanagers.monitoring.coreos.com
 sudo k3s kubectl delete crd podmonitors.monitoring.coreos.com
@@ -25,3 +26,6 @@ sudo k3s kubectl delete --all pod --namespace=kps
 
 # delete all remaining services under the namespace
 sudo k3s kubectl delete svc --all -n kps
+
+# delete all remaining secrets under the namespace
+sudo k3s kubectl delete secret --all -n kps
