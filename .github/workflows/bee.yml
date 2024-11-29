@@ -22,19 +22,23 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Build docker image
+      - name: Build OCI image
         run: |
           docker run  -d -p 5000:5000 --name registry registry:2.7
           # env git_hash env goes into the compose.yml
-          docker compose -f ./compose.yml --progress=plain build busybox
-          docker push localhost:5000/bubo_builder:latest
+          docker compose -f ./compose.yml --progress=plain build libbpf_core
+          docker push localhost:5000/libbpf_core:latest
           #podman build -t bubo_builder:latest -f ./utils/busybox/Dockerfile
 
 
-      - name: Retrieve artifact from docker image
+      - name: Retrieve artifact from OCI image
         run: |
-          docker run -it --name bubo -d localhost:5000/bubo_builder:latest
-          docker cp bubo:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/
+          mkdir -p ${{ github.workspace }}/artifacts/libbpf-examples/
+          docker create --name libbpf_core localhost:5000/libbpf_core:latest
+          docker cp ${{ github.workspace }}/trace/libbpf-core/examples/ libbpf_core:./app/
+          docker run -it --name libbpf_core -d --entrypoint="/bin/sh" localhost:5000/haskell_exs:latest -c 'mkdir -p /artifacts/libbpf-examples/; tar -czf /artifacts/libbpf-examples/bpfcore_examples.tar.gz'
+          docker cp libbpf_core:/artifacts/libbpf-examples/bpfcore_examples.tar.gz ${{ github.workspace }}/artifacts/libbpf-examples/
+          echo done!!
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v3
@@ -42,4 +46,4 @@ jobs:
           name: bubo
           # image size: 8.48MB
           # artifact size: 829.6K
-          path: ${{ github.workspace }}/artifacts/initramfs.cpio.gz
+          path: ${{ github.workspace }}/artifacts/bpfcore_examples.tar.gz

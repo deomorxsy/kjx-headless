@@ -91,10 +91,13 @@ assets/makefile2graph
 Dockerfile.stripped
 outfull.svg
 
-# libbpf co-re
+# libbpf co-re and other vmlinux
 trace/libbpf-core/examples/Makefile
 trace/libbpf-core/examples/*.o
 trace/libbpf-core/examples/*.skel.h
 trace/libbpf-core/examples/vmlinux.h
 trace/libbpf-core/examples/ocisnoop
 artifacts/ocisnoop
+trace/exporter-libbpfgo/vmlinux.h
+
+

@@ -1,13 +1,24 @@
 #version: "3.8"
 services:
-  libbpf:
+  libbpf_core:
     environment:
       - git_hash
     build:
       context: "."
-      dockerfile: "./trace/libbpf/Dockerfile"
+      dockerfile: "./trace/libbpf-core/Dockerfile"
       tags:
-        - "localhost:5000/libbpf:latest"
+        - "localhost:5000/libbpf-core:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      apk upgrade && apk update &&
+      apk add apk add clang libelf elfutils-dev zlib-dev bpftool \
+        git make &&
+      setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) &&
+      setcap cap_sys_admin+eip $(readlink -f $(which parted)) &&
+      setcap cap_sys_admin,cap_dac_override,cap_dac_read_search+eip $(readlink -f $(which kpartx)) && \
+      setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) && \
+      setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup))
+      . /app/scripts/squashed.sh
     stop_signal: SIGINT
   ayaya:
     environment:
