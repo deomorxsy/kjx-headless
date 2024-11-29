@@ -11,7 +11,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: |
       apk upgrade && apk update &&
-      apk add apk add clang libelf elfutils-dev zlib-dev bpftool \
+      apk add clang libelf elfutils-dev zlib-dev bpftool \
         git make &&
       setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) &&
       setcap cap_sys_admin+eip $(readlink -f $(which parted)) &&
@@ -23,11 +23,60 @@ services:
   ayaya:
     environment:
       - git_hash
+      - RUSTUP_HOME=/usr/local/rustup
+      - CARGO_HOME=/usr/local/cargo
+      - PATH=/usr/local/cargo/bin:$PATH
+      - RUST_VERSION=1.82.0
+      - APPLICATION_USER=appuser
+      - APPLICATION_UID=1000
     build:
       context: "."
       dockerfile: "./trace/ayaya/Dockerfile"
       tags:
         - "localhost:5000/export_bee:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -eux;
+      # ========== set user permissions
+      mkdir -p /app ${CARGO_HOME} ${RUSTUP_HOME}
+      adduser -u ${APPLICATION_UID} -D -s /bin/sh ${APPLICATION_USER}
+      cat > /home/${APPLICATION_USER}/.profile <<EOF
+      export RUSTUP_HOME=/usr/local/rustup
+      export CARGO_HOME=/usr/local/cargo
+      export PATH=/usr/local/cargo/bin:\$PATH
+      export RUST_VERSION=1.82.0
+      EOF
+      chown -R ${APPLICATION_USER}:${APPLICATION_USER} /home/${APPLICATION_USER}/.profile
+      chown -R "${APPLICATION_USER}":"${APPLICATION_USER}" "${RUSTUP_HOME}"
+      chown -R "${APPLICATION_USER}":"${APPLICATION_USER}" "${CARGO_HOME}"
+      chown -R "${APPLICATION_USER}":"${APPLICATION_USER}" "/app"
+      # =========== install required packages
+      apk upgrade && apk update
+      apk add gcc musl-dev
+      su - ${APPLICATION_USER} -c 'printf "\nNow running as ${APPLICATION_USER}."\n\n'
+      # =========== setup rustup, rustc and cargo
+      apkArch="$(apk --print-arch)";
+      case "$apkArch" in
+          x86_64) rustArch='x86_64-unknown-linux-musl'; rustupSha256='1455d1df3825c5f24ba06d9dd1c7052908272a2cae9aa749ea49d67acbe22b47' ;;
+          aarch64) rustArch='aarch64-unknown-linux-musl'; rustupSha256='7087ada906cd27a00c8e0323401a46804a03a742bd07811da6dead016617cc64' ;;
+          *) echo >&2 "unsupported architecture: $apkArch"; exit 1 ;;
+      esac;
+      url="https://static.rust-lang.org/rustup/archive/1.27.1/$rustArch/rustup-init";
+      wget "$url";
+      echo "$rustupSha256 ./rustup-init" | sha256sum -c -;
+      chmod +x ./rustup-init
+      ./rustup-init -y --no-modify-path --profile minimal --default-toolchain ${RUST_VERSION} --default-host $rustArch;
+      chmod -R a+w ${RUSTUP_HOME} ${CARGO_HOME};
+      rustup --version;
+      cargo --version;
+      rustc --version;
+      rustup toolchain install stable && \
+      rustup toolchain install nightly --component rust-src && \
+      cargo install bpf-linker && \
+      cargo xtask build-ebpf && \
+      cargo build && \
+      cargo xtask build && \
+      RUST_LOG=info cargo xtask run 2>&1 > /app/cargotest_results.txt
     stop_signal: SIGINT
   isogen_new:
     build:
@@ -41,11 +90,11 @@ services:
       apk upgrade && apk update &&
       apk add libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
         file multipath-tools e2fsprogs xorriso expect libseccomp &&
-      setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) &&
-      setcap cap_sys_admin+eip $(readlink -f $(which parted)) &&
+      setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) && \
+      setcap cap_sys_admin+eip $(readlink -f $(which parted)) && \
       setcap cap_sys_admin,cap_dac_override,cap_dac_read_search+eip $(readlink -f $(which kpartx)) && \
       setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) && \
-      setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup))
+      setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup)) && \
       . /app/scripts/squashed.sh
     devices:
       # HOST_PATH:CONTAINER_PATH[:CGROUP_PERMISSIONS]

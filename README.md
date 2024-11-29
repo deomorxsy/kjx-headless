@@ -3,15 +3,17 @@
 
 [![initramfs](https://github.com/deomorxsy/kjx-headless/actions/workflows/ramdisk-builder.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ramdisk-builder.yml)
 [![bzImage](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel-builder.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel-builder.yml)
-[![CI](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml)
-[![unit-tests](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml)
-[![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml/coverage.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml)
+[![CI/iso9660](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml)
 
-[![libbpf](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml)
+[![libbpf-core](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml)
+
+[![cronaws](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml)
+
+[![unit-tests](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml)
 [![libbpfgo](https://github.com/deomorxsy/kjx-headless/actions/workflows/libbpfgo.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/libbpfgo.yml)
 [![ayaya](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml)
 
-
+[![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml)
 
 Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 
