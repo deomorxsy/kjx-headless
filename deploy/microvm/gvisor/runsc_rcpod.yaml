@@ -1,0 +1,25 @@
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: gvisor
+handler: runsc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-gvisor
+spec:
+  runtimeClassName: gvisor
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+      - containerPort: 80
+    resources:
+      requests:
+        memory: "50Mi" # min memory allowed
+        cpu: "100m"    # min cpu allowed
+      limits:
+        memory: "100Mi" # max memory allowed
+        cpu: "200m"     # max cpu allowed
+  nodeName: asari

@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podman-rootless
+spec:
+  containers:
+    - name: rootless
+      image: quay.io/podman/stable
+      args:
+        - sleep
+        - "100000"
+      securityContext:
+        privileged: false
+        runAsUser: 1000
+
+      volumeMounts:
+      - name: podmansocket
+        mountpath: /run/user/1000
+
+      - name: getTheDockerfile
+        mountpath: /home/asari/gvisor-k3s/podman/
+
+        #- name: podman-command
+
+
+
+
