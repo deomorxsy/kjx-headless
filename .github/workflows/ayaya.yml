@@ -1,4 +1,4 @@
-name: parse.bpf.c
+name: aya-rs
 
 # This rule triggers when the workflow will run
 on:

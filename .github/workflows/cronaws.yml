@@ -1,5 +1,5 @@
 ---
-name: Cron
+name: cronaws
 
 on:
   schedule:
