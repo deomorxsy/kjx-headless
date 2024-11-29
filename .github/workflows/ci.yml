@@ -28,39 +28,64 @@ jobs:
           docker compose -f ./compose.yml --progress=plain build kernel
           docker push localhost:5000/linux_build:latest
 
-      - name: Retrieve bzImage artifact from docker image
+      - name: Retrieve initramfs artifact from previous actions workflow
         run: |
-          docker run -it --name kernel -d localhost:5000/linux_build:latest
-          docker cp kernel:/app/artifacts/bzImage ${{ github.workspace }}/artifacts/
+          curl -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.FETCH_ARTIFACT }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts/ \
+          > ${{ github.workspace }}/artifacts/artifact-list.json
+          initramfs_url=$(cat ${{ github.workspace }}/artifacts/artifact-list.json | jq -r '.artifacts | map(select(.name == "kernel")) | sort_by(.created_at) | last | .archive_download_url')
+          curl -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.FETCH_ARTIFACT }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "$initramfs_url" \
+          -o ${{ github.workspace }}/artifacts/initramfs.cpio.gz
 
-      - name: Build docker image
+      - name: Retrieve bzImage artifact from previous actions workflow
         run: |
-          docker run -d -p 5000:5000 --name registry registry:2.7
-          # env git_hash env goes into the compose.yml
-          docker compose -f ./compose.yml --progress=plain build initramfs
-          docker push localhost:5000/initramfs:latest
-          #podman build -t initramfs:latest -f ./utils/busybox/Dockerfile
+          curl -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.FETCH_ARTIFACT }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts/ \
+          > ${{ github.workspace }}/artifacts/artifact-list.json
+          kernel_url=$(cat ${{ github.workspace }}/artifacts/artifact-list.json | jq -r '.artifacts | map(select(.name == "kernel")) | sort_by(.created_at) | last | .archive_download_url')
+          curl -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.FETCH_ARTIFACT }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "$kernel_url" \
+          -o ${{ github.workspace }}/artifacts/kernel.zip
+
+          #- name: Build docker image
+          #run: |
+          #docker run -d -p 5000:5000 --name registry registry:2.7
+            # env git_hash env goes into the compose.yml
+          #docker compose -f ./compose.yml --progress=plain build initramfs
+          #docker push localhost:5000/initramfs:latest
+            #podman build -t initramfs:latest -f ./utils/busybox/Dockerfile
 
 
-      - name: Retrieve artifact from docker image
-        run: |
-          docker run -it --name initramfs -d localhost:5000/initramfs:latest
-          docker cp initramfs:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/
-
+      #- name: Build iso9660 via OCI container
+      #  run: |
+      #    . ./scripts/ccr.sh; checker && \
+      #    . ./scripts/image.sh build && \
+      #    . ./scripts/image.sh runtime && \
+      #    docker cp "$contname":/app/output.iso ./artifacts/kjx-headless.iso && \
+      #    docker rm "$contname" && \
+      #    docker stop registry
 
       - name: Build iso9660
         run: |
-          . ./scripts/ccr.sh; checker && \
-          . ./scripts/image.sh build && \
-          . ./scripts/image.sh runtime && \
-          docker cp "$contname":/app/output.iso ./artifacts/kjx-headless.iso && \
-          docker rm "$contname" && \
-          docker stop registry
+          . ./scripts/squashed.sh
 
-      - name: Archive the build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bubo
-          # image size: 8.48MB
-          # artifact size: 829.6K
-          path: ${{ github.workspace }}/artifacts/output.iso
+      #- name: Archive the build artifact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: bubo
+      #    # image size: 8.48MB
+      #    # artifact size: 829.6K
+      #    path: ${{ github.workspace }}/artifacts/output.iso
