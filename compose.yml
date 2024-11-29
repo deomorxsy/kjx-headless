@@ -22,13 +22,13 @@ services:
     stop_signal: SIGINT
   ayaya:
     environment:
-      - git_hash
-      - RUSTUP_HOME=/usr/local/rustup
-      - CARGO_HOME=/usr/local/cargo
-      - PATH=/usr/local/cargo/bin:$PATH
-      - RUST_VERSION=1.82.0
-      - APPLICATION_USER=appuser
-      - APPLICATION_UID=1000
+      - git_hash=${git_hash:-default_git_hash}
+      - RUSTUP_HOME=${RUSTUP_HOME:-/usr/local/rustup}
+      - CARGO_HOME=${CARGO_HOME:-/usr/local/cargo}
+      - PATH=${PATH:-/usr/local/cargo/bin:$PATH}
+      - RUST_VERSION=${RUST_VERSION:-1.82.0}
+      - APPLICATION_USER=${APPLICATION_USER:-appuser}
+      - APPLICATION_UID=${APPLICATION_UID:-1000}
     build:
       context: "."
       dockerfile: "./trace/ayaya/Dockerfile"
@@ -169,11 +169,10 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    expose:
-      - 9100
+    port:
+      - 9100::9100
     networks:
       - monitoring
-
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -187,8 +186,8 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
-    expose:
-      - 9090
+    port:
+      - 9090:9090
     networks:
       - monitoring
   # =======================
