@@ -33,5 +33,5 @@ podman run \
     --name prometheus \
     -p 9090:9090 \
     --net=host \
-    -v ./deploy/monitoring/prom-metrics.yaml:/etc/prometheus/prometheus.yml \
+    -v ./deploy/monitoring/prom-metrics_ebpfexp.yaml:/etc/prometheus/prometheus.yml \
     0a1bcc4b2d6a
