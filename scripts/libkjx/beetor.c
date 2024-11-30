@@ -1,4 +1,5 @@
 #include <bits/types/siginfo_t.h>
+#include <csignal>
 #include <curl/system.h>
 #include <signal.h>
 #include <stdint.h>
@@ -139,6 +140,19 @@ void cleanup(int signal) {
 
 }
 
+sig_atomic_t nexitedchlds = 0; // the atomic data type allowed to use in the context of the signal handling
+int pipe_fd[2]; // pipe file descriptors
+pid_t child2_pid; // pid of the second child
+
+void handle_pipe_tunnel(int sig) { // for the childs!!
+    if (sig == SIGCHLD) {
+        printf("Parent: child1 has exited. Stopping child2.\n");
+        kill(child2_pid, SIGTERM); // send SIGTERM to child2
+    }
+}
+
+
+
 int main(void) {
 
     CURL *handle; //*curl
@@ -147,10 +161,12 @@ int main(void) {
     pid_t pid1; // libbpf
     pid_t pid2; // k3s
 
-    char *const ebpf_argv[] = {"libbpf", NULL};
-    char *const ebpf_envp[] = {NULL};
+    // libbpf-hw
+    char *const ebpf_argv[] = {"tracepoint", NULL}; // default arguments
+    char *const ebpf_envp[] = {NULL}; // environment pointer
 
-    char *const k3s_argv[] = {"libbpf", NULL};
+    // k3s
+    char *const k3s_argv[] = {"--disable-agent", NULL}; // /bin/k3s
     char *const k3s_envp[] = {NULL};
 
     // step 1. block signals for parent
@@ -160,8 +176,56 @@ int main(void) {
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 
 
+
+
+    /*
+     * =====================================================
+     *
+     *              OLD BELOW!!!!!!!!
+     *
+     * -----------------------------------------------------
+     *
+     * */
+
+    // redo
+    struct sigaction act;
+    memset(&act, 0, sizeof(struct sigaction));
+    sigemptyset(&act.sa_mask);
+
+    act.sa_sigaction = sigchld_handler;
+    act.sa_flags = SA_SIGINFO;
+
+    if (-1 == sigaction(SIGCHLD, &act, NULL))
+    {
+        perror("sigaction()");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < NUMCHLDS; i++)
+    {
+        switch(fork())
+        {
+            case 0:
+                return 1234567890;
+            case -1:
+                write(STDERR_FILENO, "fork ERROR!", 11);
+                exit(EXIT_FAILURE);
+            default:
+                printf("Child created\n");
+        }
+
+    }
+
+    while (1)
+    {
+        if (nexitedchlds < NUMCHLDS)
+            pause();
+        else
+         exit(EXIT_SUCCESS);
+    }
+
     // fork 1
-    if (sigaction(SIGCHLD, SIG_IGN) == SIG_ERR) {
+    if (sigaction(SIGINT, &act, NULL) == -1) {
         perror("signal");
         exit(EXIT_FAILURE);
     }
@@ -169,7 +233,7 @@ int main(void) {
     if (pid1 == 0) {
         sigwait(&set, &sig);
         if (sig == SIGUSR1) {
-            execve("/bin/libkjx/libbpf", ebpf_argv, ebpf_envp);
+            execve("/bin/libbpf-hw", ebpf_argv, ebpf_envp);
         }
         exit(0);
     }
@@ -200,12 +264,13 @@ int main(void) {
 
     // step 4. send signal to children ebpf to start monitoring tgid
     kill(pid1, SIGUSR1);
+    sleep(10);
+
     kill(pid2, SIGUSR2);
 
     /*call send_flamegraph logic*/
     //const char *post_args = "";
-    generate_flamegraph();
-    send_flamegraph();
+    s3_uploads();
     curl_global_cleanup();
 
     waitpid(pid1, NULL, 0);
@@ -214,5 +279,120 @@ int main(void) {
     printf("program complete. Exiting now...");
     return 0;
 
+
+}
+
+
+void signal_resume_child1(int sig) {
+    // noop
+}
+
+int new_main(void) {
+
+    /*
+     * =================
+     * SELF-CONTAINED
+     * ================
+     * */
+
+
+    // libbpf-hw
+    char *const ebpf_argv[] = {"tracepoint", NULL}; // default arguments
+    char *const ebpf_envp[] = {NULL}; // environment pointer
+
+    // k3s
+    char *const k3s_argv[] = {"--disable-agent", NULL}; // /bin/k3s
+    char *const k3s_envp[] = {NULL};
+
+    // pipe file descriptor
+    pid_t child1_pid = fork();
+    if (child1_pid < 0) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (child1_pid == 0) {
+        close(pipe_fd[0]); // close unused read end of the pipe
+
+        printf("Child1: my pid is %d. Writing it to the pipe\n.", getpid());
+        pid_t my_pid = getpid();
+        write(pipe_fd[1], &my_pid, sizeof(my_pid));
+        close(pipe_fd[1]); // close write end of the pipe
+
+        printf("Child1: waiting indefinitely\n");
+
+
+        // set up signal handler to resume execution
+        struct sigaction sa;
+        sa.sa_handler = signal_resume_child1;
+        sa.sa_flags = 0;
+        sigemptyset(&sa.sa_mask);
+
+        if(sigaction(SIGUSR1, &sa, NULL) == -1) {
+            perror("sigaction");
+            exit(EXIT_FAILURE);
+        }
+
+        /* pause() causes the calling process (or thread)
+         * to sleep until a signal is delivered that either
+         * terminates the process or causes the invocation
+         * of a signal-catching function.
+        */
+        pause(); // wait indefinitely
+        printf("Child1: Resuming k3s execution")  // received the signal
+
+        // run the k3s binary
+        execlp("k3s", "k3s", "server", NULL);
+        execlp("/bin/k3s", ebpf_argv, ebpf_envp);
+        execve("/bin/k3s", ebpf_argv, ebpf_envp);
+
+        printf("Child1: Exiting.\n");
+        exit(EXIT_SUCCESS);
+
+    }
+
+    //fork second child
+    child2_pid = fork();
+    if (child2_pid < 0) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+
+    }
+
+    if (child2_pid == 0) {
+        // child2 process
+        close(pipe_fd[1]);
+
+        pid_t received_pid;
+        read(pipe_fd[0], &received_pid, sizeof(received_pid));
+        close(pipe_fd[0]);
+
+        printf("child2: Received PID from child1: %d. Resuming the run of child1...\n", received_pid);
+
+        while (1) {
+            printf("Child2: running...\n");
+            sleep(1);
+        }
+    }
+
+    // parent process
+    close(pipe_fd[0]);
+    close(pipe_fd[1]);
+
+    struct sigaction sa;
+    sa.sa_handler = handle_pipe_tunnel;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask); //sa_mask specifies mask of signals that should be blocked
+
+    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+
+    // wait for child1 to exit
+    printf("Parent: waiting for Child to exit\n");
+    waitpid(child1_pid, NULL, 0);
+    printf("Parent: Exiting\n");
+    return 0;
 
 }
