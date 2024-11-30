@@ -1,12 +1,22 @@
 #include <bits/types/siginfo_t.h>
+#include <curl/system.h>
 #include <signal.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h> // strlen
 #include <sys/types.h>
 #include <unistd.h>
+
+
+#include <stdio.h>
 #include <curl/curl.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+// gcc/g++ linking is sensitive to order, so you must
+// specify the curl header before the easy header.
+#include <curl/easy.h>
 
 // waitpid
 #include <sys/types.h>
@@ -36,60 +46,76 @@ else
 curl_global_init(CURL_GLOBAL_ALL);
 #endif
 
-void send_flamegraph() {
 
-    CURL *curl;
+#define AWS_ACCESS_KEY "${{ secrets.S3_ACCESS_KEY }}"
+#define AWS_SECRET_KEY "${{ secrets.S3_SECRET_KEY }}"
+#define BUCKET_NAME    "kjx-flamegraphs"
+#define REGION         "your-region"
+#define FILE_PATH      "path/to/your/file"
+#define OBJECT_KEY     "object-key-in-s3"
+
+int s3_uploads() {
+    CURL *handle; //*curl
     CURLcode res;
+    struct curl_slist *slist = NULL;
+    struct stat file_info;
+    curl_off_t speed_upload, total_time;
+    FILE *fd;
 
-    curl = curl_easy_init();
-    if(curl) {
-        // set URL
-        curl_easy_setopt(curl, CURLOPT_URL, sprintf("%s", SERVER_URL));
+    // open file to upload
+    fd = fopen("debugit", "rb");
+    if (!fd)
+        return 1;
 
-        // set POST request
-        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    // get file size
+    if (fstat(fileno(fd), &file_info) != 0)
+        return 1; /* cannot continue */
 
-        // specify the POST fields
-        const char *drive_secret = getenv("DRIVE_TOKEN_SECRET");
-        const char *err_token = "\n========\nIt wasn't possible to getthe DRIVE_TOKEN_SECRET.\n=======\n";
+    handle = curl_easy_init();
+    if (handle) {
 
-        const char post_fields[256];
-
-        if (strlen(drive_secret) == 0 || drive_secret == NULL) {
-            printf("%s\n", err_token);
-            exit(1);
-        } else {
-            snprintf(post_fields, sizeof(post_fields), "a=%s", drive_secret);
-            printf("Post fields are: %s\n", post_fields);
-        }
-
-        //
-
+         va_list ap;
 
         // Set custom headers
-        struct curl_slist *headers = NULL;
-        headers = curl_slist_append(headers, "Host: kjx-demo");
-        headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        slist = curl_slist_append(slist, "Host: kjx-demo");
+        slist = curl_slist_append(slist, "X-libcurl: coolness");
+        slist = curl_slist_append(slist, "Content-Type: application/x-www-form-urlencoded");
 
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_fields);
-        res = curl_easy_perform(curl);
+        if (!slist)
+            return -1;
 
-        /* Check for errors */
+        curl_easy_setopt(handle, CURLOPT_HTTPHEADER, slist);
+
+        // set upload destination
+        curl_easy_setopt(handle, CURLOPT_URL,
+                "https://<bucket-name>.s3.<region>.amazonaws.com/<object-key>");
+        // upload to the url
+        curl_easy_setopt(handle, CURLOPT_UPLOAD, 1L);
+
+        // read the data being upload from the file descriptor
+        curl_easy_setopt(handle, CURLOPT_READDATA, fd);
+
+        // give the size of the upload beforehand
+        curl_easy_setopt(handle, CURLOPT_INFILESIZE_LARGE,
+                (curl_off_t)file_info.st_size);
+
+        // enable verbose for tracing
+        curl_easy_setopt(handle, CURLOPT_VERBOSE, 1L);
+
+        // perform request
+        res = curl_easy_perform(handle);
+
+        /* error checking */
         if(res != CURLE_OK) {
-            fvprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         } else {
             printf("Request sent sucessfully.\n");
         }
 
-    } else {
-        fprintf(stderr, "Failed to initialize libcurl.\n");
+        curl_slist_free_all(slist);
     }
 
-    /* free custom headers and cleanup libcurl */
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
-
+    return 0;
 }
 
 
@@ -115,6 +141,7 @@ void cleanup(int signal) {
 
 int main(void) {
 
+    CURL *handle; //*curl
     sigset_t set;
     int sig;
     pid_t pid1; // libbpf
