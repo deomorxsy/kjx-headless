@@ -1,4 +1,4 @@
-name: ISO9660gen
+name: iso9660
 
 # This rule triggers when the workflow will run
 on:

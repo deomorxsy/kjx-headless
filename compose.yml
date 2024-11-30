@@ -153,6 +153,14 @@ services:
       tags:
         - "localhost:5000/exporter-static:latest"
     stop_signal: SIGINT
+  hpota: # ebpf-exporter
+    build:
+      context: "./trace/hpota/"
+      # Dockerfile's location is relative to the context field (the base directory).
+      dockerfile: "./Dockerfile"
+      tags:
+        - "localhost:5000/hpota:latest"
+    stop_signal: SIGINT
   # =======================
   # standalone prometheus
   # =======================
