@@ -205,3 +205,28 @@ qemu_bridge:
 #
 k8s:
 	kubectl apply -f ./deploy/
+
+# ===============
+# ISO9660 build phase creation with mount namespaces and squashfs
+.PHONY: iso
+
+# ==============
+# ISO9660 runtime phase with mount namespaces, libguestfs and squashfs
+
+# ===============
+# runit supervised scripts
+#
+.PHONY: beetor
+beetor:
+	. ./scripts/ccr.sh; checker; \
+	docker pull registry:2.8.3
+	docker run -d -p 5000:5000 --name registry registry:2.8.3
+	docker start registry && \
+	docker compose -f ./compose.yml --progress=plain build beetor && \
+	docker compose images | grep beetor | awk '{ print $4 }' && \
+	docker push localhost:5000/beetor:latest && \
+	docker stop registry
+
+
+
+
