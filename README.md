@@ -18,6 +18,24 @@ This proof-of-concept monorepo gathers concepts from several [1] constrained sys
 Check the [Gitlab mirror]() for an example using Jenkins instead of Github Actions.
 
 
+```sh
+ .-"``"-.
+/  _.-` (_) `-._
+\   (_.----._)  /
+ \     /    \  /
+  `\  \____/  /`
+    `-.____.-`      __     _
+     /      \      / /__  (_)_ __
+    /        \    /  '_/ / /\ \ /
+   /_ |  | _\    /_/\_\_/ //_\_\
+     |  | |          |___/         deomorxsy/kjx
+     |__|__|  ----------------------------------------------
+     /_ | _\   Reboot (01.00.0, ${GIT_CONTAINERFILE_HASH})
+              ----------------------------------------------
+```
+
+
+
 The entire boot flowchart, from kernel init scripts to k3s initialization:
 ```
                                           kernel

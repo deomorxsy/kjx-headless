@@ -6,5 +6,5 @@
 
 sudo ./ebpf_exporter.x86_64 \
     --config.dir=./sample/examples/ \
-    --config.names=biolatency \
+    --config.names=sched-trace \
     --debug

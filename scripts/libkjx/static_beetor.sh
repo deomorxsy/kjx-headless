@@ -1,5 +1,8 @@
 #!/bin/sh
 
+BEETOR_PATH=./scripts/libkjx/beetor
+
+artifact() {
 set -e
 
 cd ./assets || return
@@ -16,3 +19,21 @@ gcc ./scripts/libkjx/beetor.c ./artifacts/libs/libcurl.a -lssl -lcrypto -ldl -lm
 
 #make test
 #make install
+}
+
+profiler() {
+    if [ -f "$1" ]; then
+        valgrind --tool=callgrind --trace-children=yes --dump-instr=yes --callgrind-out-file=./beetor.cg.out --vgdb-error=0 --collect-jumps=yes "$1"
+    else
+        printf "\n[profiler] File not found. exiting now...\n\n"
+    fi
+}
+
+
+
+
+if [ "$1" = "profiler" ]; then
+    profiler "$BEETOR_PATH"
+elif [ "$1" = "artifact" ]; then
+    artifact
+fi

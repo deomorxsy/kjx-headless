@@ -1,4 +1,5 @@
 #.DEFAULT_GOAL := all
+#SHELL := /bin/sh
 
 GIT_SHA=$(shell git rev-parse HEAD)
 # if changes are detected, append "-local" to hash
@@ -219,7 +220,6 @@ k8s:
 .PHONY: beetor
 beetor:
 	. ./scripts/ccr.sh; checker; \
-	docker pull registry:2.8.3
 	docker run -d -p 5000:5000 --name registry registry:2.8.3
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build beetor && \
@@ -227,6 +227,9 @@ beetor:
 	docker push localhost:5000/beetor:latest && \
 	docker stop registry
 
+.PHONY: valprof
+valprof:
+	. ./scripts/libkjx/static_beetor.sh profiler
 
 
 
