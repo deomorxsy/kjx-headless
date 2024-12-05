@@ -245,4 +245,21 @@ services:
               libcrypto zlib elfutils-dev && \
       . /libkjx/static_beetor.sh
     stop_signal: SIGINT
+  # ========================
+  # libguestfs library with ocaml
+  # =========================
+  librakuda:
+    environment:
+      - git_hash
+    build:
+      context: "./scripts/librakuda/"
+      dockerfile: "./Dockerfile"
+      tags:
+        - "localhost:5000/librakuda:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      apk upgrade && apk update && \
+      apk add dune ocaml musl-dev && \
+      cat /tests/test_result_*_.txt
+    stop_signal: SIGINT
 
