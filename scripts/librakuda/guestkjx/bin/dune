@@ -1,0 +1,4 @@
+(executable
+ (public_name guestkjx)
+ (name main)
+ (libraries guestkjx))
