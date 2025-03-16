@@ -144,6 +144,17 @@ services:
       tags:
         - "localhost:5000/initramfs:latest"
     stop_signal: SIGINT
+  dropbear:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./assets/dropbear/Dockerfile"
+      args:
+        GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
+      tags:
+        - "localhost:5000/dropbear:latest"
+    stop_signal: SIGINT
   kernel:
     build:
       context: "./assets/kernel/"
@@ -262,4 +273,17 @@ services:
       apk add dune ocaml musl-dev && \
       cat /tests/test_result_*_.txt
     stop_signal: SIGINT
+  rakupasa:
+    environment:
+      - git_hash
+    build:
+      context: "./scripts/librakuda/parser_example/Dockerfile"
+      tags:
+        - "localhost:5000/rakupasa:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      apk upgrade && apk update && \
+      apk add dune ocaml musl-dev && \
+      eval $(opam env --switch=utop)
+
 

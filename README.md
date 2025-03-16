@@ -11,6 +11,7 @@
 [![ayaya](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml)
 [![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml)
 [![ocaml-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml)
+[![dropbear](https://github.com/deomorxsy/kjx-headless/actions/workflows/ramdisk-dropbear.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ramdisk-dropbear.yml)
 
 Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 
@@ -144,3 +145,4 @@ Unit and Integration tests use the go testing package with code coverage. Curren
 - [qemu-fuse-disk-export script](https://gitlab.com/hreitz/qemu-scripts/-/blob/main/qemu-fuse-disk-export.py)
 - [youki tests!](https://github.com/containers/youki/blob/main/tests/k8s/Dockerfile)
 - [the cromwell runntime](https://github.com/guni1192/cromwell)
+- The firecracker scripts from [kubefire](https://github.com/innobead/kubefire)

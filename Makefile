@@ -71,6 +71,10 @@ kernel:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build kernel
 
+dropbear:
+	. ./scripts/ccr.sh; checker; \
+	docker compose -f ./compose.yml --progress=plain build dropbear
+	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
 
 
 
@@ -232,4 +236,52 @@ valprof:
 	. ./scripts/libkjx/static_beetor.sh profiler
 
 
+.PHONY: k9s
+k9s:
+	sudo -E k9s --kubeconfig /etc/rancher/k3s/k3s.yaml
+
+# ==================
+# proof verification
+#
+
+# sel4 verifiable kernel
+.PHONY: sel4
+sel4:
+	echo "not yet!"
+
+# ocaml to USDT ebpf
+.PHONY: beeml
+beeml:
+	echo "not yet!"
+
+# menhir backend to coq
+.PHONY: cohir
+cohir:
+	echo "not yet!"
+
+# ============
+# context switch tasks
+#
+
+# device driver
+.PHONY: ddkjx
+ddkjx:
+	gcc -Wl -no-as-needed -lcap -o ./scripts/libkjx/device-driver/sample ./scripts/libkjx/device-driver/sample.c
+
+# LKM
+#
+obj-m += hello-1.o
+obj-m += hello-2.o
+
+LKM_PWD := $(CURDIR)/scripts/libkjx/lkm_idk
+
+all_lkm:
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(LKM_PWD) modules
+
+clean_lkm:
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(LKM_PWD) clean
+
+.PHONY: lkmkjx
+lkmkjx:
+	gcc -Wl --no-as-needed -lcap -o ./scripts/libkjx/lkm_idk/lkm-sample ./scripts/libkjx/lkm_idk/main.c
 
