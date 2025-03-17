@@ -101,3 +101,13 @@ artifacts/ocisnoop
 trace/exporter-libbpfgo/vmlinux.h
 
 deploy/oci_cri/podman/Dockerfile
+airflow/
+libguestfs/
+sample/
+quicktest/
+outro/
+ipc-tests/
+containers/
+
+# dropbear
+artifacts/dropbear/*

@@ -268,7 +268,7 @@ cp /app/dropbear/*  /app/ramdisk/bin/
 # create cpio tarball with busybox and dropbear
 chmod +x /app/ramdisk/init && \
     cd /app/ramdisk || return && \
-    find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../initramfs.cpio.gz && \
+    find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../rootfs-with-ssh.cpio.gz && \
     cd - || return
 
 EOF
@@ -276,7 +276,7 @@ EOF
 #FROM scratch as empty
 FROM alpine:3.20 as empty
 
-COPY --from=packer /app/initramfs.cpio.gz .
+COPY --from=packer /app/rootfs-with-ssh.cpio.gz .
 
 RUN echo "done!!!"
 

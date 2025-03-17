@@ -1,4 +1,4 @@
-name: dropbear initramfs
+name: add dropbear to the rootfs
 
 # This rule triggers when the workflow will run
 on:
@@ -34,7 +34,7 @@ jobs:
       - name: Retrieve artifact from docker image
         run: |
           docker run -it --name dropbear -d localhost:5000/dropbear:latest
-          docker cp initramfs:./initramfs.cpio.gz ${{ github.workspace }}/artifacts/initramfs-ssh.cpio.gz
+          docker cp dropbear:./rootfs-with-ssh.cpio.gz ${{ github.workspace }}/artifacts/rootfs-with-ssh.cpio.gz
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
@@ -42,4 +42,4 @@ jobs:
           name: initramfs
           # image size: 8.48MB
           # artifact size: 829.6K
-          path: ${{ github.workspace }}/artifacts/initramfs-ssh.cpio.gz
+          path: ${{ github.workspace }}/artifacts/rootfs-with-ssh.cpio.gz
