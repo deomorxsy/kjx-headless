@@ -84,6 +84,7 @@ make defconfig
 ./scripts/config --disable CONFIG_TEST_BPF
 
 # Enable the securityfs filesystem
+./scripts/config --enable CONFIG_SECURITY
 ./scripts/config --enable CONFIG_SECURITYFS
 
 # enable SELinux as LSM; PS: also mount the securityfs at boot
