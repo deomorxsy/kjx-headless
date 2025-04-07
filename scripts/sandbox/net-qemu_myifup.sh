@@ -1,10 +1,20 @@
-#!/bin/bash
+#!/bin/sh
 #
 # adapted from https://github.com/deomorxsy/eulab-poc/blob/main/scripts/qemu-myifup.sh
 #
 # allow all instead. virtbr0 is an arbitrary name for the virtual bridge
 #echo "allow vmbr0" | sudo tee "/etc/qemu/${USER}.conf"
 #echo "include /etc/qemu/${USER}.conf" | sudo tee --append "/etc/qemu/bridge.conf"
+
+fallin() {
+
+sudo /sbin/ip link add name vmbr0 type bridge
+sudo /sbin/ip link set enp4s0 master vmbr0
+sudo /sbin/ip addr add "192.168.0.20/24" dev vmbr0
+sudo /sbin/ip link set dev vmbr0 up
+
+
+}
 
 bridge() {
 
@@ -63,11 +73,11 @@ echo cap-myifup
 
 
 # Check the argument passed from the command line
-if [ "$1" == "bridge" ]; then
+if [ "$1" = "bridge" ]; then
     bridge
-elif [ "$1" == "clean_bridge" ]; then
+elif [ "$1" = "clean_bridge" ]; then
     clean_bridge
-elif [ "$1" == "clean_cap" ]; then
+elif [ "$1" = "clean_cap" ]; then
     clean_cap
 else
     echo "Invalid function name. Please specify one of: function1, function2, function3"
