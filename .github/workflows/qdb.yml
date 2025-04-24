@@ -1,4 +1,4 @@
-name: ssh-enabled-rootfs
+name: qemu distro builder
 
 # This rule triggers when the workflow will run
 on:
@@ -22,24 +22,16 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Build docker image
-        run: |
-          docker run -d -p 5000:5000 --name registry registry:2.7
-          # env git_hash env goes into the compose.yml
-          docker compose -f ./compose.yml --progress=plain build dropbear
-          docker push localhost:5000/dropbear:latest
-          #podman build -t initramfs:latest -f ./utils/busybox/Dockerfile
 
-
-      - name: Retrieve artifact from docker image
+      - name: build the rootfs for the qonq builder
         run: |
-          docker run -it --name dropbear -d localhost:5000/dropbear:latest
-          docker cp dropbear:./rootfs-with-ssh.cpio.gz ${{ github.workspace }}/artifacts/rootfs-with-ssh.cpio.gz
+          . ./scripts/qonq.sh -fq
+
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rootfs-with-ssh
+          name: qonq_ssh_rootfs
           # image size: 8.48MB
           # artifact size: 829.6K
-          path: ${{ github.workspace }}/artifacts/rootfs-with-ssh.cpio.gz
+          path: ${{ github.workspace }}/artifacts/ssh-rootfs/ssh-rootfs-revised.cpio_*.gz

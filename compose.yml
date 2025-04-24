@@ -83,6 +83,13 @@ services:
       cargo xtask build && \
       RUST_LOG=info cargo xtask run 2>&1 > /app/cargotest_results.txt
     stop_signal: SIGINT
+  builda_qemu:
+      build:
+        context: "."
+        dockerfile: "./Dockerfile"
+        tags:
+          - "localhost:5000/qemu_kjx:latest"
+      entrypoint: ["/bin/sh", "-c"]
   isogen_new:
     build:
       context: "."

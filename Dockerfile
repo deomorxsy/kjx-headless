@@ -1,18 +1,36 @@
+#
+# prepare the QEMU binaries
+# for the VM environment
+#
+
 # ==================
 # 1. Builder Step
 # ==================
 
 FROM alpine:3.20 as builder
 
+WORKDIR /app/
+
 RUN <<"EOF"
+
+# extract with -xJvf
+#qemuver="qemu-9.2.3.tar.xz"
+
+tarformat=".tar.bz2"
+# extract .tar.bz2 with xvf
+newver="qemu-9.2.3"
+oldver="qemu-9.1.0"
+
 apk upgrade && apk update && \
 apk add python3 musl-dev iasl \
     sparse xen-dev sphinx ninja git make bash fuse3-dev && \
-mkdir -p downloads && \
-cd downloads/ && \
-wget https://download.qemu.org/qemu-9.1.0.tar.bz2 && \
-tar -xvf qemu-9.1.0.tar.bz2 && \
-cd qemu-9.1.0/ && \
+
+mkdir -p downloads
+cd downloads/ || return
+wget https://download.qemu.org/"$newver.tar.bz2" && \
+tar -xvf "$newver.tar.bz2" && \
+cd "$newver"/ && printf "\n\n|> OK!! in dir!!\n"
+
 ./configure --disable-kvm \
     --enable-fuse \
     --target-list="x86_64-softmmu" \
@@ -20,16 +38,21 @@ cd qemu-9.1.0/ && \
     --localstatedir="/var" \
     --sysconfdir="/etc" \
     --disable-pa && \
-make -j$(nproc) && \
+make -j$(( $(nproc)-1 )) && \
 make install
+EOF
 
+RUN <<EOF
 # for each qemu program, get track of its dependent shared objects
 for f in /usr/bin/*; do
     case $f in
         /usr/bin/qemu*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >> /foo.txt ;;
     esac
 done
+EOF
 
+
+RUN <<EOF
 
 # ==== follow softlinks of the filepaths with readlink
 
@@ -82,6 +105,35 @@ RUN ls -allht
 RUN printf "\n===== Currently on /app directory ======\n\n"
 RUN chmod +x /app/scripts/squashed.sh
 RUN ls -allht
+
+
+
+
+
+FROM alpine:3.20 as final
+
+WORKDIR /app
+
+COPY --from=relay "/usr/bin/qemu*" /usr/bin/
+COPY --from=relay "/app/shared_deps/lib/*" /lib/
+COPY --from=relay "/app/shared_deps/usr/lib/*" /usr/lib/
+
+COPY --from=builder "/archive.tar.gz" /app/shared_deps/
+
+RUN <<EOF
+
+/usr/bin/qemu-storage-daemon -h
+
+EOF
+
+
+RUN <<EOF
+
+/usr/bin/qemu-system-x86_64 -h
+
+
+EOF
+
 
 # set command to be executed when the container starts
 ENTRYPOINT ["/bin/sh", "-c"]

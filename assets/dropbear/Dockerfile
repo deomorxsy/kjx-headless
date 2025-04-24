@@ -84,6 +84,19 @@ mount -t tmpfs      tmpfs       /tmp
 mount -t tracefs tracefs /sys/kernel/tracing/
 mount -t debugfs debugfs /sys/kernel/debug/
 mount -t securityfs securityfs /sys/kernel/security/
+
+# cgroupv1 config
+# mount cgroupfs to enable oci/cri based containers
+mount -t tmpfs cgroup_root /sys/fs/cgroup
+mkdir -p /sys/fs/cgroup/cpuset
+mount -t cgroup -ocpuset cpuset /sys/fs/cgroup/cpuset
+
+# set cgroupv2 config
+mount -t cgroup2 cgroup2 /sys/fs/cgroup
+echo "+cpu +memory -io" > /sys/fs/cgroup/cgroup.subtree_control
+
+cat c
+
 # INIT_EOF && \
 #
 #
@@ -99,22 +112,32 @@ echo "kjx" > /etc/hostname && hostname -F /etc/hostname
 # alternate method, built-in inside busybox
 #udhcpc -i eth0 # dynamic ipv4 assignment
 
+
+# now configure the default route for k3s
+ifconfig eth0 10.0.2.15
+route add default gw 10.0.2.2
+
+# mount -t cgroup2 cgroup2 /sys/fs/cgroup
+# echo "+cpu +memory -io" > /sys/fs/cgroup/cgroup.subtree_control
+# echo "+cpu +memory -io" | tee /sys/fs/cgroup/cgroup.subtree_control
+# k3s server —disable-agent —default-runtime=runsc &
+
 # ================================
 
 
-sysctl -w kernel.printk="2 4 1 7"
+sysctl -w kernel.printk="3 4 1 7"
 
 # sets up BRK keyboard
 #setxkbmap -model abnt2 -layout br -variant abnt2
 echo && echo
 
 # get rootfs UUID from kernel parameters on /proc/cmdline
-ROOTFS=$(cat /proc/cmdline | awk -F= 'NR==1 {print $4}' | awk '{print $1}')
-exec /bin/busybox switch_root -c /dev/console $ROOTFS /usr/bin/init
+# ROOTFS=$(cat /proc/cmdline | awk -F= 'NR==1 {print $4}' | awk '{print $1}')
+# exec /bin/busybox switch_root -c /dev/console $ROOTFS /usr/bin/init
 
-current_commit_hash = subprocess.run(["git", "rev-parse", "--short", "HEAD"], stdout=subprocess.PIPE, text=True)
-current_commit_hash = current_commit_hash.stdout.strip()
-print ("\033[93;1;4mCurrent Commit Hash    : " + current_commit_hash + "\033[0m")
+# current_commit_hash = subprocess.run(["git", "rev-parse", "--short", "HEAD"], stdout=subprocess.PIPE, text=True)
+# current_commit_hash = current_commit_hash.stdout.strip()
+# print ("\033[93;1;4mCurrent Commit Hash    : " + current_commit_hash + "\033[0m")
 
 cat << 'asciiart'
  .-"``"-.
@@ -141,6 +164,10 @@ printf "Boot took $(cut -d' ' -f1 /proc/uptime) seconds btw\n"
 
 # get a shell
 sh
+
+
+/bin/beetor
+
 INIT_EOF
 ) | tee ./init
 

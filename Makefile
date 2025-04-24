@@ -71,12 +71,18 @@ kernel:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build kernel
 
+bzImage:
+	. ./scripts/gen-bzimage.sh
+
 dropbear:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build dropbear
 	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
 
 
+builda_qemu:
+	. ./scripts/ccr.sh; checker; \
+	docker compose -f ./compose.yml --progress=plain build builda_qemu
 
 .PHONY: isogen
 isogen:
@@ -224,7 +230,7 @@ k8s:
 .PHONY: beetor
 beetor:
 	. ./scripts/ccr.sh; checker; \
-	docker run -d -p 5000:5000 --name registry registry:2.8.3
+	docker run -d -p 5000:5000 --name registry registry:3.0
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build beetor && \
 	docker compose images | grep beetor | awk '{ print $4 }' && \
