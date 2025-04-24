@@ -13,7 +13,6 @@ deb-src http://deb.debian.org/debian bookworm-updates main
 EOF
 
 # 2. build dependencies
-
 FROM debian-builder AS dependencies
 RUN <<"EOF"
 apt-get update
@@ -47,8 +46,8 @@ make defconfig
 #make kvmconfig removed after Linux 5.10
 
 # code coverage
-./scripts/config --enable CONFIG_DEBUG_FS=y
-./scripts/config --enable CONFIG_GCOV_KERNEL=y
+./scripts/config --enable CONFIG_DEBUG_FS
+./scripts/config --enable CONFIG_GCOV_KERNEL
 
 # set BTF parameters
 ./scripts/config --enable CONFIG_DEBUG_INFO_BTF
@@ -83,9 +82,99 @@ make defconfig
 ./scripts/config --enable CONFIG_BPF_KPROBE_OVERRIDE
 ./scripts/config --disable CONFIG_TEST_BPF
 
+# Enable modules support
+./scripts/config --enable CONFIG_MODULES
+
 # Enable the securityfs filesystem
 ./scripts/config --enable CONFIG_SECURITY
 ./scripts/config --enable CONFIG_SECURITYFS
+
+# enable cgroups support
+./scripts/config --enable CONFIG_CGROUPS
+./scripts/config --enable CONFIG_BLK_CGROUP
+./scripts/config --enable CONFIG_CGROUP_WRITEBACK
+./scripts/config --enable CONFIG_CGROUP_SCHED
+./scripts/config --enable CONFIG_CGROUP_PIDS
+./scripts/config --enable CONFIG_CGROUP_RDMA
+./scripts/config --enable CONFIG_CGROUP_FREEZER
+./scripts/config --enable CONFIG_CGROUP_HUGETLB
+./scripts/config --enable CONFIG_CGROUP_DEVICE
+./scripts/config --enable CONFIG_CGROUP_CPUACCT
+./scripts/config --enable CONFIG_CGROUP_PERF
+./scripts/config --enable CONFIG_CGROUP_BPF
+./scripts/config --enable CONFIG_CGROUP_MISC
+./scripts/config --enable CONFIG_SOCK_CGROUP_DATA
+./scripts/config --enable CONFIG_BLK_CGROUP_RWSTAT
+./scripts/config --enable CONFIG_BLK_CGROUP_PUNT_BIO
+./scripts/config --enable CONFIG_BLK_CGROUP_IOLATENCY
+./scripts/config --enable CONFIG_BLK_CGROUP_FC_APPID
+./scripts/config --enable CONFIG_BLK_CGROUP_IOCOST
+./scripts/config --enable CONFIG_BLK_CGROUP_IOPRIO
+./scripts/config --module CONFIG_NETFILTER_XT_MATCH_CGROUP
+./scripts/config --module CONFIG_NET_CLS_CGROUP
+./scripts/config --enable CONFIG_CGROUP_NET_PRIO
+./scripts/config --enable CONFIG_CGROUP_NET_CLASSID
+
+# trace support
+./scripts/config --enable CONFIG_TASKS_TRACE_RCU
+./scripts/config --enable CONFIG_SYSCTL_EXCEPTION_TRACE
+./scripts/config --enable CONFIG_TRACEPOINTS
+./scripts/config --enable CONFIG_STACKTRACE_SUPPORT
+./scripts/config --enable CONFIG_PM_TRACE
+./scripts/config --enable CONFIG_PM_TRACE_RTC
+./scripts/config --enable CONFIG_KPROBES_ON_FTRACE
+./scripts/config --enable CONFIG_HAVE_KPROBES_ON_FTRACE
+./scripts/config --enable CONFIG_ARCH_CORRECT_STACKTRACE_ON_KRETPROBE
+./scripts/config --enable CONFIG_TRACE_IRQFLAGS_SUPPORT
+./scripts/config --enable CONFIG_TRACE_IRQFLAGS_NMI_SUPPORT
+./scripts/config --enable CONFIG_HAVE_ARCH_TRACEHOOK
+./scripts/config --enable CONFIG_HAVE_RELIABLE_STACKTRACE
+./scripts/config --enable CONFIG_SCSI_IPR_TRACE
+./scripts/config --enable CONFIG_ATH5K_TRACER
+./scripts/config --enable CONFIG_STACKTRACE_BUILD_ID
+./scripts/config --enable CONFIG_STACKTRACE
+./scripts/config --enable CONFIG_USER_STACKTRACE_SUPPORT
+./scripts/config --enable CONFIG_NOP_TRACER
+./scripts/config --enable CONFIG_HAVE_FUNCTION_TRACER
+./scripts/config --enable CONFIG_HAVE_FUNCTION_GRAPH_TRACER
+./scripts/config --enable CONFIG_HAVE_DYNAMIC_FTRACE
+./scripts/config --enable CONFIG_HAVE_DYNAMIC_FTRACE_WITH_REGS
+./scripts/config --enable CONFIG_HAVE_DYNAMIC_FTRACE_WITH_DIRECT_CALLS
+./scripts/config --enable CONFIG_HAVE_DYNAMIC_FTRACE_WITH_ARGS
+./scripts/config --enable CONFIG_HAVE_DYNAMIC_FTRACE_NO_PATCHABLE
+./scripts/config --enable CONFIG_HAVE_FTRACE_MCOUNT_RECORD
+./scripts/config --enable CONFIG_HAVE_SYSCALL_TRACEPOINTS
+./scripts/config --enable CONFIG_TRACER_MAX_TRACE
+./scripts/config --enable CONFIG_TRACE_CLOCK
+./scripts/config --enable CONFIG_CONTEXT_SWITCH_TRACER
+./scripts/config --enable CONFIG_GENERIC_TRACER
+./scripts/config --enable CONFIG_FTRACE
+./scripts/config --enable CONFIG_FUNCTION_TRACER
+./scripts/config --enable CONFIG_FUNCTION_GRAPH_TRACER
+./scripts/config --enable CONFIG_DYNAMIC_FTRACE
+./scripts/config --enable CONFIG_DYNAMIC_FTRACE_WITH_REGS
+./scripts/config --enable CONFIG_DYNAMIC_FTRACE_WITH_DIRECT_CALLS
+./scripts/config --enable CONFIG_DYNAMIC_FTRACE_WITH_ARGS
+./scripts/config --enable CONFIG_STACK_TRACER
+./scripts/config --enable CONFIG_SCHED_TRACER
+./scripts/config --enable CONFIG_HWLAT_TRACER
+./scripts/config --enable CONFIG_OSNOISE_TRACER
+./scripts/config --enable CONFIG_TIMERLAT_TRACER
+./scripts/config --enable CONFIG_MMIOTRACE
+./scripts/config --enable CONFIG_FTRACE_SYSCALLS
+./scripts/config --enable CONFIG_TRACER_SNAPSHOT
+./scripts/config --enable CONFIG_BLK_DEV_IO_TRACE
+./scripts/config --enable CONFIG_FTRACE_MCOUNT_RECORD
+./scripts/config --enable CONFIG_FTRACE_MCOUNT_USE_CC
+./scripts/config --enable CONFIG_HAVE_SAMPLE_FTRACE_DIRECT
+./scripts/config --enable CONFIG_HAVE_SAMPLE_FTRACE_DIRECT_MULTI
+./scripts/config --enable CONFIG_HAVE_MMIOTRACE_SUPPORT
+./scripts/config --enable CONFIG_CC_HAS_SANCOV_TRACE_PC
+
+# ftrace modules
+./scripts/config --module CONFIG_STM_SOURCE_FTRACE
+./scripts/config --module CONFIG_NETFILTER_XT_TARGET_TRACE
+
 
 # enable SELinux as LSM; PS: also mount the securityfs at boot
 ./scripts/config --enable CONFIG_SECURITY_SELINUX
@@ -95,6 +184,89 @@ make defconfig
 # provide symbol table to debug startup
 ./scripts/config --enable CONFIG_DEBUG_INFO
 ./scripts/config --enable DEBUG_INFO
+
+
+# other security configs
+./scripts/config --enable CONFIG_HAVE_ARCH_SECCOMP
+./scripts/config --enable CONFIG_HAVE_ARCH_SECCOMP_FILTER
+./scripts/config --enable CONFIG_SECCOMP
+./scripts/config --enable CONFIG_SECCOMP_FILTER
+./scripts/config --enable CONFIG_SECRETMEM
+./scripts/config --enable CONFIG_NETWORK_SECMARK
+./scripts/config --enable CONFIG_NF_CONNTRACK_SECMARK
+./scripts/config --module CONFIG_NETFILTER_XT_TARGET_CONNSECMARK
+./scripts/config --module CONFIG_NETFILTER_XT_TARGET_SECMARK
+./scripts/config --module CONFIG_IP_NF_SECURITY
+./scripts/config --module CONFIG_IP6_NF_SECURITY
+./scripts/config --enable CONFIG_EFI_COCO_SECRET
+./scripts/config --enable CONFIG_MTD_SPI_NOR_USE_4K_SECTORS
+./scripts/config --enable CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
+./scripts/config --module CONFIG_MACSEC
+./scripts/config --module CONFIG_CHELSIO_IPSEC_INLINE
+./scripts/config --enable CONFIG_IXGBEVF_IPSEC
+./scripts/config --enable CONFIG_MLX5_MACSEC
+./scripts/config --enable CONFIG_MLX5_EN_IPSEC
+./scripts/config --enable CONFIG_NFP_NET_IPSEC
+./scripts/config --module CONFIG_CEC_SECO
+./scripts/config --enable CONFIG_CEC_SECO_RC
+./scripts/config --enable CONFIG_DRM_AMD_SECURE_DISPLAY
+./scripts/config --module CONFIG_EFI_SECRET
+./scripts/config --module CONFIG_INTEL_VSEC
+./scripts/config --module CONFIG_FPGA_M10_BMC_SEC_UPDATE
+./scripts/config --enable CONFIG_EXT4_FS_SECURITY
+./scripts/config --enable CONFIG_F2FS_FS_SECURITY
+./scripts/config --enable CONFIG_JFFS2_FS_SECURITY
+./scripts/config --enable CONFIG_UBIFS_FS_SECURITY
+./scripts/config --enable CONFIG_EROFS_FS_SECURITY
+./scripts/config --enable CONFIG_NFS_V4_SECURITY_LABEL
+./scripts/config --enable CONFIG_NFSD_V4_SECURITY_LABEL
+./scripts/config --module CONFIG_RPCSEC_GSS_KRB5
+./scripts/config --enable CONFIG_RPCSEC_GSS_KRB5_ENCTYPES_AES_SHA1
+./scripts/config --enable CONFIG_RPCSEC_GSS_KRB5_ENCTYPES_CAMELLIA
+./scripts/config --enable CONFIG_RPCSEC_GSS_KRB5_ENCTYPES_AES_SHA2
+./scripts/config --enable CONFIG_CEPH_FS_SECURITY_LABEL
+./scripts/config --enable CONFIG_CIFS_ALLOW_INSECURE_LEGACY
+./scripts/config --enable CONFIG_9P_FS_SECURITY
+./scripts/config --enable CONFIG_SECURITY_DMESG_RESTRICT
+./scripts/config --enable CONFIG_SECURITY
+./scripts/config --enable CONFIG_SECURITYFS
+./scripts/config --enable CONFIG_SECURITY_NETWORK
+./scripts/config --enable CONFIG_SECURITY_INFINIBAND
+./scripts/config --enable CONFIG_SECURITY_NETWORK_XFRM
+./scripts/config --enable CONFIG_SECURITY_PATH
+./scripts/config --enable CONFIG_SECURITY_SELINUX
+./scripts/config --enable CONFIG_SECURITY_SELINUX_BOOTPARAM
+./scripts/config --enable CONFIG_SECURITY_SELINUX_DEVELOP
+./scripts/config --enable CONFIG_SECURITY_SELINUX_AVC_STATS
+./scripts/config --set-val CONFIG_SECURITY_SELINUX_SIDTAB_HASH_BITS 9
+./scripts/config --set-val CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE 256
+./scripts/config --enable CONFIG_SECURITY_SMACK
+./scripts/config --enable CONFIG_SECURITY_SMACK_BRINGUP
+./scripts/config --enable CONFIG_SECURITY_SMACK_NETFILTER
+./scripts/config --enable CONFIG_SECURITY_SMACK_APPEND_SIGNALS
+./scripts/config --enable CONFIG_SECURITY_TOMOYO
+./scripts/config --set-val CONFIG_SECURITY_TOMOYO_MAX_ACCEPT_ENTRY 2048
+./scripts/config --set-val CONFIG_SECURITY_TOMOYO_MAX_AUDIT_LOG 1024
+./scripts/config --set-str CONFIG_SECURITY_TOMOYO_POLICY_LOADER "/usr/bin/tomoyo-init"
+./scripts/config --set-str CONFIG_SECURITY_TOMOYO_ACTIVATION_TRIGGER "/usr/lib/systemd/systemd"
+./scripts/config --enable CONFIG_SECURITY_APPARMOR
+./scripts/config --enable CONFIG_SECURITY_APPARMOR_INTROSPECT_POLICY
+./scripts/config --enable CONFIG_SECURITY_APPARMOR_HASH
+./scripts/config --enable CONFIG_SECURITY_APPARMOR_HASH_DEFAULT
+./scripts/config --enable CONFIG_SECURITY_APPARMOR_EXPORT_BINARY
+./scripts/config --enable CONFIG_SECURITY_APPARMOR_PARANOID_LOAD
+./scripts/config --enable CONFIG_SECURITY_LOADPIN
+./scripts/config --enable CONFIG_SECURITY_LOADPIN_ENFORCE
+./scripts/config --enable CONFIG_SECURITY_YAMA
+./scripts/config --enable CONFIG_SECURITY_SAFESETID
+./scripts/config --enable CONFIG_SECURITY_LOCKDOWN_LSM
+./scripts/config --enable CONFIG_SECURITY_LANDLOCK
+./scripts/config --enable CONFIG_SECURITY_IPE
+./scripts/config --enable CONFIG_IPE_POLICY_SIG_SECONDARY_KEYRING
+./scripts/config --enable CONFIG_DEFAULT_SECURITY_DAC
+./scripts/config --enable CONFIG_SECONDARY_TRUSTED_KEYRING
+./scripts/config --enable CONFIG_SECTION_MISMATCH_WARN_ONLY
+
 
 # final make commands
 make kvm_guest.config

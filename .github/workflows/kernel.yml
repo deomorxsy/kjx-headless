@@ -4,13 +4,24 @@ name: bzImage
 on:
   # run the workflow manually from Actions tab
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      config-path:
+        required: true
+        type: string
+    secrets:
+      personal_access_token:
+        required: true
+
+env:
+  GITHUB_TOKEN: ${{ secrets.FETCH_ARTIFACT }}
 
 # jobs can run in sequence or parallel in a workflow
 jobs:
   reusable_workflow_job:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v4
+      - uses: actions/labeler@v5
         with:
           repo-token: ${{ secrets.personal_access_token }}
           configuration-path: ${{ inputs.config-path }}
