@@ -2,10 +2,10 @@ name: libbpfgo
 
 # This rule triggers when the workflow will run
 on:
-  push:
-    branches:
-      - 'main'
-      - 'releases/**'
+  #push:
+  #  branches:
+  #    - 'main'
+  #    - 'releases/**'
   # run the workflow manually from Actions tab
   workflow_dispatch:
 
