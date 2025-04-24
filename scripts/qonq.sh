@@ -160,12 +160,8 @@ END
 
 
 # Check the argument passed from the command line
-elif [ "$1" = "-fq" ] || [ "$1" = "--finalqemu" ] || [ "$1" = "finalqemu" ] ; then
+if [ "$1" = "-fq" ] || [ "$1" = "--finalqemu" ] || [ "$1" = "finalqemu" ] ; then
     replace
-elif [ "$1" = "dropbear" ] || [ "$1" = "-d" ] || [ "$1" = "--dropbear" ] ; then
-    dropbear
-elif [ "$1" = "kjx" ]; then
-    kjx
 elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     print_usage
 elif [ "$1" = "debug" ]; then
