@@ -1,0 +1,19 @@
+automation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+
+tracing:
+  - changed-files:
+      - any-glob-to-any-file:
+          - trace/**
+
+scripts:
+  - changed-files:
+      - any-glob-to-any-file:
+          - scripts/**
+
+deploy:
+  - changed-files:
+    - any-glob-to-any-file:
+        - deploy/**
