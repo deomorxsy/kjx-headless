@@ -3,6 +3,8 @@
 
 [![initramfs](https://github.com/deomorxsy/kjx-headless/actions/workflows/initramfs.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/initramfs.yml)
 [![bzImage](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel.yml)
+[![dropbear](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml)
+[![qemu-builder](https://github.com/deomorxsy/kjx-headless/actions/workflows/qdb.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/qdb.yml)
 [![iso9660](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml)
 [![libbpf-core](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml)
 [![cronaws](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml)
@@ -11,7 +13,6 @@
 [![ayaya](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml)
 [![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml)
 [![ocaml-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml)
-[![dropbear](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml)
 
 Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 

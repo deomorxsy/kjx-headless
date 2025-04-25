@@ -13,7 +13,7 @@ sec_sed="./scripts/rep-secrets.sed"
 
 if [ -f "$sec_sed" ]; then
 
-sed -f="$sec_sed" < "./scripts/qonq.sh" > ./artifacts/replaSED-qonq.sh && \
+sed -f "$sec_sed" < "./scripts/qonq.sh" > ./artifacts/replaSED-qonq.sh && \
     envsubst < ./artifacts/replaSED-qonq.sh > ./artifacts/unsealed-qonq.sh
 
 printf "\n|> Replacement shellscript created. Running it now...\n\n"
@@ -42,18 +42,18 @@ fi
 # the ccr script should be called before this function
 final_qemu() {
 
-QEMU_KJX_LINKED=$(docker ps | grep qemu_kjx | awk {'print $1'})
-
+. ./scripts/ccr.sh; checker && \
 
 if [ "$QEMU_KJX_LINKED" = "" ]; then
     printf "\n|> did not found the qemu_kjx image. Building it now...\n\n"
     bqm
+    QEMU_KJX_LINKED=$(docker ps | grep qemu_kjx | awk {'print $1'})
 else
     printf "\n|> found qemu_kjx image. Preparing...\n\n"
 
-fi
+fi && \
 
-mkdir -p ./newart/qemu-bins/
+mkdir -p ./newart/qemu-bins/ && \
 
 # get the linkage tarball
 docker cp "$QEMU_KJX_LINKED":/app/shared_deps/archive.tar.gz ./newart/
@@ -114,8 +114,8 @@ rm -rf "./artifacts/ssh-rootfs/fakerootdir/*" && \
 gzip -cd ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz | cpio -idmv -D ./artifacts/ssh-rootfs/fakerootdir/
 
 # setup dropbear keypair
-ssh-keygen -t ed25519 -C "dropbear" -f ./artifacts/ssh-keys/kjx-keys -N ""
-cat ./artifacts/ssh-keys/kjx-keys.pub >> ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/authorized_keys
+ssh-keygen -t ed25519 -C "dropbear" -f ./artifacts/ssh-keys/kjx-keypair -N ""
+cat ./artifacts/ssh-keys/kjx-keypair.pub >> ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/authorized_keys
 
 # enter dir just to run find
 cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
@@ -125,6 +125,9 @@ cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
 ROOTFS_SEMVER=0.3.1
 # create revised cpio.gz rootfs tarball
 find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../ssh-rootfs-revised.cpio_"$ROOTFS_SEMVER".gz && \
+
+cd - || return && \
+
 echo done!!
 }
 
@@ -140,17 +143,15 @@ ssh-keygen -t ed25519 -f ~/.ssh/qemu_vm_key -N ""
 print_usage() {
 cat <<-END >&2
 USAGE: run-qemu [-options]
-                - thirdver
-                - dropbear
+                - fq
                 - debug
                 - help
                 - version
 eg,
-run-qemu -thirdver   # runs qemu pointing to a custom initramfs and kernel bzImage
-run-qemu -dropbear  # runs qemu enabled with ssh for quick file copying between target vm and host
-run-qemu -debug # the same of thirdver but with serial and pty flags for kernel debug
-run-qemu -help    # shows this help message
-run-qemu -version # shows script version
+run-qemu -fq        # final qemu
+run-qemu -debug     # the same of thirdver but with serial and pty flags for kernel debug
+run-qemu -help      # shows this help message
+run-qemu -version   # shows script version
 
 See the man page and example file for more info.
 
