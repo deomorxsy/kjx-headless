@@ -42,16 +42,19 @@ fi
 # the ccr script should be called before this function
 final_qemu() {
 
+printf "\n|> Building qemu_kjx image..."
+
 . ./scripts/ccr.sh; checker && \
 
-if [ "$QEMU_KJX_LINKED" = "" ]; then
-    printf "\n|> did not found the qemu_kjx image. Building it now...\n\n"
-    bqm
-    QEMU_KJX_LINKED=$(docker ps | grep qemu_kjx | awk {'print $1'})
-else
-    printf "\n|> found qemu_kjx image. Preparing...\n\n"
+#if [ "$QEMU_KJX_LINKED" = "" ]; then
+#    printf "\n|> did not found the qemu_kjx image. Building it now...\n\n"
 
-fi && \
+bqm
+QEMU_KJX_LINKED=$(docker ps | grep qemu_kjx | awk {'print $1'})
+#else
+#    printf "\n|> found qemu_kjx image. Preparing...\n\n"
+
+#fi && \
 
 mkdir -p ./newart/qemu-bins/ && \
 
@@ -69,14 +72,17 @@ docker cp "$QEMU_KJX_LINKED":/usr/bin/qemu-storage-daemon ./newart/qemu-bins/
 docker cp "$QEMU_KJX_LINKED":/usr/bin/qemu-system-x86_64 ./newart/qemu-bins/
 docker cp "$QEMU_KJX_LINKED":/usr/bin/qemu-vmsr-helper ./newart/qemu-bins/
 
-tar -xvf /app/shared_deps/archive.tar.gz
+#tar -xvf /app/shared_deps/archive.tar.gz
+cd ./newart || return
+tar -xvf ./archive.tar.gz
+cd - || return
 
 
-
-
+# The action will fetch this from the actions secret environment variable
 PAT_KJX_ARTIFACT=${{ secrets.FETCH_ARTIFACT }}
 
-CUSTOM_ROOTFS_BUILDER=$(curl -H "Authorization: token $PAT_KJX_ARTIFACT" https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts | jq -C -r '.artifacts[] | select(.name == "ssh-enabled-rootfs") | .archive_download_url' | awk 'NR==1 {print $1}')
+# from ssh-enabled-rootfs to rootfs-with-ssh
+CUSTOM_ROOTFS_BUILDER=$(curl -H "Authorization: token $PAT_KJX_ARTIFACT" https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts | jq -C -r '.artifacts[] | select(.name == "rootfs-with-ssh") | .archive_download_url' | awk 'NR==1 {print $1}')
 
 
 # run container image with curl that gets it
@@ -84,7 +90,7 @@ CUSTOM_ROOTFS_BUILDER=$(curl -H "Authorization: token $PAT_KJX_ARTIFACT" https:/
 # get container ID
 BASECONT=$(docker run -it -d alpine:3.20 /bin/sh)
 
-docker exec -it "$BASECONT" sh -c "apk upgrade && apk update && apk add curl jq && curl -L -H \"Authorization: token $PAT_KJX_ARTIFACT\" -o rootfs-ssh.zip $CUSTOM_ROOTFS_BUILDER"
+docker exec -it "$BASECONT" sh -c "apk upgrade && apk update && apk add curl jq && curl -L -H \"Authorization: token $PAT_KJX_ARTIFACT\" -o rootfs-ssh-final.zip $CUSTOM_ROOTFS_BUILDER"
 
 #
 DBSSH_PATH="./artifacts/ssh-rootfs"
@@ -92,30 +98,41 @@ DBSSH_FAKEROOTDIR="$DBSSH_PATH/fakerootdir"
 
 # cleanup 1
 rm -rf "./artifacts/ssh-rootfs/*"
-mkdir -p "$DBSSH_PATH"
+mkdir -p "./artifacts/ssh-rootfs/"
 
 # cleanup 2
 rm -rf "./artifacts/ssh-rootfs/fakerootdir/*"
-mkdir -p "$DBSSH_FAKEROOTDIR"
+mkdir -p "./artifacts/ssh-rootfs/fakerootdir/"
 
 #now copy the artifact outside and then come back to the function
-docker cp "$BASECONT":rootfs-with-ssh.zip "$DBSSH_PATH"
+docker cp "$BASECONT":rootfs-ssh-final.zip "$DBSSH_PATH"
 
 # stop and remove the container
 docker stop "$BASECONT"
 docker rm "$BASECONT" --force
 
-
+cd "$DBSSH_PATH" || return
+unzip ./rootfs-with-ssh.zip
+cd - || return
 
 # clean the rootfs tree if it exists
-rm -rf "./artifacts/ssh-rootfs/fakerootdir/*" && \
+#rm -rf "./artifacts/ssh-rootfs/fakerootdir/*" && \
 
 # decompress gunzip and then cpio to the specified path
 gzip -cd ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz | cpio -idmv -D ./artifacts/ssh-rootfs/fakerootdir/
 
+
 # setup dropbear keypair
+mkdir -p ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/
+
 ssh-keygen -t ed25519 -C "dropbear" -f ./artifacts/ssh-keys/kjx-keypair -N ""
 cat ./artifacts/ssh-keys/kjx-keypair.pub >> ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/authorized_keys
+
+# setup qemu binaries
+cp ./newart/lib/* ./artifacts/ssh-rootfs/lib/
+cp ./newart/usr/* ./artifacts/ssh-rootfs/usr/
+cp ./newart/qemu-bins/* ./artifacts/ssh-rootfs/bin/
+
 
 # enter dir just to run find
 cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
@@ -125,10 +142,9 @@ cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
 ROOTFS_SEMVER=0.3.1
 # create revised cpio.gz rootfs tarball
 find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../ssh-rootfs-revised.cpio_"$ROOTFS_SEMVER".gz && \
+    cd - || return && \
 
-cd - || return && \
-
-echo done!!
+printf "\n|> done!! Exiting now...\n\n"
 }
 
 
