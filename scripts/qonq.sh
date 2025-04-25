@@ -73,10 +73,11 @@ tar -xvf /app/shared_deps/archive.tar.gz
 
 
 
-
+# The action will fetch this from the actions secret environment variable
 PAT_KJX_ARTIFACT=${{ secrets.FETCH_ARTIFACT }}
 
-CUSTOM_ROOTFS_BUILDER=$(curl -H "Authorization: token $PAT_KJX_ARTIFACT" https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts | jq -C -r '.artifacts[] | select(.name == "ssh-enabled-rootfs") | .archive_download_url' | awk 'NR==1 {print $1}')
+# from ssh-enabled-rootfs to rootfs-with-ssh
+CUSTOM_ROOTFS_BUILDER=$(curl -H "Authorization: token $PAT_KJX_ARTIFACT" https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts | jq -C -r '.artifacts[] | select(.name == "rootfs-with-ssh") | .archive_download_url' | awk 'NR==1 {print $1}')
 
 
 # run container image with curl that gets it
@@ -105,13 +106,18 @@ docker cp "$BASECONT":rootfs-with-ssh.zip "$DBSSH_PATH"
 docker stop "$BASECONT"
 docker rm "$BASECONT" --force
 
-
+cd "$DBSSH_PATH" || return
+unzip ./rootfs-with-ssh.zip
+cd - || return
 
 # clean the rootfs tree if it exists
-rm -rf "./artifacts/ssh-rootfs/fakerootdir/*" && \
+#rm -rf "./artifacts/ssh-rootfs/fakerootdir/*" && \
 
 # decompress gunzip and then cpio to the specified path
 gzip -cd ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz | cpio -idmv -D ./artifacts/ssh-rootfs/fakerootdir/
+
+
+mkdir -p ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/
 
 # setup dropbear keypair
 ssh-keygen -t ed25519 -C "dropbear" -f ./artifacts/ssh-keys/kjx-keypair -N ""
@@ -125,10 +131,9 @@ cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
 ROOTFS_SEMVER=0.3.1
 # create revised cpio.gz rootfs tarball
 find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../ssh-rootfs-revised.cpio_"$ROOTFS_SEMVER".gz && \
+    cd - || return && \
 
-cd - || return && \
-
-echo done!!
+printf "\n|> done!! Exiting now...\n\n"
 }
 
 
