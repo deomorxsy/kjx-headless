@@ -11,7 +11,7 @@ replace() {
 
 sec_sed="./scripts/rep-secrets.sed"
 
-if [ -f "$sec_sed" ] && [ -f ./artifacts/sso.sh ]; then
+if [ -f "$sec_sed" ]; then
 
 sed -f="$sec_sed" < "./scripts/qonq.sh" > ./artifacts/replaSED-qonq.sh && \
     envsubst < ./artifacts/replaSED-qonq.sh > ./artifacts/unsealed-qonq.sh
