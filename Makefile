@@ -291,3 +291,8 @@ clean_lkm:
 lkmkjx:
 	gcc -Wl --no-as-needed -lcap -o ./scripts/libkjx/lkm_idk/lkm-sample ./scripts/libkjx/lkm_idk/main.c
 
+# ==========
+#
+.PHONY: ayaya
+ayaya:
+	. ./scripts/ayabuild.sh

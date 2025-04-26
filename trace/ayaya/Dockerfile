@@ -66,7 +66,7 @@ FROM alpine:3.20 as relay
 
 WORKDIR /app
 
-COPY --from-builder=/app/cargotest_results.txt /app/
+COPY --from=builder /app/cargotest_results.txt /app/
 
 # set command to be executed when the container starts
 ENTRYPOINT ["/bin/sh", "-c"]

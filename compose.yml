@@ -9,8 +9,8 @@ services:
     environment:
       - git_hash
     build:
-      context: "."
-      dockerfile: "./trace/libbpf-core/Dockerfile"
+      context: "./trace/libbpf-core/"
+      dockerfile: "./Dockerfile"
       tags:
         - "localhost:5000/libbpf-core:latest"
     entrypoint: ["/bin/sh", "-c"]
@@ -35,53 +35,13 @@ services:
       - APPLICATION_USER=${APPLICATION_USER:-appuser}
       - APPLICATION_UID=${APPLICATION_UID:-1000}
     build:
-      context: "."
-      dockerfile: "./trace/ayaya/Dockerfile"
+      context: "./trace/ayaya"
+      dockerfile: "./Dockerfile"
       tags:
         - "localhost:5000/export_bee:latest"
     entrypoint: ["/bin/sh", "-c"]
-    command: |
-      set -eux;
-      # ========== set user permissions
-      mkdir -p /app ${CARGO_HOME} ${RUSTUP_HOME}
-      adduser -u ${APPLICATION_UID} -D -s /bin/sh ${APPLICATION_USER}
-      cat > /home/${APPLICATION_USER}/.profile <<EOF
-      export RUSTUP_HOME=/usr/local/rustup
-      export CARGO_HOME=/usr/local/cargo
-      export PATH=/usr/local/cargo/bin:\$PATH
-      export RUST_VERSION=1.82.0
-      EOF
-      chown -R ${APPLICATION_USER}:${APPLICATION_USER} /home/${APPLICATION_USER}/.profile
-      chown -R "${APPLICATION_USER}":"${APPLICATION_USER}" "${RUSTUP_HOME}"
-      chown -R "${APPLICATION_USER}":"${APPLICATION_USER}" "${CARGO_HOME}"
-      chown -R "${APPLICATION_USER}":"${APPLICATION_USER}" "/app"
-      # =========== install required packages
-      apk upgrade && apk update
-      apk add gcc musl-dev
-      su - ${APPLICATION_USER} -c 'printf "\nNow running as ${APPLICATION_USER}."\n\n'
-      # =========== setup rustup, rustc and cargo
-      apkArch="$(apk --print-arch)";
-      case "$apkArch" in
-          x86_64) rustArch='x86_64-unknown-linux-musl'; rustupSha256='1455d1df3825c5f24ba06d9dd1c7052908272a2cae9aa749ea49d67acbe22b47' ;;
-          aarch64) rustArch='aarch64-unknown-linux-musl'; rustupSha256='7087ada906cd27a00c8e0323401a46804a03a742bd07811da6dead016617cc64' ;;
-          *) echo >&2 "unsupported architecture: $apkArch"; exit 1 ;;
-      esac;
-      url="https://static.rust-lang.org/rustup/archive/1.27.1/$rustArch/rustup-init";
-      wget "$url";
-      echo "$rustupSha256 ./rustup-init" | sha256sum -c -;
-      chmod +x ./rustup-init
-      ./rustup-init -y --no-modify-path --profile minimal --default-toolchain ${RUST_VERSION} --default-host $rustArch;
-      chmod -R a+w ${RUSTUP_HOME} ${CARGO_HOME};
-      rustup --version;
-      cargo --version;
-      rustc --version;
-      rustup toolchain install stable && \
-      rustup toolchain install nightly --component rust-src && \
-      cargo install bpf-linker && \
-      cargo xtask build-ebpf && \
-      cargo build && \
-      cargo xtask build && \
-      RUST_LOG=info cargo xtask run 2>&1 > /app/cargotest_results.txt
+    command: "echo hmm"
+
     stop_signal: SIGINT
   builda_qemu:
       build:

@@ -173,7 +173,7 @@ EOF
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
-  name: runc
+  name: runc
 handler: runc
 ---
 apiVersion: node.k8s.io/v1
@@ -197,19 +197,19 @@ handler: kata
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
-  name: youki
+  name: youki
 handler: youki
 ---
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
-  name: wasmtime
+  name: wasmtime
 handler: wasmtime
 ---
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
-  name: wasmedge
+  name: wasmedge
 handler: wasmedge
 EOF
 ) | ./k3s kubectl apply -f -
@@ -301,3 +301,4 @@ else
     echo "Invalid function name. Please specify one of: function1, function2, function3"
     print_usage
 fi
+
