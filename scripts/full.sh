@@ -349,7 +349,8 @@ chmod +x "$rootfs_path/etc/runit/runsvdir/default/getty-tty1/run"
 
 # ============================
 
-RUN cat > ./rootfs/etc/runit/1 <<"INIT_EOF"
+# RUN
+cat > ./rootfs/etc/runit/1 <<"INIT_EOF"
 #!/bin/busybox sh
 
 # redo mount filesystems
@@ -357,6 +358,11 @@ mount -t devtmpfs   devtmpfs    /dev
 mount -t proc       none        /proc
 mount -t sysfs      none       /sys
 mount -t tmpfs      tmpfs       /tmp
+
+# mount cgroup2
+mount -t cgroup2 cgroup2 /sys/fs/cgroup
+
+
 
 # redo mount tracefs and securityfs pseudo-filesystems
 mount -t tracefs tracefs /sys/kernel/tracing/
@@ -376,6 +382,10 @@ echo "kjx" > /etc/hostname && hostname -F /etc/hostname
 
 # redo alternate method, built-in inside busybox
 #udhcpc -i eth0 # dynamic ipv4 assignment
+
+# fix network
+ifconfig eth0 10.0.2.15
+route add default gw 10.0.2.2
 
 # ================================
 
@@ -412,7 +422,8 @@ printf "System config: $(uname -a) \n"
 exec /bin/busybox runsvdir /etc/runit/runsvdir/default
 
 # load early bpf program
-/bin/runqlat
+# /bin/runqlat
+/bin/beetor
 
 INIT_EOF
 

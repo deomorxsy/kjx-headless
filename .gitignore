@@ -112,3 +112,20 @@ containers/
 
 # dropbear
 artifacts/dropbear/*
+
+# qonq
+artifacts/replaSED-qonq.sh
+artifacts/ssh-keys/*
+artifacts/ssh-rootfs/*
+artifacts/unsealed-qonq.sh
+
+# bpftrace
+capable.bt
+
+# ftrace
+trace/Ftrace/ftrace.sample.out
+
+# assets
+assets/curl/
+assets/runit/
+newart/
