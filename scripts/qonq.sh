@@ -128,8 +128,6 @@ CUSTOM_ROOTFS_BUILDER=$(curl -H "Authorization: token $PAT_KJX_ARTIFACT" https:/
 BASECONT=$(docker run -it -d alpine:3.20 /bin/sh)
 
 
-printf "\n|> The token is: %s\n\n" "$PAT_KJX_ARTIFACT"
-
 docker exec -it "$BASECONT" sh -c "apk upgrade && apk update && apk add curl jq && curl -L -H \"Authorization: token $PAT_KJX_ARTIFACT\" -o rootfs-tarball.zip $CUSTOM_ROOTFS_BUILDER"
 
 #
@@ -144,8 +142,12 @@ mkdir -p "./artifacts/ssh-rootfs/"
 rm -rf "./artifacts/ssh-rootfs/fakerootdir/*"
 mkdir -p "./artifacts/ssh-rootfs/fakerootdir/"
 
+# cleanup 3
+rm ./artifacts/ssh-rootfs/rootfs-tarball.zip
+
 #now copy the artifact outside and then come back to the function
-docker cp "$BASECONT":rootfs-tarball.zip "$DBSSH_PATH"
+#docker cp "$BASECONT":rootfs-tarball.zip "$DBSSH_PATH"
+docker cp "$BASECONT":rootfs-tarball.zip ./artifacts/ssh-rootfs/rootfs-tarball.zip
 
 # stop and remove the container
 docker stop "$BASECONT"
@@ -155,11 +157,11 @@ docker rm "$BASECONT" --force
 # check if the decompressed rootfs cpio.gz already exists to avoid unzip dialog
 if [ -f ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz ]; then
     rm ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz
-    rm ./artifacts/ssh-rootfs/rootfs-tarball.zip
 fi
 
 # unzip the zip tarball containin the cpio.gz
-cd "$DBSSH_PATH" || return
+# cd "$DBSSH_PATH" || return
+cd ./artifacts/ssh-rootfs/ || return
 unzip ./rootfs-tarball.zip
 cd - || return
 
@@ -173,10 +175,15 @@ gzip -cd ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz | cpio -idmv -D ./artifa
 # setup dropbear keypair
 mkdir -p ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/
 
-# check if keypair already exists to avoid dialog
+
+# make sure the directory exists and keypair
+# already exists (locally) to avoid dialog
+mkdir -p ./artifacts/ssh-keys
+
 if [ -f ./artifacts/ssh-keys/kjx-keypair ]; then
     rm ./artifacts/ssh-keys/kjx-keypair
 fi
+
 
 ssh-keygen -t ed25519 -C "dropbear" -f ./artifacts/ssh-keys/kjx-keypair -N ""
 
@@ -197,7 +204,7 @@ cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
 ROOTFS_SEMVER=0.3.2
 
 # create revised cpio.gz rootfs tarball
-find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../ssh-rootfs-revised.cpio_"$ROOTFS_SEMVER".gz && \
+find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../ssh-rootfs-revised_"$ROOTFS_SEMVER".cpio.gz && \
     cd - || return && \
 
 printf "\n|> done!! Exiting now...\n\n"
