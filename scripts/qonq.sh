@@ -14,7 +14,7 @@ sec_sed="./scripts/rep-secrets.sed"
 
 
 # if [ -f "$sec_sed" ] &&
-if [ "$GITHUB_ACTIONS" = "true" ] && [ "$DUMMYABABABABA" = "sjadisaoida" ]; then
+if [ "$GITHUB_ACTIONS" = "true" ]; then
 
 #sed -f "$sec_sed" < "./scripts/qonq.sh" > ./artifacts/replaSED-qonq.sh && \
 #    envsubst < ./artifacts/replaSED-qonq.sh > ./artifacts/unsealed-qonq.sh
