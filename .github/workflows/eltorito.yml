@@ -34,7 +34,7 @@ jobs:
         run: |
           docker run -it --name eltorito -d localhost:5000/eltorito:latest
           mkdir -p ${{ github.workspace }}/artifacts/bootloader/
-          docker cp eltorito:/app/eltorito.img/ ${{ github.workspace }}/artifacts/bootloader/
+          docker cp eltorito:/app/eltorito.img ${{ github.workspace }}/artifacts/bootloader/
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
