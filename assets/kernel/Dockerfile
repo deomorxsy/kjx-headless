@@ -268,6 +268,14 @@ make defconfig
 ./scripts/config --enable CONFIG_SECTION_MISMATCH_WARN_ONLY
 
 
+# enable squashfs support
+./scripts/config --enable CONFIG_SQUASHFS
+./scripts/config --enable CONFIG_SQUASHFS_ZLIB
+./scripts/config --enable CONFIG_SQUASHFS_LZ4
+./scripts/config --enable CONFIG_SQUASHFS_LZO
+./scripts/config --enable CONFIG_SQUASHFS_XZ
+./scripts/config --enable CONFIG_SQUASHFS_4K_DEVBLK_SIZE
+
 # final make commands
 make kvm_guest.config
 echo "kvm_guest.config done"
