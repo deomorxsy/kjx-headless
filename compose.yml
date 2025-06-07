@@ -131,6 +131,17 @@ services:
       tags:
         - "localhost:5000/dropbear:latest"
     stop_signal: SIGINT
+  grub:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./assets/grub/Dockerfile"
+      args:
+        GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
+      tags:
+        - "localhost:5000/eltorito:latest"
+    stop_signal: SIGINT
   kernel:
     build:
       context: "./assets/kernel/"
