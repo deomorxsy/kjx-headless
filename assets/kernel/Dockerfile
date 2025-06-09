@@ -89,6 +89,11 @@ make defconfig
 ./scripts/config --enable CONFIG_SECURITY
 ./scripts/config --enable CONFIG_SECURITYFS
 
+# to be able to append to /sys/fs/cgroup/cgroup.subtree_control,
+# you need a kernel with the memory controller available.
+./scripts/config --enable CONFIG_MEMCG
+./scripts/config --enable CONFIG_MEMCG_KMEM
+
 # enable cgroups support
 ./scripts/config --enable CONFIG_CGROUPS
 ./scripts/config --enable CONFIG_BLK_CGROUP
