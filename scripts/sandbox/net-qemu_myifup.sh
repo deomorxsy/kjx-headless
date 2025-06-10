@@ -8,10 +8,31 @@
 
 fallin() {
 
-sudo /sbin/ip link add name vmbr0 type bridge
-sudo /sbin/ip link set enp4s0 master vmbr0
-sudo /sbin/ip addr add "192.168.0.20/24" dev vmbr0
-sudo /sbin/ip link set dev vmbr0 up
+# sudo /sbin/ip link add name vmbr0 type bridge
+# sudo /sbin/ip link set enp4s0 master vmbr0
+# sudo /sbin/ip addr add "192.168.0.20/24" dev vmbr0
+# sudo /sbin/ip link set dev vmbr0 up
+
+# create te network bridge
+sudo ip link add name vmbr0 type bridge
+
+# set NIC as master of the bridge
+sudo ip link set enp4s0 master vmbr0
+
+# remove all addresses from an interface
+sudo ip addr flush dev enp4s0
+
+# add an address to an interface
+sudo ip addr add 192.168.0.20/24 dev vmbr0
+
+# bring a network interface link up
+sudo ip link set enp4s0 up
+
+# bring a bridge link up
+sudo ip link set vmbr0 up
+
+# add default route to the routing table
+sudo ip route add default via 192.168.0.1
 
 
 }
@@ -61,6 +82,38 @@ printf "\n=========\nCleaning bridge...\n============\n"
 echo bridge-myifup
 }
 
+clean_fallin() {
+
+    printf "\n=========\nCleaning up bridge...\n============\n"
+
+    # Bring down vmbr0
+    sudo ip link set dev vmbr0 down
+
+    # Remove IP from bridge
+    sudo ip addr del 192.168.0.20/24 dev vmbr0
+
+    # Detach physical interface from bridge
+    sudo ip link set enp4s0 nomaster
+
+    # Bring down the bridge interface (already down, but safe)
+    sudo ip link set vmbr0 down
+
+    # Delete the bridge
+    sudo ip link delete vmbr0 type bridge
+
+    # Restore IP directly to physical NIC
+    sudo ip addr add 192.168.0.20/24 dev enp4s0
+
+    # Bring NIC up
+    sudo ip link set enp4s0 up
+
+    # Restore default route via your real router (adjust as needed)
+    sudo ip route add default via 192.168.0.1
+
+    printf "\n=========\nBridge removed. Network restored to direct mode.\n============\n"
+
+}
+
 clean_cap() {
 # cleanup capabilities
 printf "\n\n=====\n[clean_cap()] sudo setcap permission:\n"
@@ -75,10 +128,12 @@ echo cap-myifup
 # Check the argument passed from the command line
 if [ "$1" = "bridge" ]; then
     bridge
+elif [ "$1" = "fallin" ]; then
+    fallin
 elif [ "$1" = "clean_bridge" ]; then
     clean_bridge
 elif [ "$1" = "clean_cap" ]; then
     clean_cap
 else
-    echo "Invalid function name. Please specify one of: function1, function2, function3"
+    printf "\n|> Invalid function name. Please specify one of: function1, function2, function3\n"
 fi

@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# builds the project and fetch binaries for
+# qemu-storage-daemon on qemu automation for the builder
+#
+# PS: also other binaries for early manual testing
+# shared objects come from the tarball artifact from
+# either ./assets/initramfs/Dockerfile
+# or ./assets/dropbox/Dockerfile
+
 bqm() {
     . ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build builda_qemu
@@ -87,6 +95,7 @@ QEMU_KJX_LINKED=$(docker ps | grep qemu_kjx | awk {'print $1'})
 
 #fi && \
 
+mkdir -p ./newart/other-bins/
 mkdir -p ./newart/qemu-bins/ && \
 
 # get the linkage tarball
@@ -102,6 +111,77 @@ docker cp "$QEMU_KJX_LINKED":/usr/bin/qemu-pr-helper ./newart/qemu-bins/
 docker cp "$QEMU_KJX_LINKED":/usr/bin/qemu-storage-daemon ./newart/qemu-bins/
 docker cp "$QEMU_KJX_LINKED":/usr/bin/qemu-system-x86_64 ./newart/qemu-bins/
 docker cp "$QEMU_KJX_LINKED":/usr/bin/qemu-vmsr-helper ./newart/qemu-bins/
+
+# get the other binaries
+podman cp "$QEMU_KJX_LINKED":/usr/sbin/setcap       ./newfrdir/usr/sbin/
+podman cp "$QEMU_KJX_LINKED":/usr/sbin/parted       ./newfrdir/usr/sbin/
+podman cp "$QEMU_KJX_LINKED":/usr/sbin/kpartx       ./newfrdir/usr/sbin/
+podman cp "$QEMU_KJX_LINKED":/sbin/mkfs.ext4        ./newfrdir/sbin/
+
+# from fuser3
+podman cp "$QEMU_KJX_LINKED":/usr/bin/fusermount3   ./newfrdir/usr/bin/
+
+# as an snapshotter alternative for k3s
+podman cp "$QEMU_KJX_LINKED":/usr/bin/fuse-overlayfs ./newfrdir/usr/bin/fuse-overlayfs
+
+
+# must be based on util-linux/losetup, not on busybox's version.
+podman cp "$QEMU_KJX_LINKED":/sbin/losetup     ./newfrdir/sbin/
+
+
+
+# ================
+# remaining binaries
+
+
+# trace loading, debugging and dumping;
+# vmlinux generation, btf debug info: bpftool, pahole, expect
+# iso generation: xorriso, mksquashfs
+# peripherals support: expect
+
+podman run -it docker://alpine:3.20 \
+    sh -c "apk upgrade && \
+            apk update && \
+            apk add bpftool pahole squashfs-tools setxkbmap xorriso expect && \
+            echo "$(readlink -f "$(which setxkbmap)" )" && \
+            sleep 300
+            " &
+
+TMP_CONT_NAME=$(
+    podman ps -a | \
+    grep alpine | \
+    grep Created | \
+    awk 'END {print $1}' \
+    )
+
+podman start "$TMP_CONT_NAME"
+
+getnames=$(podman exec "$TMP_CONT_NAME" sh -c '
+  readlink -f "$(which bpftool)"
+  readlink -f "$(which pahole)"
+  readlink -f "$(which setxkbmap)"
+  readlink -f "$(which mksquashfs)"
+  readlink -f "$(which xorriso)"
+  readlink -f "$(which expect)"
+  ')
+
+# reference:
+# /home/asari/Downloads/kjxh-artifacts/another/
+# ./newfrdir
+#
+# make sure dir pathname exist beforehand
+mkdir -p ./newfrdir/usr/sbin/
+mkdir -p ./newfrdir/usr/bin/
+
+# without quotes for word splitting
+for index in $getnames; do
+    podman cp "$TMP_CONT_NAME:$index" "./newfrdir$index"
+done
+
+
+
+# ================
+
 
 #tar -xvf /app/shared_deps/archive.tar.gz
 cd ./newart || return
@@ -135,15 +215,15 @@ DBSSH_PATH="./artifacts/ssh-rootfs"
 DBSSH_FAKEROOTDIR="$DBSSH_PATH/fakerootdir"
 
 # cleanup 1
-rm -rf "./artifacts/ssh-rootfs/*"
+#rm -rf "./artifacts/ssh-rootfs/*"
 mkdir -p "./artifacts/ssh-rootfs/"
 
 # cleanup 2
-rm -rf "./artifacts/ssh-rootfs/fakerootdir/*"
+#rm -rf "./artifacts/ssh-rootfs/fakerootdir/*"
 mkdir -p "./artifacts/ssh-rootfs/fakerootdir/"
 
 # cleanup 3
-rm ./artifacts/ssh-rootfs/rootfs-tarball.zip
+#rm ./artifacts/ssh-rootfs/rootfs-tarball.zip
 
 #now copy the artifact outside and then come back to the function
 #docker cp "$BASECONT":rootfs-tarball.zip "$DBSSH_PATH"
@@ -201,11 +281,16 @@ cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
 # patch the specified file with anything
 #
 #ROOTFS_SEMVER=0.3.1
-ROOTFS_SEMVER=0.3.2
+ROOTFS_SEMVER=0.3.3
 
 # create revised cpio.gz rootfs tarball
 find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../ssh-rootfs-revised_"$ROOTFS_SEMVER".cpio.gz && \
     cd - || return && \
+
+
+# find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../rootfs_v7.cpio.gz
+
+
 
 printf "\n|> done!! Exiting now...\n\n"
 }

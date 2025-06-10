@@ -155,6 +155,7 @@ RUN <<EOF
 apk upgrade && apk update && \
     apk add libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
         file multipath-tools e2fsprogs xorriso expect libseccomp libcgroup \
+        bpftool pahole squashfs-tools setxkbmap losetup fuse3 \
         perl runit openssh git
 
 EOF
@@ -169,13 +170,85 @@ RUN <<EOF
 for f in /usr/bin/*; do
     case $f in
         /usr/bin/qemu*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >> /foo.txt ;;
-        "$(readlink -f "$(which setcap)" )"      ) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >> /foo.txt ;;
-        "$(readlink -f "$(which parted)" )"      ) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >> /foo.txt ;;
-        "$(readlink -f "$(which kpartx)" )"      ) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >> /foo.txt ;;
-        "$(readlink -f "$(which mkfs.ext4)" )"   ) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >> /foo.txt ;;
-        "$(readlink -f "$(which losetup)" )"     ) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >> /foo.txt ;;
-    esac
+   esac
 done
+
+# block and base rootfs handling
+ldd "$(readlink -f "$(which ldd)" )"        | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which setcap)" )"     | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which parted)" )"     | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which kpartx)" )"     | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which mkfs.ext4)" )"  | awk '{print $3}' >> /foo.txt
+
+# also handle filesystem in userspace bits (fuse-overlayfs, fuse3)
+ldd "$(readlink -f "$(which fusermount3)")" | awk '{print $3}' >> /foo.txt
+
+# check for libsmartcols, a dependency of util-linux's losetup
+CHECK_LIBSC=$(ldd /sbin/losetup | grep libsmartcols)
+if ! [ "$CHECK_LIBSC" = "" ]; then
+    ldd "$(readlink -f "$(which losetup)" )"    | awk '{print $3}' >> /foo.txt
+else
+    printf "\n|> Could not find the util-linux based losetup package installed. Using busybox instead...\n\n"
+
+fi
+
+
+#cp /usr/bin/ldd
+# printf "/lib/ld-musl-x86_64.so.1" >> /foo.txt
+
+# bpftool
+# pahole
+# mksquashfs
+# xorriso
+# expect
+
+# trace loading, debugging and dumping;
+# vmlinux generation, btf debug info
+ldd "$(readlink -f "$(which bpftool)" )"    | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which pahole)" )"     | awk '{print $3}' >> /foo.txt
+
+# iso generation
+ldd "$(readlink -f "$(which mksquashfs)" )" | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which unsquashfs)" )" | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which xorriso)" )"    | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which expect)" )"     | awk '{print $3}' >> /foo.txt
+
+# peripherals support
+ldd "$(readlink -f "$(which setxkbmap)" )"  | awk '{print $3}' >> /foo.txt
+
+# squashfs
+
+# remaining binaries
+# this logic should go on ./scripts/qonq.sh
+
+# echo "" >> /foo.txt
+# echo "$(readlink -f "$(which bpftool)" )"    >> /foo.txt
+# echo "$(readlink -f "$(which pahole)" )"     >> /foo.txt
+# echo "$(readlink -f "$(which mksquashfs)" )" >> /foo.txt
+# echo "$(readlink -f "$(which xorriso)" )"    >> /foo.txt
+# echo "$(readlink -f "$(which expect)" )"     >> /foo.txt
+# echo "$(readlink -f "$(which setxkbmap)" )"  >> /foo.txt
+
+
+(
+  set -e
+  ARCH=$(uname -m)
+  URL=https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}
+  wget ${URL}/runsc ${URL}/runsc.sha512 \
+    ${URL}/containerd-shim-runsc-v1 ${URL}/containerd-shim-runsc-v1.sha512
+  sha512sum -c runsc.sha512 \
+    -c containerd-shim-runsc-v1.sha512
+  rm -f *.sha512
+  chmod a+rx runsc containerd-shim-runsc-v1
+  mv runsc containerd-shim-runsc-v1 /usr/local/bin
+)
+
+
+# gvisor static binary
+echo "" >> /foo.txt
+echo "/usr/local/bin/runsc" >> /foo.txt
+echo "/usr/local/bin/containerd-shim-runsc-v1" >> /foo.txt
+
 
 EOF
 
