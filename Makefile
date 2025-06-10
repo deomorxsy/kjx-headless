@@ -237,6 +237,14 @@ beetor:
 	docker push localhost:5000/beetor:latest && \
 	docker stop registry
 
+
+# fix beetor synchronization program
+.PHONY: bwc_off
+bwc_off:
+	gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
+
+
+# generate stack call graph
 .PHONY: valprof
 valprof:
 	. ./scripts/libkjx/static_beetor.sh profiler
@@ -292,7 +300,58 @@ lkmkjx:
 	gcc -Wl --no-as-needed -lcap -o ./scripts/libkjx/lkm_idk/lkm-sample ./scripts/libkjx/lkm_idk/main.c
 
 # ==========
+# libbpf-based tracing
 #
 .PHONY: ayaya
 ayaya:
 	. ./scripts/ayabuild.sh
+
+.PHONY: libbpf-core
+libbpf-core:
+	$(MAKE) -C trace/libbpf-core/ bootstrap
+
+
+# =========
+# qemu builder runtime
+
+.PHONY: qemu_builder
+qemu_builder:
+	. ./scripts/sandbox/run-qemu.sh -d
+
+# airgap k3s inside QEMU
+.PHONY: airgap
+airgap:
+	. ./scripts/sandbox/run-qemu.sh -airgap
+
+
+# generate k3s dependencies
+.PHONY: squash
+squash:
+	. ./scripts/sandbox/run-qemu.sh -squash
+
+
+# ======== boot related
+
+# generate eltorito.img before xorriso
+.PHONY: eltorito
+eltorito:
+	#. ./scripts/usfs.sh
+	# --rm -it
+	. ./scripts/ccr.sh; checker && \
+	docker run -d --name eltorito-builder  \
+		-v "$$PWD/scripts:/app/scripts/" \
+		alpine:3.20 \
+		/bin/sh -c "chmod +x /app/scripts/install_grub.sh && /app/scripts/install_grub.sh && sleep 100"
+	# wait a few seconds
+	sleep 2
+	# retrieve artifact
+	mkdir -p ./artifacts/bootloader/
+	docker cp eltorito-builder:/app/eltorito.img ./artifacts/bootloader/
+	# cleanup container runtime
+	docker rm -f eltorito-builder
+
+
+.PHONY: itoeltor
+itoeltor:
+	. ./scripts/ccr.sh; checker && \
+	docker compose -f ./compose.yml --progress=plain build grub
