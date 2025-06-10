@@ -94,6 +94,19 @@ make defconfig
 ./scripts/config --enable CONFIG_MEMCG
 ./scripts/config --enable CONFIG_MEMCG_KMEM
 
+# enable overlay support
+# this is needed in order to mount the containerd device at /tmp
+./scripts/config --enable CONFIG_LD_CAN_USE_KEEP_IN_OVERLAY
+./scripts/config --enable CONFIG_EFI_CUSTOM_SSDT_OVERLAYS
+./scripts/config --module CONFIG_OVERLAY_FS
+./scripts/config --enable CONFIG_OVERLAY_FS_REDIRECT_DIR
+# ./scripts/config --enable # CONFIG_OVERLAY_FS_REDIRECT_ALWAYS_FOLLOW is not set
+./scripts/config --enable CONFIG_OVERLAY_FS_INDEX
+./scripts/config --enable CONFIG_OVERLAY_FS_XINO_AUTO
+./scripts/config --enable CONFIG_OVERLAY_FS_METACOPY
+# ./scripts/config --enable # CONFIG_OVERLAY_FS_DEBUG is not set
+
+
 # enable cgroups support
 ./scripts/config --enable CONFIG_CGROUPS
 ./scripts/config --enable CONFIG_BLK_CGROUP
