@@ -398,11 +398,12 @@ airgap_k3s() {
     #KERNEL_IMAGE="./artifacts/bzImage"
     KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/bzImage"
 
+
     MEMCG_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/memcg-kernel/bzImage"
-    OVERLAYFS_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/"
+    OVERLAYFS_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/overlay_support/bzImage"
 
     qemu-system-x86_64 \
-        -kernel "$MEMCG_KERNEL_IMG" \
+        -kernel "$OVERLAYFS_KERNEL_IMG" \
         -initrd "$ANODA" \
         -enable-kvm \
         -m 3072 \
@@ -430,6 +431,20 @@ configure_vm_ssh() {
 
     ssh-keygen -t ed25519 -f ~/.ssh/qemu_vm_key -N ""
 
+}
+
+# run the final iso artifact
+supasonic() {
+
+qemu-system-x86_64 \
+    -m 1024 \
+    -cdrom ./artifacts/kjx-headless.iso \
+    -boot d \
+    -enable-kvm \
+    -nographic \
+    -no-reboot \
+    -cpu host \
+    -serial mon:stdio
 }
 
 print_usage() {
@@ -470,6 +485,8 @@ elif [ "$1" = "--airgap" ] || [ "$1" = "-ag" ] || [ "$1" = "-airgap" ] ; then
     airgap_k3s
 elif [ "$1" = "--squash" ] || [ "$1" = "-sq" ] || [ "$1" = "-sq" ] || [ "$1" = "-squash" ]; then
     squash_k3s
+elif [ "$1" = "--supa" ] || [ "$1" = "-supa" ] || [ "$1" = "-supasonic" ] || [ "$1" = "--supasonic" ] ; then
+    supasonic
 elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     print_usage
 elif [ "$1" = "debug" ]; then
