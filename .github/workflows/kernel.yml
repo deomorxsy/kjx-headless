@@ -48,11 +48,19 @@ jobs:
         run: |
           docker run -it --name kernel -d localhost:5000/linux_build:latest
           docker cp kernel:/app/artifacts/bzImage ${{ github.workspace }}/artifacts/
+          docker cp kernel:/app/artifacts/ko_tarball.tar.gz ${{ github.workspace }}/artifacts/ko_tarball.tar.gz
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
           # 12.80MB artifact
           name: kernel
-          path: ${{ github.workspace }}/artifacts/bzImage
+          path: |
+            ${{ github.workspace }}/artifacts/bzImage
+            ${{ github.workspace }}/artifacts/ko_tarball.tar.gz
 
+      - name: Archive the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ko_tarball
+          path: ${{ github.workspace }}/artifacts/ko_tarball.tar.gz

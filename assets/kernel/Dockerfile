@@ -98,8 +98,8 @@ make defconfig
 # this is needed in order to mount the containerd device at /tmp
 ./scripts/config --enable CONFIG_LD_CAN_USE_KEEP_IN_OVERLAY
 ./scripts/config --enable CONFIG_EFI_CUSTOM_SSDT_OVERLAYS
-# ./scripts/config --module CONFIG_OVERLAY_FS
-./scripts/config --enable CONFIG_OVERLAY_FS
+./scripts/config --module CONFIG_OVERLAY_FS
+# ./scripts/config --enable CONFIG_OVERLAY_FS
 ./scripts/config --enable CONFIG_OVERLAY_FS_REDIRECT_DIR
 # ./scripts/config --enable # CONFIG_OVERLAY_FS_REDIRECT_ALWAYS_FOLLOW is not set
 ./scripts/config --enable CONFIG_OVERLAY_FS_INDEX
@@ -107,6 +107,9 @@ make defconfig
 ./scripts/config --enable CONFIG_OVERLAY_FS_METACOPY
 # ./scripts/config --enable # CONFIG_OVERLAY_FS_DEBUG is not set
 
+# enable /proc/config.gz file at runtime
+./scripts/config --enable CONFIG_IKCONFIG
+./scripts/config --enable CONFIG_IKCONFIG_PROC
 
 # enable cgroups support
 ./scripts/config --enable CONFIG_CGROUPS
@@ -304,10 +307,25 @@ make bzImage
 echo "bzImage done"
 make -j"$(nproc)"
 echo "final kernel make done"
+
+printf "\n|> Modules setup ========="
+
+# modules setup
+make modules
+
+mkdir -p /mnt/lfs/
+
+make INSTALL_MOD_PATH=/mnt/lfs modules_install
+
 cd - || return
+
+cd /app
+tar -czf ./ko_tarball.tar.gz /mnt/lfs/
+
 EOF
 
 FROM alpine:3.18 as relay
 ARG KERNEL_VERSION=6.6.22
 WORKDIR /app/
 COPY --from=download-boot ./utils/kernel/linux-${KERNEL_VERSION}/arch/x86/boot/bzImage /app/artifacts/
+COPY --from=download-boot /app/ko_tarball.tar.gz /app/artifacts/
