@@ -308,19 +308,24 @@ echo "bzImage done"
 make -j"$(nproc)"
 echo "final kernel make done"
 
-printf "\n|> Modules setup ========="
-
 # modules setup
 make modules
-
 mkdir -p /mnt/lfs/
-
 make INSTALL_MOD_PATH=/mnt/lfs modules_install
-
 cd - || return
 
-cd /app
+EOF
+
+WORKDIR /app
+
+RUN <<EOF
+
+if [ $PWD = "/app" ]; then
 tar -czf ./ko_tarball.tar.gz /mnt/lfs/
+else
+
+printf "WRONG PATH!"
+fi
 
 EOF
 
