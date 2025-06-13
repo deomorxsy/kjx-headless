@@ -98,7 +98,8 @@ make defconfig
 # this is needed in order to mount the containerd device at /tmp
 ./scripts/config --enable CONFIG_LD_CAN_USE_KEEP_IN_OVERLAY
 ./scripts/config --enable CONFIG_EFI_CUSTOM_SSDT_OVERLAYS
-./scripts/config --module CONFIG_OVERLAY_FS
+# ./scripts/config --module CONFIG_OVERLAY_FS
+./scripts/config --enable CONFIG_OVERLAY_FS
 ./scripts/config --enable CONFIG_OVERLAY_FS_REDIRECT_DIR
 # ./scripts/config --enable # CONFIG_OVERLAY_FS_REDIRECT_ALWAYS_FOLLOW is not set
 ./scripts/config --enable CONFIG_OVERLAY_FS_INDEX

@@ -155,8 +155,9 @@ RUN <<EOF
 apk upgrade && apk update && \
     apk add libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
         file multipath-tools e2fsprogs xorriso expect libseccomp libcgroup \
-        bpftool pahole squashfs-tools setxkbmap losetup fuse3 \
-        perl runit openssh git
+        bpftool pahole bpftrace squashfs-tools setxkbmap losetup fuse3 \
+        perl runit openssh git \
+        runc
 
 EOF
 
@@ -215,6 +216,14 @@ ldd "$(readlink -f "$(which expect)" )"     | awk '{print $3}' >> /foo.txt
 
 # peripherals support
 ldd "$(readlink -f "$(which setxkbmap)" )"  | awk '{print $3}' >> /foo.txt
+
+# kernel modules support (so overlayfs can be enabled since it was compiled as one)
+ln -s "./kmod" "/sbin/lsmod"
+ln -s "./kmod" "/sbin/rmmod"
+ln -s "./kmod" "/sbin/insmod"
+ln -s "./kmod" "/sbin/modinfo"
+ln -s "./kmod" "/sbin/modprobe"
+ln -s "./kmod" "/sbin/depmod"
 
 # squashfs
 

@@ -23,3 +23,6 @@
 [submodule "assets/libbpf"]
 	path = assets/libbpf
 	url = git@github.com:libbpf/libbpf.git
+[submodule "assets/bcc"]
+	path = assets/bcc
+	url = git@github.com:iovisor/bcc.git
