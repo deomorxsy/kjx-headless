@@ -26,21 +26,22 @@ EOF
 FROM dependencies AS download-boot
 ARG KERNEL_VERSION=6.6.22
 
+WORKDIR /app
+
 RUN <<"EOF"
 
-WORKDIR /app
-mkdir -p ./utils/kernel/
-version="./utils/kernel/linux-${KERNEL_VERSION}/"
+mkdir -p /app/utils/kernel/
+version="/app/utils/kernel/linux-${KERNEL_VERSION}/"
 
 if [ ! -e $version ]; then
-    wget -P ./utils/kernel/ https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
-    tar -xvf ./utils/kernel/linux-${KERNEL_VERSION}.tar.xz -C ./utils/kernel/
-    rm ./utils/kernel/linux-${KERNEL_VERSION}.tar.xz
+    wget -P /app/utils/kernel/ https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
+    tar -xvf /app/utils/kernel/linux-${KERNEL_VERSION}.tar.xz -C /app/utils/kernel/
+    rm /app/utils/kernel/linux-${KERNEL_VERSION}.tar.xz
 else
     echo "linux source already downloaded"
 fi
 # or simply make -f
-cd ./utils/kernel/linux-${KERNEL_VERSION}/ || exit
+cd /app/utils/kernel/linux-${KERNEL_VERSION}/ || exit
 
 make defconfig
 #make kvmconfig removed after Linux 5.10
@@ -298,6 +299,16 @@ make defconfig
 ./scripts/config --enable CONFIG_SQUASHFS_XZ
 ./scripts/config --enable CONFIG_SQUASHFS_4K_DEVBLK_SIZE
 
+# enable the tun module
+./scripts/config --module CONFIG_TUN
+
+# Enable dynamic management of the /dev directory with
+# devtmpfs + mdev
+./scripts/config --enable CONFIG_DEVTMPFS
+./scripts/config --enable CONFIG_DEVTMPFS_MOUNT
+./scripts/config --enable CONFIG_DEVTMPFS_SAFE
+
+
 # final make commands
 make kvm_guest.config
 echo "kvm_guest.config done"
@@ -332,5 +343,5 @@ EOF
 FROM alpine:3.18 as relay
 ARG KERNEL_VERSION=6.6.22
 WORKDIR /app/
-COPY --from=download-boot ./utils/kernel/linux-${KERNEL_VERSION}/arch/x86/boot/bzImage /app/artifacts/
+COPY --from=download-boot /app/utils/kernel/linux-${KERNEL_VERSION}/arch/x86/boot/bzImage /app/artifacts/
 COPY --from=download-boot /app/ko_tarball.tar.gz /app/artifacts/
