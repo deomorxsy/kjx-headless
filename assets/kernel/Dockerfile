@@ -50,10 +50,6 @@ make defconfig
 make kvm_guest.config
 echo "kvm_guest.config done"
 
-# Defaults the config
-make olddefconfig
-echo "olddefconfig done"
-
 # code coverage
 ./scripts/config --enable CONFIG_DEBUG_FS
 ./scripts/config --enable CONFIG_GCOV_KERNEL
@@ -342,6 +338,9 @@ echo "olddefconfig done"
 ./scripts/config --module CONFIG_INET_ESP
 #    - CONFIG_INET_XFRM_MODE_TRANSPORT: missing
 
+# Defaults the config
+make olddefconfig
+echo "olddefconfig done"
 
 # Final make commands
 make bzImage
