@@ -309,6 +309,15 @@ make defconfig
 ./scripts/config --enable CONFIG_DEVTMPFS_SAFE
 
 
+# More network virt subsystem dependencies for k3s
+./scripts/config --module CONFIG_VETH
+./scripts/config --module CONFIG_BRIDGE
+./scripts/config --module CONFIG_BRIDGE_NETFILTER
+./scripts/config --module CONFIG_NETFILTER_XT_MATCH_IPVS
+./scripts/config --module CONFIG_NETFILTER_XT_MATCH_COMMENT
+./scripts/config --module CONFIG_NETFILTER_XT_MATCH_MULTIPORT
+
+
 # final make commands
 make kvm_guest.config
 echo "kvm_guest.config done"
