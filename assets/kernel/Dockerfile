@@ -46,6 +46,14 @@ cd /app/utils/kernel/linux-${KERNEL_VERSION}/ || exit
 make defconfig
 #make kvmconfig removed after Linux 5.10
 
+# KVM Configuration
+make kvm_guest.config
+echo "kvm_guest.config done"
+
+# Defaults the config
+make olddefconfig
+echo "olddefconfig done"
+
 # code coverage
 ./scripts/config --enable CONFIG_DEBUG_FS
 ./scripts/config --enable CONFIG_GCOV_KERNEL
@@ -318,11 +326,24 @@ make defconfig
 ./scripts/config --module CONFIG_NETFILTER_XT_MATCH_MULTIPORT
 
 
-# final make commands
-make kvm_guest.config
-echo "kvm_guest.config done"
-make olddefconfig
-echo "olddefconfig done"
+# Add more missing modules
+./scripts/config --enable CONFIG_USER_NS
+./scripts/config --enable CONFIG_BLK_DEV_THROTTLING
+./scripts/config --enable CONFIG_CFS_BANDWIDTH
+# CONFIG_RT_GROUP_SCHED: missing
+./scripts/config --enable CONFIG_IP_NF_TARGET_REDIRECT
+./scripts/config --module CONFIG_IP_SET
+./scripts/config --module CONFIG_IP_VS
+./scripts/config --enable CONFIG_IP_VS_NFCT
+./scripts/config --enable CONFIG_IP_VS_PROTO_TCP
+./scripts/config --enable CONFIG_IP_VS_PROTO_UDP
+./scripts/config --module CONFIG_IP_VS_RR
+./scripts/config --module CONFIG_VXLAN
+./scripts/config --module CONFIG_INET_ESP
+#    - CONFIG_INET_XFRM_MODE_TRANSPORT: missing
+
+
+# Final make commands
 make bzImage
 echo "bzImage done"
 make -j"$(nproc)"
