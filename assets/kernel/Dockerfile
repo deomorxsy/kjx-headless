@@ -314,7 +314,7 @@ echo "olddefconfig done"
 ./scripts/config --enable CONFIG_SECURITY_LANDLOCK
 ./scripts/config --enable CONFIG_SECURITY_IPE
 ./scripts/config --enable CONFIG_IPE_POLICY_SIG_SECONDARY_KEYRING
-./scripts/config --enable CONFIG_DEFAULT_SECURITY_DAC
+# ./scripts/config --enable CONFIG_DEFAULT_SECURITY_DAC
 ./scripts/config --enable CONFIG_SECONDARY_TRUSTED_KEYRING
 ./scripts/config --enable CONFIG_SECTION_MISMATCH_WARN_ONLY
 
@@ -350,9 +350,9 @@ echo "olddefconfig done"
 
 # CONFIG_BRIDGE_NETFILTER resolution
 ./scripts/config --module CONFIG_BRIDGE
-./scripts/config --module CONFIG_NETFILTER
-./scripts/config --module CONFIG_INET
-./scripts/config --module CONFIG_NETFILTER_ADVANCED
+./scripts/config --enable CONFIG_NETFILTER
+./scripts/config --enable CONFIG_INET
+./scripts/config --enable CONFIG_NETFILTER_ADVANCED
 ./scripts/config --module CONFIG_BRIDGE_NETFILTER
 
 ./scripts/config --module CONFIG_NETFILTER_XT_MATCH_IPVS
