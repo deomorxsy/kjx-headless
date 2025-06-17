@@ -392,18 +392,36 @@ airgap_k3s() {
     #ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v14.cpio.gz"
 
     # this one have fuse-overlayfs
-    ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
+    #
+    # this one have bpftrace
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v16.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v18.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v19.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v20.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v21.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v22.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v23.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v24.cpio.gz"
+    ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v25.cpio.gz"
+
 
     # PS: this kernel image needs to have squashfs support.
     #KERNEL_IMAGE="./artifacts/bzImage"
-    KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/bzImage"
+    #KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/bzImage"
+    #MEMCG_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/2_memcg-kernel/bzImage"
+    #OVERLAYFS_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
+    # OVERLAY_KO="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
 
-
-    MEMCG_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/memcg-kernel/bzImage"
-    OVERLAYFS_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/overlay_support/bzImage"
+    # OVERLAY_CONFIGZ_KO="$HOME/Downloads/kjxh-artifacts/4_bzImage_kos/bzImage"
+    # NETBZ="$HOME/Downloads/kjxh-artifacts/5_last-k3s/bzImage"
+    # MISSING="$HOME/Downloads/kjxh-artifacts/7_missing/bzImage"
+    # ORDERED="$HOME/Downloads/kjxh-artifacts/8_ordered/bzImage"
+    # ORDERED="./assets/module_kernel_build/lfs/lib/modules/6.6.22/build/arch/x86/boot/bzImage"
+    TIDY="$HOME/Downloads/kjxh-artifacts/9_tidying/bzImage"
 
     qemu-system-x86_64 \
-        -kernel "$OVERLAYFS_KERNEL_IMG" \
+        -kernel "$TIDY" \
         -initrd "$ANODA" \
         -enable-kvm \
         -m 3072 \
@@ -434,7 +452,7 @@ configure_vm_ssh() {
 }
 
 # run the final iso artifact
-supasonic() {
+runiso() {
 
 qemu-system-x86_64 \
     -m 1024 \
@@ -485,8 +503,8 @@ elif [ "$1" = "--airgap" ] || [ "$1" = "-ag" ] || [ "$1" = "-airgap" ] ; then
     airgap_k3s
 elif [ "$1" = "--squash" ] || [ "$1" = "-sq" ] || [ "$1" = "-sq" ] || [ "$1" = "-squash" ]; then
     squash_k3s
-elif [ "$1" = "--supa" ] || [ "$1" = "-supa" ] || [ "$1" = "-supasonic" ] || [ "$1" = "--supasonic" ] ; then
-    supasonic
+elif [ "$1" = "--runiso" ] || [ "$1" = "-runiso" ] || [ "$1" = "runiso" ] ; then
+    runiso
 elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     print_usage
 elif [ "$1" = "debug" ]; then

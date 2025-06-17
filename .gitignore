@@ -21,6 +21,7 @@ artifacts/coverage_go.out
 artifacts/mock_ist.yaml
 artifacts/bzImage_with_selinux
 artifacts/extracted_vmlinux
+artifacts/burn/
 
 # valgrind related
 callgrind.*
@@ -136,4 +137,6 @@ assets/libbpf-bootstrap/
 .github/workflows/downloader.yml
 .github/workflows/qemu.yml
 
-#
+# kernel assets
+assets/kernel/app/
+assets/module_kernel_build

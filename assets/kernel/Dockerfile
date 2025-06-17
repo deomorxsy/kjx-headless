@@ -122,6 +122,78 @@ echo "olddefconfig done"
 ./scripts/config --enable CONFIG_OVERLAY_FS_METACOPY
 # ./scripts/config --enable # CONFIG_OVERLAY_FS_DEBUG is not set
 
+# enable fuse-overlayfs support
+./scripts/config --enable CONFIG_FUSE_FS
+
+    # fuse_dax dependencies
+    ./scripts/config --enable CONFIG_VIRTIO_FS
+
+    # CONFIG_ZONE_DEVICE Device memory (pmem, HMM, etc...) hotplug support
+    ./scripts/config --enable CONFIG_ZONE_DEVICE
+
+        ./scripts/config --enable CONFIG_SPARSEMEM_VMEMMAP
+
+            ./scripts/config --enable CONFIG_SPARSEMEM
+            ./scripts/config --enable CONFIG_ARCH_SPARSEMEM_ENABLE
+            ./scripts/config --enable CONFIG_SPARSEMEM_VMEMMAP_ENABLE
+
+        ./scripts/config --enable CONFIG_ARCH_HAS_PTE_DEVMAP
+
+        ./scripts/config --enable CONFIG_MEMORY_HOTPLUG
+        ./scripts/config --enable CONFIG_MEMORY_HOTREMOVE
+
+            # CONFIG_MEMORY_HOTPLUG
+            ./scripts/config --enableCONFIG_ARCH_ENABLE_MEMORY_HOTREMOVE
+            # page migration support
+            ./scripts/config --enable CONFIG_MIGRATION
+
+            ./scripts/config --enable CONFIG_SPARSEMEM_VMEMMAP
+        # CONFIG_ARCH_HAS_PTE_DEVMAP dependencies
+        ./scripts/config --enable CONFIG_ARCH_HAS_PTE_DEVMAP
+        # ( CONFIG_NUMA || CONFIG_ARCH_ENABLE_MEMORY_HOTREMOVE || CONFIG_COMPACTION || CONFIG_CMA ) && CONFIG_MMU
+            # NUMA dependencies
+            ./scripts/config --enable CONFIG_NUMA
+            # ( CONFIG_SMP ) && ( CONFIG_X86_64 )
+            ./scripts/config --enable CONFIG_CPU_CK860
+            ./scripts/config --enable CONFIG_SMP
+            ./scripts/config --enable CONFIG_X86_64
+
+        ./scripts/config --enable CONFIG_ARCH_ENABLE_MEMORY_HOTREMOVE
+        ./scripts/config --enable CONFIG_MMU
+        ./scripts/config --enable CONFIG_COMPACTION
+        ./scripts/config --enable CONFIG_CMA
+
+
+# CONFIG_MEMORY_HOTPLUG support
+    ./scripts/config --enable CONFIG_ARCH_ENABLE_MEMORY_HOTPLUG
+    ./scripts/config --enable CONFIG_64BIT
+
+    # Sparsemem support
+    # this should not be set: CONFIG_SELECT_MEMORY_MODEL
+    ./scripts/config --enable CONFIG_ARCH_SPARSEMEM_ENABLE
+    ./scripts/config --enable CONFIG_SPARSEMEM
+
+
+#####
+./scripts/config --enable CONFIG_FS_DAX
+
+# FS_DAX_PMD support
+./scripts/config --enable CONFIG_FS_DAX_PMD
+./scripts/config --enable CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE
+# do not set: CONFIG_PREEMPT_RT
+
+# CONFIG_DAX support
+./scripts/config --enable CONFIG_DAX
+./scripts/config --enable CONFIG_FUSE_DAX
+
+# fuse_passthrough dependencies
+./scripts/config --enable CONFIG_FUSE_PASSTHROUGH
+
+# fuse_io_uring dependencies
+./scripts/config --enable CONFIG_FUSE_IO_URING
+./scripts/config --enable CONFIG_IO_URING
+./scripts/config --enable CONFIG_EXPERT
+
 # enable /proc/config.gz file at runtime
 ./scripts/config --enable CONFIG_IKCONFIG
 ./scripts/config --enable CONFIG_IKCONFIG_PROC
