@@ -50,6 +50,12 @@ make defconfig
 make kvm_guest.config
 echo "kvm_guest.config done"
 
+
+## Defaults the config
+make olddefconfig
+echo "olddefconfig done"
+
+
 # code coverage
 ./scripts/config --enable CONFIG_DEBUG_FS
 ./scripts/config --enable CONFIG_GCOV_KERNEL
@@ -73,7 +79,11 @@ echo "kvm_guest.config done"
 ./scripts/config --disable CONFIG_BPF_PRELOAD
 ./scripts/config --enable CONFIG_BPF_LSM
 ./scripts/config --enable CONFIG_CGROUP_BPF
+
+./scripts/config --enable CONFIG_IPV6
+./scripts/config --enable CONFIG_IPV6_SEG6_LWTUNNEL
 ./scripts/config --enable CONFIG_IPV6_SEG6_BPF
+
 ./scripts/config --enable CONFIG_NETFILTER_BPF_LINK
 ./scripts/config --module CONFIG_NETFILTER_XT_MATCH_BPF
 ./scripts/config --disable CONFIG_BPFILTER
@@ -198,7 +208,18 @@ echo "kvm_guest.config done"
 ./scripts/config --enable CONFIG_HAVE_MMIOTRACE_SUPPORT
 ./scripts/config --enable CONFIG_CC_HAS_SANCOV_TRACE_PC
 
-# ftrace modules
+# hist-triggers trace support
+./scripts/config --enable CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
+./scripts/config --enable CONFIG_HIST_TRIGGERS
+
+# Enable the kernel runtime verification infrastructure
+# also related to ftrace
+./scripts/config --enable CONFIG_TRACING
+./scripts/config --enable CONFIG_TRACING_SUPPORT
+./scripts/config --enable CONFIG_TRACING_MAP
+./scripts/config --enable CONFIG_RV
+
+# other ftrace modules
 ./scripts/config --module CONFIG_STM_SOURCE_FTRACE
 ./scripts/config --module CONFIG_NETFILTER_XT_TARGET_TRACE
 
@@ -257,6 +278,9 @@ echo "kvm_guest.config done"
 ./scripts/config --enable CONFIG_SECURITY_DMESG_RESTRICT
 ./scripts/config --enable CONFIG_SECURITY
 ./scripts/config --enable CONFIG_SECURITYFS
+./scripts/config --enable CONFIG_AUDIT
+./scripts/config --enable CONFIG_AUDITSYSCALL
+./scripts/config --enable CONFIG_AUDIT_ARCH
 ./scripts/config --enable CONFIG_SECURITY_NETWORK
 ./scripts/config --enable CONFIG_SECURITY_INFINIBAND
 ./scripts/config --enable CONFIG_SECURITY_NETWORK_XFRM
@@ -312,15 +336,36 @@ echo "kvm_guest.config done"
 ./scripts/config --enable CONFIG_DEVTMPFS_MOUNT
 ./scripts/config --enable CONFIG_DEVTMPFS_SAFE
 
+# More modules to shut up the autoconf restart config
+./scripts/config --module CONFIG_BRIDGE_NF_EBTABLES_LEGACY
+./scripts/config --module CONFIG_BRIDGE_NF_EBTABLES
 
 # More network virt subsystem dependencies for k3s
 ./scripts/config --module CONFIG_VETH
 ./scripts/config --module CONFIG_BRIDGE
+
+# Generate the br_netfilter module
+# ./scripts/config --enable CONFIG_IPV6
+# ./scripts/config --enable CONFIG_IPV6_SEG6_LWTUNNEL
+
+# CONFIG_BRIDGE_NETFILTER resolution
+./scripts/config --module CONFIG_BRIDGE
+./scripts/config --module CONFIG_NETFILTER
+./scripts/config --module CONFIG_INET
+./scripts/config --module CONFIG_NETFILTER_ADVANCED
 ./scripts/config --module CONFIG_BRIDGE_NETFILTER
+
 ./scripts/config --module CONFIG_NETFILTER_XT_MATCH_IPVS
 ./scripts/config --module CONFIG_NETFILTER_XT_MATCH_COMMENT
 ./scripts/config --module CONFIG_NETFILTER_XT_MATCH_MULTIPORT
 
+# Some kernel symbols
+./scripts/config --enable CONFIG_KALLSYMS
+./scripts/config --enable CONFIG_KALLSYMS_ALL
+./scripts/config --enable CONFIG_KALLSYMS_ABSOLUTE_PERCPU
+
+# Ring buffer
+./scripts/config --enable CONFIG_RING_BUFFER
 
 # Add more missing modules
 ./scripts/config --enable CONFIG_USER_NS
@@ -338,20 +383,40 @@ echo "kvm_guest.config done"
 ./scripts/config --module CONFIG_INET_ESP
 #    - CONFIG_INET_XFRM_MODE_TRANSPORT: missing
 
-# Defaults the config
-make olddefconfig
-echo "olddefconfig done"
+## Defaults the config
+# make olddefconfig
+# echo "olddefconfig done"
 
 # Final make commands
-make bzImage
-echo "bzImage done"
-make -j"$(nproc)"
-echo "final kernel make done"
+#make KCFLAGS="-std=gnu89" bzImage
+# make KCFLAGS="-std=gnu99" bzImage
+# make CC="gcc -std=gnu89" KBUILD_CFLAGS="-std=gnu89" KBUILD_CFLAGS_REALMODE="-std=gnu89" bzImage
+#export CC="gcc -std=gnu89"
+#make bzImage
 
-# modules setup
-make modules
+# make \
+#   CC="gcc -std=gnu89" \
+#   REALMODE_CFLAGS="-m16 -std=gnu89" \
+#   bzImage
+# make CC="gcc -std=gnu89 -fcf-protection=none" bzImage
+
+# Do not invoke a prompt, and align
+# the .config file with Kconfig enforcement
+yes "" | make olddefconfig
+
+if grep CONFIG_BRIDGE_NETFILTER ./.config; then
+
+make CC="gcc -std=gnu99 -fcf-protection=none" -j"$(nproc)" bzImage modules
+
 mkdir -p /mnt/lfs/
 make INSTALL_MOD_PATH=/mnt/lfs modules_install
+
+printf "\n|> bzImage and modules done!! \n\n"
+
+else
+    printf "\n|> Error: .config was overwritten and CONFIG_BRIDGE_NETFILTER is nowhere to be found. Exiting now, fix the code...\n\n"
+fi
+
 cd - || return
 
 EOF
