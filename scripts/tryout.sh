@@ -31,7 +31,7 @@ ISO_GRUB_PRELOAD_MODULES="part_gpt part_msdos ext2 normal linux iso9660 udf all_
 
 KERNEL_PATH="$HOME/Downloads/kjxh-artifacts/bzImage"
 RAMDISK_PATH="$HOME/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
-ROOTFS_PATH="./artifacts/burn/rootfs/"
+ROOTFS_PATH="./artifacts/burn/rootfs"
 #ROOTFS_PATH="./artifacts/qcow2-rootfs/rootfs"
 
 # loop device handling with u
@@ -46,10 +46,19 @@ INITRAMFS_BASENAME=$(basename "$RAMDISK_PATH")
 SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
 ELTORITO_PATH="./eltorito.img"
 ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
-ISO_FINAL_PATH="$PWD/artifacts/kjx-headless.iso"
+ISO_FINAL_PATH="$PWD/artifacts"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
 
+
+INITRAMFS_BASENAME=$(basename "$RAMDISK_PATH")
+KERNEL_BASENAME=$(basename "$KERNEL_PATH")
+
+SOURCE_ROOTFS_DIR="./artifacts/burn/rootfs"
+SQUASHFS_IMAGE="./artifacts/rootfs.sqfs"
+ISO_INITRAMFS="initramfs-ssh.cpio.gz"
+
 #
+BUILDER_ROOTFS_DIR="$HOME"/Downloads/kjxh-artifacts/another/newfrdir
 }
 
 
@@ -402,6 +411,7 @@ INIT_EOF
 
 chmod +x "$ROOTFS_PATH/etc/runit/1"
 
+# sudo ln -sf "$ISO_DIR"/rootfs/etc/runit/1 "$ISO_DIR"/rootfs/sbin/init
 ln -sf "$ROOTFS_PATH/etc/runit/1" "$ROOTFS_PATH/sbin/init"
 #}
 
@@ -632,10 +642,18 @@ mkdir -pv "$SQ_OVERLAY/workdir"
 mkdir -pv "$SQ_OVERLAY/merged"
 
 
-BUILDER_ROOTFS_DIR=$HOME/Downloads/kjxh-artifacts/another/newfrdir
-cp -r $BUILDER_ROOTFS_DIR/* "$ROOTFS_PATH"
-sudo cp $BUILDER_ROOTFS_DIR/lib/libdevmapper.so.1.02 $ROOTFS_PATH/lib/
-sudo cp $BUILDER_ROOTFS_DIR/usr/lib/libtcl8.6.so $ROOTFS_PATH/usr/lib/
+# This includes kernel modules
+BUILDER_ROOTFS_DIR="$HOME"/Downloads/kjxh-artifacts/another/newfrdir
+
+if [ "$(basename "$PWD")" = "kjx-headless" ] && [ -d "$ROOTFS_PATH" ] ; then
+    cp -r "$BUILDER_ROOTFS_DIR"/* "$ROOTFS_PATH"
+    sudo cp "$BUILDER_ROOTFS_DIR"/lib/libdevmapper.so.1.02 "$ROOTFS_PATH"/lib/
+    sudo cp "$BUILDER_ROOTFS_DIR"/usr/lib/libtcl8.6.so "$ROOTFS_PATH"/usr/lib/
+
+    printf "\n\n|> Sucessfully copied the BUILDER_ROOTFS directory to the ISO ROOTFS_PATH, including the libdevmapper and libtcl shared objects. Exiting now...\n\n"
+else
+    printf "\n==========\n|> Error: not on the root of the repository project (kjx-headless). \n|> Change it before running this block. Exiting now...\n\n"
+fi
 
 
 
@@ -726,8 +744,8 @@ sudo tee "$ISO_DIR/syslinux/isolinux.cfg" > /dev/null <<EOF
 DEFAULT linux
 
 LABEL linux
-    KERNEL /kernel/${KERNEL_BASENAME}
-    APPEND initrd=/kernel/${INITRAMFS_BASENAME} security=selinux console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0 cgroup_no_v1=all
+    KERNEL  /kernel/${KERNEL_BASENAME}
+    APPEND  initrd=/kernel/${INITRAMFS_BASENAME} security=selinux console=ttyS0 root=/dev/sr0 rootfs_path=/images/rootfs.sqfs earlyprintk net.ifnames=0 cgroup_no_v1=all
 
 LABEL fallback
     MENU LABEL KJX Linux Fallback
@@ -841,11 +859,21 @@ EOF
 
 # final_move
 
+# ISO_DIR
+# EFI_TMPDIR mktmp
+
+# ====================================
+#
+# Create EFI.img artifact
+#
 touch "$ISO_DIR"/boot/grub/efi.img
 dd if=/dev/zero of="$ISO_DIR"/boot/grub/efi.img bs=1M count=20
 mkfs.vfat "$ISO_DIR"/boot/grub/efi.img
 
+if [ "$EFI_TMPDIR" = "" ]; then
 EFI_TMPDIR=$(/bin/busybox mktemp -d)
+fi
+
 sudo mount "$ISO_DIR"/boot/grub/efi.img "$EFI_TMPDIR"
 
 sudo mkdir -pv "$EFI_TMPDIR/EFI/boot"
@@ -854,54 +882,232 @@ sudo grub-mkstandalone -O x86_64-efi -o "$EFI_TMPDIR/EFI/boot/bootx64.efi" "boot
 sudo umount "$EFI_TMPDIR"
 
 
-# eltorito part
-ISO_GRUB_PRELOAD_MODULES="part_gpt part_msdos ext2 normal linux iso9660 udf all_video video_fb search configfile echo cat"
-mkdir -p "$ISO_DIR/boot/grub/i386-pc"
-
 routine=$(uname -m)
-
-# if [[ $routine = x86_64 ]]; then
-#     grub-mkimage \
-#         -O i386-pc \
-#         -o /tmp/core.img \
-#         -p /boot/grub biosdisk $ISO_GRUB_PRELOAD_MODULES
-#     cat /usr/lib/grub/i386-pc/cdboot.img /tmp/core.img \
-#         > $ISO_DIR/boot/grub/i386-pc/eltorito.img
-# fi
 
 
 SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
 ELTORITO_PATH="./eltorito.img"
-
-# artifacts/distro/packages/syslinux-4.05/mbr/isohdpfx.bin
-# artifacts/distro/syslinux-6.03/efi64/mbr/isohdpfx.bin
-# artifacts/distro/syslinux-6.03/efi32/mbr/isohdpfx.bin
-#▌artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin
-
 ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
-
 ISO_FINAL_PATH="$PWD/artifacts/kjx-headless.iso"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
 
-### 5. package the final filesystem into an ISO9660 image using xorriso.
-# search workdir: /boot/syslinux directory
-# xorriso -as mkisofs -o "$ISO_FINAL_PATH" \
-#     -J -l \
-#     -b "$SYSLINUX_BOOTBIN" \
-#     -c boot/boot.cat \
-#     -b "$ELTORITO_PATH" \
-#     -no-emul-boot \
-#     -boot-load-size 4 \
-#     -boot-info-table \
-#     -eltorito-alt-boot \
-#     -e "$EFI_PATH" \
-#     -no-emul-boot \
-#     -isohybrid-mbr "$ISOHDPFX_PATH" \
-#     -isohybrid-gpt-basdat \
-#     -r -V "My Linux" "$ISO_DIR"
 
-# fixed
-xorriso -as mkisofs -o "$ISO_FINAL_PATH"_v2.iso \
+# ====================================
+#
+# FINISH ISOLINUX
+
+(
+cat <<EOF
+DEFAULT linux
+
+LABEL linux
+    KERNEL  /kernel/bzImage
+    APPEND  initrd=/kernel/initramfs-ssh.cpio.gz security=selinux console=ttyS0 root=/dev/sr0 rootfs_path=/images/rootfs.sqfs earlyprintk net.ifnames=0 cgroup_no_v1=all
+
+LABEL fallback
+    MENU LABEL KJX Linux Fallback
+    LINUX /kernel/bzImage-6.6.22-kjx-1.0
+    APPEND root=/dev/sa3 rw
+    INITRD /kernel/initramfs-ssh.cpio.gz
+
+
+# PC-DOS
+LABEL pcdos
+    KERNEL /kernel/memdisk
+    APPEND initrd=/images/tools.imz
+
+# Darik's boot and nuke
+LABEL bootnuke
+    KERNEL /kernel/memdisk
+    APPEND initrd=/images/bootnuke.imz
+
+# memtest86+
+LABEL memtestp
+    KERNEL /kernel/memtp170
+
+EOF
+) | sudo tee "$ISO_DIR/syslinux/isolinux.cfg" > /dev/null
+
+
+# Repack initramfs init bootscript
+#
+
+if [ -f "$ISO_DIR"/kernel/initramfs-ssh.cpio.gz ]; then
+cd "$ISO_DIR"/kernel/ || return
+    mkdir -p ./repack_initramfs
+
+    # decompress gunzip and then cpio to the specified path
+    gzip -cd ./initramfs-ssh.cpio.gz | cpio -idmv -D ./repack_initramfs
+
+(
+cat <<"INIT_EOF"
+#!/bin/busybox sh
+
+# redo mount filesystems
+mount -t devtmpfs   devtmpfs    /dev
+mount -t proc       none        /proc
+mount -t sysfs      none       /sys
+mount -t tmpfs      tmpfs       /tmp
+
+# redo mount tracefs and securityfs pseudo-filesystems
+mount -t tracefs tracefs /sys/kernel/tracing/
+mount -t debugfs debugfs /sys/kernel/debug/
+mount -t securityfs securityfs /sys/kernel/security/
+EOF && \
+#
+#
+#
+# redo set up hostname
+echo "kjx" > /etc/hostname && hostname -F /etc/hostname
+
+# redo bring up the connection
+/sbin/ip link set lo up                         # bring up loopback interface
+/sbin/ip link set eth0 up                       # bring up ethernet interface
+/sbin/ip addr add 192.168.0.27 eth0             # static ipv4 assignment
+
+# redo alternate method, built-in inside busybox
+#udhcpc -i eth0 # dynamic ipv4 assignment
+
+# ================================
+
+# sets up BRK keyboard
+setxkbmap -model abnt2 -layout br -variant abnt2
+echo && echo
+
+cat << 'asciiart'
+ .-"``"-.
+/  _.-` (_) `-._
+\   (_.----._)  /
+ \     /    \  /
+  `\  \____/  /`
+    `-.____.-`      __     _
+     /      \      / /__  (_)_ __
+    /        \    /  '_/ / /\ \ /
+   /_ |  | _\    /_/\_\_/ //_\_\
+     |  | |          |___/         deomorxsy/kjx
+     |__|__|  ----------------------------------------------
+     /_ | _\   Reboot (01.00.0, ${GIT_CONTAINERFILE_HASH})
+              ----------------------------------------------
+asciiart
+
+
+
+printf "Uptime: $(cut -d' ' -f1 /proc/uptime) \n"
+printf "System config: $(uname -a) \n"
+
+# Parse kernel command line for our custom parameters
+ISO_DEVICE=$(cat /proc/cmdline | sed -n 's/.*root=\([^ ]*\).*/\1/p')
+SQUASHFS_IMAGE_PATH=$(cat /proc/cmdline | sed -n 's/.*rootfs_path=\([^ ]*\).*/\1/p')
+FULL_SQUASHFS_PATH="/mnt/iso_live$SQUASHFS_IMAGE_PATH"
+
+# Create temporary mount points
+mkdir -p /mnt/iso_live
+mkdir -p /new_root
+
+# X
+
+
+# Mount the ISO device
+echo "Attempting to mount ISO device ($ISO_DEVICE) to /mnt/iso_live..."
+if ! mount -r -t iso9660 "$ISO_DEVICE" /mnt/iso_live; then
+    printf "\n|> Failed to mount ISO device $ISO_DEVICE. Dropping to shell.\n"
+    exec /bin/sh && asciiart
+fi
+echo "ISO device mounted successfully."
+
+echo "Attempting to mount SquashFS image from $FULL_SQUASHFS_PATH to /new_root..."
+if [ ! -f "$FULL_SQUASHFS_PATH" ]; then
+    printf "\n\n|> Error: SquashFS image not found at $FULL_SQUASHFS_PATH. Dropping to shell."
+    exec /bin/sh && asciiart
+fi
+
+# -r for read-only mount, -t squashfs for filesystem type
+if ! mount -r -t squashfs "$FULL_SQUASHFS_PATH" /new_root; then
+    printf "\n|> Failed to mount SquashFS image $FULL_SQUASHFS_PATH. Dropping to shell."
+    printf "\n|> Check if 'squashfs' kernel module is loaded or compiled into kernel."
+    exec /bin/sh && asciiart
+fi
+echo "SquashFS root filesystem mounted successfully."
+
+
+# Unmount the ISO since it is not needed anymore
+umount /mnt/iso_live 2>/dev/null || true # Ignore if it fails (e.g., if busy)
+
+printf "\n\n===========\n|> Switching root to the new filesystem...\n===============\n\n"
+# The 'switch_root' command expects the new root directory and the path to 'init'
+# within that new root.
+exec switch_root /new_root /sbin/init
+
+# Should not reach here if switch_root is successful
+echo "ERROR: switch_root failed! Dropping to shell."
+exec /bin/sh && asciiart
+
+INIT_EOF
+) | tee ./repack_initramfs/init
+
+chmod +x ./repack_initramfs/init
+
+
+cd - || return
+else
+    printf "\n|> ERROR: initramfs-ssh.cpio.gz file not found. Exiting now...\n\n"
+fi
+
+
+ # create revised cpio.gz rootfs tarball
+ #
+if [ -d "$ISO_DIR"/kernel/repack_initramfs ]; then
+cd "$ISO_DIR"/kernel/repack_initramfs || return
+    mv ../initramfs-ssh.cpio.gz ../initramfs-ssh_bak.cpio.gz
+    find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../initramfs-ssh.cpio.gz && \
+    echo done!!
+
+cd - || return
+else
+    printf "\n|> Error: could not find the repack directory. Exiting now...\n\n"
+fi
+
+
+# Fix the rootfs init
+(
+cat <<EOF
+EOF
+) | tee "$ROOTFS_PATH/init"
+
+
+
+
+
+SOURCE_ROOTFS_DIR="./artifacts/burn/rootfs"
+SQUASHFS_IMAGE="./artifacts/rootfs.sqfs"
+KERNEL_BASENAME=$(basename "$KERNEL_PATH")
+ISO_INITRAMFS="initramfs-ssh.cpio.gz"
+
+# 4. Create squashfs file for the rootfs
+if [ "$(basename "$PWD")" = "kjx-headless" ] && [ -d "$SOURCE_ROOTFS_DIR" ] && [ -d "$ISO_DIR" ]; then
+    if [ -f $SQUASHFS_IMAGE ]; then
+
+        printf "\n|> Error: found a previous squashfs file. Removing...\n\n"
+        rm "$SQUASHFS_IMAGE"
+
+        mksquashfs "$SOURCE_ROOTFS_DIR" "$SQUASHFS_IMAGE" -comp xz -b 256K -Xbcj x86 &&
+            printf "\n|> squashfs file created with success! \n\n"
+
+
+    fi
+
+mkdir -p "$ISO_DIR"/images/
+cp $SQUASHFS_IMAGE "$ISO_DIR"/images/
+
+
+# Used on grub-mkimage for an alternate way of getting the eltorito part
+# now located at ./assets/grub/Dockerfile
+ISO_GRUB_PRELOAD_MODULES="part_gpt part_msdos ext2 normal linux iso9660 udf all_video video_fb search configfile echo cat"
+mkdir -p "$ISO_DIR/boot/grub/i386-pc"
+
+
+# 5. Package the final filesystem into an ISO9660 image using xorriso.
+xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v2.iso \
   -J -l \
   -V "KJX_HEADLESS" \
   -b syslinux/isolinux.bin \
@@ -914,7 +1120,17 @@ xorriso -as mkisofs -o "$ISO_FINAL_PATH"_v2.iso \
     -no-emul-boot \
     -isohybrid-mbr artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin \
     -isohybrid-gpt-basdat \
-    -r "$ISO_DIR"
+    -r "$ISO_DIR" \
+    -m 'rootfs'
+
+
+else
+    printf "\n\n|> Error: not on the root of the kjx-headless repository. hint: Change dir and try again! \n|> Exiting now...\n\n"
+fi
+
+
+
+
 
 ### 6. Copy the iso file outside the namespace
 # cp /mnt/output/my_custom.iso "./artifacts/kjx-headless.iso"
