@@ -1000,12 +1000,22 @@ ISO_DEVICE=$(cat /proc/cmdline | sed -n 's/.*root=\([^ ]*\).*/\1/p')
 SQUASHFS_IMAGE_PATH=$(cat /proc/cmdline | sed -n 's/.*rootfs_path=\([^ ]*\).*/\1/p')
 FULL_SQUASHFS_PATH="/mnt/iso_live$SQUASHFS_IMAGE_PATH"
 
+
+# Base directories for overlayfs over the squashfs image
+SQ_ROOTFS="/tmp/kjx_rootfs"
+SQ_SQUASHFS="/tmp/kjx_squashfs"
+SQ_OVERLAY="/tmp/kjx_overlay"
+
+# Create squashfs destination paths
+mkdir -pv "$SQ_ROOTFS"
+mkdir -pv "$SQ_SQUASHFS"
+mkdir -pv "$SQ_OVERLAY/upperdir/usr/local/bin/"
+mkdir -pv "$SQ_OVERLAY/workdir"
+mkdir -pv "$SQ_OVERLAY/merged"
+
 # Create temporary mount points
 mkdir -p /mnt/iso_live
 mkdir -p /new_root
-
-# X
-
 
 # Mount the ISO device
 echo "Attempting to mount ISO device ($ISO_DEVICE) to /mnt/iso_live..."
@@ -1015,11 +1025,45 @@ if ! mount -r -t iso9660 "$ISO_DEVICE" /mnt/iso_live; then
 fi
 echo "ISO device mounted successfully."
 
+# =======================================
+
 echo "Attempting to mount SquashFS image from $FULL_SQUASHFS_PATH to /new_root..."
 if [ ! -f "$FULL_SQUASHFS_PATH" ]; then
     printf "\n\n|> Error: SquashFS image not found at $FULL_SQUASHFS_PATH. Dropping to shell."
     exec /bin/sh && asciiart
 fi
+
+# -r for read-only mount, -t squashfs for filesystem type
+if ! mount -r -t squashfs "$FULL_SQUASHFS_PATH" "$SQ_OVERLAY"/merged; then
+    printf "\n|> Failed to mount SquashFS image $FULL_SQUASHFS_PATH. Dropping to shell."
+    printf "\n|> Check if 'squashfs' kernel module is loaded or compiled into kernel."
+    exec /bin/sh && asciiart
+fi
+echo "SquashFS root filesystem mounted successfully."
+
+# Unmount the ISO since it is not needed anymore
+umount /mnt/iso_live 2>/dev/null || true # Ignore if it fails (e.g., if busy)
+
+# use fuse-overlayfs to stack files and install additional programs
+# fuse-overlayfs -o lowerdir="$SQ_OVERLAY/merged",upperdir="$SQ_OVERLAY/upperdir",workdir="$SQ_OVERLAY/workdir" "$SQ_OVERLAY/merged"
+mount -t overlay overlay -o lowerdir="$SQ_OVERLAY/merged",upperdir="$SQ_OVERLAY/upperdir",workdir="$SQ_OVERLAY/workdir" "$SQ_OVERLAY/merged"
+
+# unmounting:
+# fusermount -u "$SQ_OVERLAY/merged"
+# umount "$SQ_OVERLAY/merged"
+
+printf "\n\n===========\n|> Switching root to the new filesystem...\n===============\n\n"
+# The 'switch_root' command expects the new root directory and the path to 'init'
+# within that new root.
+exec switch_root "$SQ_OVERLAY"/upperdir
+
+
+# Should not reach here if switch_root is successful
+echo "ERROR: switch_root failed! Dropping to shell."
+exec /bin/sh && asciiart
+
+# =======================================
+
 
 # -r for read-only mount, -t squashfs for filesystem type
 if ! mount -r -t squashfs "$FULL_SQUASHFS_PATH" /new_root; then
@@ -1107,7 +1151,8 @@ mkdir -p "$ISO_DIR/boot/grub/i386-pc"
 
 
 # 5. Package the final filesystem into an ISO9660 image using xorriso.
-xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v2.iso \
+# xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v2.iso \
+xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v3.iso \
   -J -l \
   -V "KJX_HEADLESS" \
   -b syslinux/isolinux.bin \
