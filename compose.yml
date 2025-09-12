@@ -35,10 +35,10 @@ services:
       - APPLICATION_USER=${APPLICATION_USER:-appuser}
       - APPLICATION_UID=${APPLICATION_UID:-1000}
     build:
-      context: "./trace/ayaya"
-      dockerfile: "./Dockerfile"
+      context: . # "./trace/ayaya"
+      dockerfile: "./trace/ayaya/Dockerfile" # "./Dockerfile"
       tags:
-        - "localhost:5000/export_bee:latest"
+        - "localhost:5000/aya-rs:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: "echo hmm"
 
