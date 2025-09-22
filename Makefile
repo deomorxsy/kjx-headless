@@ -243,6 +243,13 @@ beetor:
 bwc_off:
 	gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
 
+# old setcap script
+# untested
+.PHONY: setcap
+setcap:
+	gcc -Wall -o ./scripts/libkjx/cap_example ./scripts/libkjx/setcap.c -lcap
+    # gcc -Wall -o cap_example setcap.c -lcap -static -fPIE -pie
+
 
 # generate stack call graph
 .PHONY: valprof
@@ -355,3 +362,12 @@ eltorito:
 itoeltor:
 	. ./scripts/ccr.sh; checker && \
 	docker compose -f ./compose.yml --progress=plain build grub
+
+# GOTO: airgap instead
+.PHONY: runiso
+runiso:
+	. ./scripts/sandbox/run-qemu.sh -runiso
+
+.PHONY: wasm
+wasm:
+	. ./scripts/entrypoints/wasm-runner.sh

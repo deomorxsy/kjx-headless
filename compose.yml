@@ -5,6 +5,18 @@ volumes:
     grafana_data: {}
 
 services:
+  # zig + wasm + typescript + deno
+  wasm_bpf:
+    environment:
+      - git_hash
+    build:
+      context: "./trace/wasm/"
+      dockerfile: "./Dockerfile"
+      tags:
+        - "localhost:5000/wasm_bpf:latest"
+    entrypoint: ["run", "--allow-net", "/app/main.ts"]
+    # command: |
+    #   echo hmm
   libbpf_core:
     environment:
       - git_hash
@@ -38,7 +50,7 @@ services:
       context: . # "./trace/ayaya"
       dockerfile: "./trace/ayaya/Dockerfile" # "./Dockerfile"
       tags:
-        - "localhost:5000/aya-rs:latest"
+        - "localhost:5000/aya_rs:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: "echo hmm"
 
