@@ -54,6 +54,7 @@ trace/vmlinux.h
 mount-point
 foo.*
 utils/storage/eulab-hd
+utils/storage/k3s-tarball-squashfs.img
 
 # gcc dump for graph generation
 # (-fdump-tree-all-graph)
@@ -114,7 +115,7 @@ containers/
 # dropbear
 artifacts/dropbear/*
 
-# qonq
+# ./scripts/qonq.sh
 artifacts/replaSED-qonq.sh
 artifacts/ssh-keys/*
 artifacts/ssh-rootfs/*
@@ -123,20 +124,67 @@ artifacts/unsealed-qonq.sh
 # bpftrace
 capable.bt
 
-# ftrace
+# Ftrace
 trace/Ftrace/ftrace.sample.out
 
-# assets
+# Assets
 assets/curl/
 assets/runit/
 newart/
 assets/blazesym/
 assets/libbpf-bootstrap/
 
-# workflows
+# Workflows
 .github/workflows/downloader.yml
 .github/workflows/qemu.yml
 
-# kernel assets
+# Kernel assets
 assets/kernel/app/
 assets/module_kernel_build
+
+# More artifacts
+
+alpine_3-20-6.tar
+artifacts/BURNA_FINAL/
+artifacts/burna-almost-iso.tar.gz
+artifacts/bzImage_0.3.1
+artifacts/k3s-airgap/
+artifacts/kjx-headless.iso
+artifacts/kjx-headless_v2.iso
+artifacts/libs/
+artifacts/oci-registry-tarball.tar
+artifacts/ramdisk_backups/
+artifacts/rootfs.sqfs
+artifacts/tracers/
+
+logs/
+qqqq.json
+
+# Capabilities sample list
+idk-edited
+
+# Bootloaders
+eltorito.img
+
+# Airgap OCI Registry
+eeita/*
+
+# Dummy initramfs.cpio.gz decompressed into base rootfs
+dadada/*
+./scripts/testfilehmm.txt
+
+# Ftrace files
+set_ftrace_pid
+
+# bcc files
+assets/bcc/
+
+# other misc
+eeeita/
+assets/libbpf/
+assets/bpftool/
+assets/HeatMap/
+
+# do not include iso generated files
+*.iso
+
