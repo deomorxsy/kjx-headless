@@ -2,10 +2,10 @@ name: aya-rs
 
 # This rule triggers when the workflow will run
 on:
-  # push:
-  #   branches:
-  #     - 'main'
-  #     - 'releases/**'
+  push:
+    branches:
+      - 'main'
+      - 'releases/**'
   # run the workflow manually from Actions tab
   workflow_dispatch:
 
@@ -28,26 +28,37 @@ jobs:
 
       - name: Build OCI image
         run: |
-          docker run  -d -p 5000:5000 --name registry registry:3.0
-          # env git_hash env goes into the compose.yml
-          docker compose -f ./compose.yml --progress=plain build ayaya
-          docker push localhost:5000/aya-rs:latest
-          #podman build -t bubo_builder:latest -f ./utils/busybox/Dockerfile
+          make ayaya
 
 
-      - name: Retrieve artifact from OCI image
-        run: |
-          mkdir -p ${{ github.workspace }}/artifacts/libbpf-examples/
-          docker create --name libbpf_core localhost:5000/libbpf_core:latest
-          docker cp ${{ github.workspace }}/trace/libbpf-core/examples/ libbpf_core:./app/
-          docker run -it --name libbpf_core -d --entrypoint="/bin/sh" localhost:5000/haskell_exs:latest -c 'mkdir -p /artifacts/libbpf-examples/; tar -czf /artifacts/libbpf-examples/bpfcore_examples.tar.gz'
-          docker cp libbpf_core:/artifacts/libbpf-examples/bpfcore_examples.tar.gz ${{ github.workspace }}/artifacts/libbpf-examples/
-          echo done!!
+     # - name: Build OCI image
+     #   run: |
+     #     docker run  -d -p 5000:5000 --name registry registry:3.0
+     #     # env git_hash env goes into the compose.yml
+     #     docker compose -f ./compose.yml --progress=plain build ayaya
+     #     docker push localhost:5000/aya-rs:latest
+     #     #podman build -t bubo_builder:latest -f ./utils/busybox/Dockerfile
 
-      - name: Archive the build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bubo
-          # image size: 8.48MB
-          # artifact size: 829.6K
-          path: ${{ github.workspace }}/artifacts/bpfcore_examples.tar.gz
+
+     # - name: Retrieve artifact from OCI image
+     #   run: |
+     #     mkdir -p "\${{ github.workspace }}/artifacts/ayaya/examples/"
+     #     docker create --name ayaya localhost:5000/aya_rs:latest
+     #     #docker cp "\${{ github.workspace }}/trace/ayaya/examples/" ayaya:./app/
+     #     # run OCI container with a volume to give the container context before the build, then copy artifacts
+     #     docker run -it \
+     #         --name ayaya \
+     #         -v "\${{ github.workspace }}/artifacts/ayaya/examples/:/app/:ro" \
+     #         -d \
+     #         --entrypoint="/bin/sh" \
+     #         localhost:5000/aya_rs:latest -c 'mkdir -p /hmm && tar -czf /hmm/aya-rs_examples.tar.gz /home/aya/app/'
+     #     docker cp ayaya:/artifacts/ayaya/examples/aya-rs_examples.tar.gz ${{ github.workspace }}/artifacts/ayaya/examples
+     #     echo done!!
+
+     # - name: Archive the build artifact
+     #   uses: actions/upload-artifact@v4
+     #   with:
+     #     name: aya-rs_examples
+     #     # image size: 8.48MB
+     #     # artifact size: 829.6K
+     #     path: ${{ github.workspace }}/artifacts/aya-rs_examples.tar.gz
