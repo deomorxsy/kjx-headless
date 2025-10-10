@@ -1,0 +1,57 @@
+default: check
+
+build:
+    cargo build
+
+build-release:
+    cargo build --release
+
+
+check:
+    cargo check && cargo clippy
+
+
+run *args: (run-log "info")
+
+run-log: log_level *args: build
+    RUST_BACKTRACE=1 RUST_LOG={{log_level}} cargo run --config 'target."cfg(all())".runner="sudo -E"' -- {{args}}
+
+test:
+    RUST_BACKTRACE=1 cargo test
+
+dbg-test *args:
+    CARGO_TARGET_X86_64_unknown_LINUX_GNU_RUNNER=rust-dbg cargo test {{args}}
+
+install-local: build-release
+    sudo cp target/release/ayaya /usr/local/bin
+    @echo "Installed to /usr/local/bin/ayaya"
+
+uninstall-local:
+    sudo rm -rf "/usr/local/bin/ayaya"
+
+# oci spec container
+oci-build:
+    ./scripts/oci-build.sh
+
+#
+oci-clean:
+    podman image rm ayaya-builder || true
+    podman system prune -f
+
+
+# misc
+fix:
+    cargo clippy --fix
+    cargo +nightly fmt
+    git add .
+    git commit -m "chore(clippy): run fixes"
+
+check-system:
+    @echo "checking eBPF system requirements..."
+    # kernel version
+    @uname -r
+    # bpf syscall availability
+    @grep -q CONFIG_BPF_SYSCALL=y /boot/config-$(uname -r) 2>/dev/null && echo 'YES' || echo 'UNKNOWN'
+    # debug filesystem
+    @mount | grep -e "debugfs" || echo 'DEBUGFS NOT MOUNTED'
+    @mount | grep -e "tracefs" || echo 'TRACEFS NOT MOUNTED'

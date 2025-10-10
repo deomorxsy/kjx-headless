@@ -311,7 +311,13 @@ lkmkjx:
 #
 .PHONY: ayaya
 ayaya:
-	. ./scripts/ayabuild.sh
+	BUILD_PAR="builder" . ./scripts/ayabuild.sh
+
+
+.PHONY: justaya
+justaya:
+	(cd ./trace/ayaya || return) && just build && (cd - || return)
+
 
 .PHONY: libbpf-core
 libbpf-core:

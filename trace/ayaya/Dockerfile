@@ -1,44 +1,72 @@
-FROM alpine:3.20 as builder
+# FROM alpine:3.20 as builder
+FROM rust:1.90.0-alpine3.20 as builder
 
+ARG AYA_USER
+ENV AYA_USER=aya
 
+ENV RUSTUP_HOME=/home/aya/rustup
+ENV CARGO_HOME=/home/aya/cargo
+ENV RUST_VERSION=1.90.0
+ENV RUSTUP_VERSION=1.28.2
 
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.82.0
+# create user and group
+RUN <<EOF
+addgroup -g 1000 -S "${AYA_USER}" && \
+    adduser -s /bin/sh -u 1000 -G "${AYA_USER}" \
+        -h "/home/${AYA_USER}" -D "${AYA_USER}"
+EOF
+
+# Switch to the custom user
+USER ${AYA_USER}
+
+# Set workdir
+WORKDIR /home/${AYA_USER}
 
 RUN <<EOF
-set -eux;
-apkArch="$(apk --print-arch)";
-case "$apkArch" in
-    x86_64) rustArch='x86_64-unknown-linux-musl'; rustupSha256='1455d1df3825c5f24ba06d9dd1c7052908272a2cae9aa749ea49d67acbe22b47' ;;
-    aarch64) rustArch='aarch64-unknown-linux-musl'; rustupSha256='7087ada906cd27a00c8e0323401a46804a03a742bd07811da6dead016617cc64' ;;
-    *) echo >&2 "unsupported architecture: $apkArch"; exit 1 ;;
-esac;
-url="https://static.rust-lang.org/rustup/archive/1.27.1/${rustArch}/rustup-init";
-wget "$url";
-echo "${rustupSha256} *rustup-init" | sha256sum -c -;
-chmod +x rustup-init;
-./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch};
-rm rustup-init;
-chmod -R a+w $RUSTUP_HOME $CARGO_HOME;
-rustup --version;
-cargo --version;
-rustc --version;
+
+apk upgrade && apk update && \
+    apk add musl-dev clang-dev llvm
+
+apk upgrade && apk update && \
+    apk add clang llvm lld libelf \
+        zlib-dev libc-dev pkgconf \
+        make ca-certificates
+
+
+RUSTUP_HOME=/home/aya/rustup
+CARGO_HOME=/home/aya/cargo
+RUST_VERSION=1.90.0
+RUSTUP_VERSION=1.28.2
 
 EOF
 
 
-WORKDIR /app
-COPY . /app/
 
 RUN <<EOF
 
 # stable rust toolchain
-rustup toolchain install stable
+# rustup toolchain install stable
 
 # nightly rust toolchain
-rust toolchain install nightly --component rust-src
+rustup toolchain install nightly \
+    && rustup component add rust-src --toolchain nightly \
+    && rustup default nightly \
+    && rustup override set ${RUST_VERSION}
+
+EOF
+
+WORKDIR /app
+#COPY ./trace/ayaya/ /app/
+# Copy manifests first for better layer caching
+COPY ./trace/ayaya/Cargo.toml Cargo.lock ./
+COPY ./trace/ayaya/ayaya/Cargo.toml ./ayaya/
+COPY ./trace/ayaya/ayaya-common/Cargo.toml ./ayaya-common/
+COPY ./trace/ayaya/ayaya-ebpf/Cargo.toml ./ayaya-ebpf/
+
+# Fetch dependencies
+RUN cargo fetch
+
+RUN <<EOF
 
 # Setup bpf-linker
 cargo install bpf-linker
@@ -52,6 +80,9 @@ cargo xtask build
 
 # Run app
 RUST_LOG=info cargo xtask run 2>&1 > /app/cargotest_results.txt
+
+# Run XDP app
+#RUST_LOG=info cargo xtask run -- --iface <network_interface>
 
 EOF
 
