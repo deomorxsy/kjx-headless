@@ -156,7 +156,7 @@ apk upgrade && apk update && \
     apk add libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
         file multipath-tools e2fsprogs xorriso expect libseccomp libcgroup \
         bpftool pahole bpftrace squashfs-tools setxkbmap losetup fuse3 \
-        perl runit openssh git \
+        perl runit openssh git podman conmon crun \
         runc
 
 EOF
@@ -217,13 +217,26 @@ ldd "$(readlink -f "$(which expect)" )"     | awk '{print $3}' >> /foo.txt
 # peripherals support
 ldd "$(readlink -f "$(which setxkbmap)" )"  | awk '{print $3}' >> /foo.txt
 
+# podman support
+ldd "$(readlink -f "$(which conmon)" )"  | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f "$(which podman)" )"  | awk '{print $3}' >> /foo.txt
+
+ldd "$(readlink -f /usr/libexec/podman/netavark    )"   | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f /usr/libexec/podman/aardvark-dns)"   | awk '{print $3}' >> /foo.txt
+ldd "$(readlink -f /usr/libexec/podman/rootlessport)"   | awk '{print $3}' >> /foo.txt
+
+# since catatonit is a static binary
+echo "$(readlink -f /usr/libexec/podman/catatonit)" >> /foo.txt
+
+# if [ -d /usr/libexec/podman ]; then
+#
+# fi
+
+# crun support
+ldd "$(readlink -f "$(which crun)" )"  | awk '{print $3}' >> /foo.txt
+
 # kernel modules support (so overlayfs can be enabled since it was compiled as one)
-ln -s "./kmod" "/sbin/lsmod"
-ln -s "./kmod" "/sbin/rmmod"
-ln -s "./kmod" "/sbin/insmod"
-ln -s "./kmod" "/sbin/modinfo"
-ln -s "./kmod" "/sbin/modprobe"
-ln -s "./kmod" "/sbin/depmod"
+
 
 # squashfs
 
