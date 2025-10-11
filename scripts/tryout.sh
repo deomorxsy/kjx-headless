@@ -153,7 +153,7 @@ qemu-img info "$QCOW_PATH"
 #foo.qcow2
 
 else
-     echo "\n|> Error: Could not start qemu-storage-daemon process since user_allow_other is not enabled at /etc/fuse.conf.\n\n"
+     printf "\n|> Error: Could not start qemu-storage-daemon process since user_allow_other is not enabled at /etc/fuse.conf.\n\n"
 fi
 
 
@@ -630,6 +630,88 @@ krun = [
 
 EOF
 
+
+# Setup storage info for containers
+# this need user management enabled
+(
+cat <<EOF
+[storage]
+driver = "overlay"
+
+# Default Storage Driver, Must be set for proper operation.
+driver = "overlay"
+
+# Temporary storage location
+runroot = "/run/containers/storage"
+graphroot = "/var/lib/containers/storage"
+
+# Storage path for rootless users
+rootless_storage_path = "$HOME/.local/share/containers/storage"
+
+[storage.options]
+pull_options = {enable_partial_images = "false", use_hard_links = "false", ostree_repos=""}
+additionalimagestores = [
+]
+
+[storage.options.overlay]
+
+# Path to an helper program to use for mounting the file system instead of mounting it
+# directly.
+mount_program = "/usr/bin/fuse-overlayfs"
+
+# mountopt specifies comma separated list of extra mount options
+mountopt = "nodev"
+
+
+EOF
+) | tee /etc/containers/storage.conf
+
+
+# =======================
+#  User, groups and shadow password management
+
+# Configure passwd management
+(
+cat <<EOF
+root:x:0:0:root:/root:/bin/ash
+kjx:x:1000:1000:kjx:/home/kjx:/bin/ash
+EOF
+) | tee "$ROOTFS_PATH"/etc/passwd
+
+
+# Configure group management
+(
+cat <<EOF
+root:x:0:
+bin:x:1:
+EOF
+) | tee "$ROOTFS_PATH"/etc/group
+
+# Setup doas superuser management
+#
+echo "permit persist :wheel" >> "$ROOTFS_PATH"/etc/doas.d/20-wheel.conf
+
+# Setup ash shell dotfiles
+
+# Openrc-based profile.d
+(
+cat <<EOF
+if [ -f "$HOME/.config/ash/profile" ]; then
+	. "$HOME/.config/ash/profile"
+fi
+EOF
+) | tee "$ROOTFS_PATH"/etc/profile.d/profile.sh
+
+# Ash profile
+(
+cat <<EOF
+export ENV="$HOME"/.config/ash/ashrc"
+EOF
+) | tee "$ROOTFS_PATH"/home/kjx/.config/ash/profile
+echo "su="doas -s""                             >>      "$ROOTFS_PATH"/home/kjx/.config/ash/ashrc
+
+
+
 #}
 
 # Create squashfs destination paths
@@ -929,27 +1011,78 @@ EOF
 ) | sudo tee "$ISO_DIR/syslinux/isolinux.cfg" > /dev/null
 
 
+#export PAT_KJX_ARTIFACT="${{ secrets.FETCH_ARTIFACT }}"
+export PAT_KJX_ARTIFACT="${FETCH_ARTIFACT_RUNTIME}"
+
+if [ -z "${PAT_KJX_ARTIFACT}" ] || ! [ "${PAT_KJX_ARTIFACT}" = "github_pat*" ]; then
+    #
+    # from ssh-enabled-rootfs to rootfs-with-ssh
+    KO_TARBALL_LINK=$( curl -H "Authorization: token $PAT_KJX_ARTIFACT" https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts | jq -C -r '.artifacts[] | select(.name == "ko_tarball") | .archive_download_url' | awk 'NR==1 {print $1}')
+
+    # wget --header="Authorization: token $PAT_KJX_ARTIFACT" -P ./artifacts/ "$KO_TARBALL_LINK"
+
+    mkdir -p "$ISO_DIR"/kernel/tmp_modules/
+    curl -L -H "Authorization: token $PAT_KJX_ARTIFACT" \
+        --output-dir "$ISO_DIR/kernel/tmp_modules/" -O "$KO_TARBALL_LINK"
+
+    cd "$ISO_DIR"/kernel/tmp_modules || return
+    unzip ./"$(basename "$KO_TARBALL_LINK")"
+
+    for f in ./*; do
+        case $f in
+            *.tar.gz) tar -xvf "$f" ;;
+        esac
+    done
+
+    cd - || return
+
+fi
+#cp ./artifacts/ko_tarball.zip "$ISO_DIR"/kernel/
+#unzip ./ko_tarball.zip
+
+
 # Repack initramfs init bootscript
-#
+if [ "$(basename "$PWD")" = "kjx-headless" ] && [ -f "$ISO_DIR"/kernel/initramfs-ssh.cpio.gz ]; then
 
-if [ -f "$ISO_DIR"/kernel/initramfs-ssh.cpio.gz ]; then
+    if [ -d "$ISO_DIR"/kernel/repack_initramfs ]; then
+        rm -rf "$ISO_DIR"/kernel/repack_initramfs/
+    fi
+
 cd "$ISO_DIR"/kernel/ || return
-    mkdir -p ./repack_initramfs
+mkdir -p ./repack_initramfs
 
-    # decompress gunzip and then cpio to the specified path
-    gzip -cd ./initramfs-ssh.cpio.gz | cpio -idmv -D ./repack_initramfs
+# Decompress gunzip and then cpio to the specified path
+echo "Trying to decompress the cpio.gz tarball..."
+if ! gzip -cd ./initramfs-ssh.cpio.gz | cpio -idmv -D ./repack_initramfs; then
+    printf "\n |> Failed to decompress cpio.gz tarball. Exiting now..."
+fi
+printf "\n|> initramfs decompressed successfully."
+
+
+# Copy kernel modules tarball into the repack directory
+cp -r ./tmp_modules/mnt/lfs/* ./repack_initramfs/
+
+rm -rf ./tmp_modules/*
+
+cd - || return
+
+
 
 (
 cat <<"INIT_EOF"
 #!/bin/busybox sh
 
-# redo mount filesystems
+# Redo mount filesystems
 mount -t devtmpfs   devtmpfs    /dev
-mount -t proc       none        /proc
-mount -t sysfs      none       /sys
+mount -t proc       proc        /proc
+mount -t sysfs      sysfs       /sys
 mount -t tmpfs      tmpfs       /tmp
+mount -t tmpfs      tmpfs       /run
 
-# redo mount tracefs and securityfs pseudo-filesystems
+mkdir /dev/pts
+mount -t devpts devpts /dev/pts
+
+# Redo mount tracefs and securityfs pseudo-filesystems
 mount -t tracefs tracefs /sys/kernel/tracing/
 mount -t debugfs debugfs /sys/kernel/debug/
 mount -t securityfs securityfs /sys/kernel/security/
@@ -1007,34 +1140,38 @@ SQ_SQUASHFS="/tmp/kjx_squashfs"
 SQ_OVERLAY="/tmp/kjx_overlay"
 
 # Create squashfs destination paths
-mkdir -pv "$SQ_ROOTFS"
-mkdir -pv "$SQ_SQUASHFS"
-mkdir -pv "$SQ_OVERLAY/upperdir/usr/local/bin/"
-mkdir -pv "$SQ_OVERLAY/workdir"
-mkdir -pv "$SQ_OVERLAY/merged"
+mkdir -p "$SQ_ROOTFS"
+mkdir -p "$SQ_SQUASHFS"
+mkdir -p "$SQ_OVERLAY/lower"
+mkdir -p "$SQ_OVERLAY/upperdir/usr/local/bin/"
+mkdir -p "$SQ_OVERLAY/workdir"
+mkdir -p "$SQ_OVERLAY/merged"
 
 # Create temporary mount points
 mkdir -p /mnt/iso_live
 mkdir -p /new_root
 
+
 # Mount the ISO device
 echo "Attempting to mount ISO device ($ISO_DEVICE) to /mnt/iso_live..."
 if ! mount -r -t iso9660 "$ISO_DEVICE" /mnt/iso_live; then
-    printf "\n|> Failed to mount ISO device $ISO_DEVICE. Dropping to shell.\n"
+    printf "\n|> Failed to mount ISO device %s. Dropping to shell.\n" "$ISO_DEVICE"
     exec /bin/sh && asciiart
 fi
 echo "ISO device mounted successfully."
 
-# =======================================
 
+# If the path for the squashfs exists,
 echo "Attempting to mount SquashFS image from $FULL_SQUASHFS_PATH to /new_root..."
 if [ ! -f "$FULL_SQUASHFS_PATH" ]; then
     printf "\n\n|> Error: SquashFS image not found at $FULL_SQUASHFS_PATH. Dropping to shell."
     exec /bin/sh && asciiart
 fi
 
+# Mount the squashfs
+#
 # -r for read-only mount, -t squashfs for filesystem type
-if ! mount -r -t squashfs "$FULL_SQUASHFS_PATH" "$SQ_OVERLAY"/merged; then
+if ! mount -r -t squashfs "$FULL_SQUASHFS_PATH" "$SQ_OVERLAY"/lower; then
     printf "\n|> Failed to mount SquashFS image $FULL_SQUASHFS_PATH. Dropping to shell."
     printf "\n|> Check if 'squashfs' kernel module is loaded or compiled into kernel."
     exec /bin/sh && asciiart
@@ -1044,82 +1181,79 @@ echo "SquashFS root filesystem mounted successfully."
 # Unmount the ISO since it is not needed anymore
 umount /mnt/iso_live 2>/dev/null || true # Ignore if it fails (e.g., if busy)
 
-# use fuse-overlayfs to stack files and install additional programs
-# fuse-overlayfs -o lowerdir="$SQ_OVERLAY/merged",upperdir="$SQ_OVERLAY/upperdir",workdir="$SQ_OVERLAY/workdir" "$SQ_OVERLAY/merged"
-mount -t overlay overlay -o lowerdir="$SQ_OVERLAY/merged",upperdir="$SQ_OVERLAY/upperdir",workdir="$SQ_OVERLAY/workdir" "$SQ_OVERLAY/merged"
+# Load the overlay kernel module
+#
+echo "Loading the overlayfs kernel module..."
+if ! modprobe overlay && lsmod | grep overlay; then
+    printf "|> Error: failed to load the overlayfs kernel module. Dropping to shell. \n"
+    printf "|> check if overlayfs kernel module is loaded or compiled into kernel."
+    exec /bin/sh && asciiart
 
-# unmounting:
-# fusermount -u "$SQ_OVERLAY/merged"
-# umount "$SQ_OVERLAY/merged"
+fi
+echo "overlayfs kernel module was successfully loaded!"
 
-printf "\n\n===========\n|> Switching root to the new filesystem...\n===============\n\n"
-# The 'switch_root' command expects the new root directory and the path to 'init'
-# within that new root.
-exec switch_root "$SQ_OVERLAY"/upperdir
-
-
-# Should not reach here if switch_root is successful
-echo "ERROR: switch_root failed! Dropping to shell."
-exec /bin/sh && asciiart
-
-# =======================================
-
-
-# -r for read-only mount, -t squashfs for filesystem type
-if ! mount -r -t squashfs "$FULL_SQUASHFS_PATH" /new_root; then
-    printf "\n|> Failed to mount SquashFS image $FULL_SQUASHFS_PATH. Dropping to shell."
-    printf "\n|> Check if 'squashfs' kernel module is loaded or compiled into kernel."
+# Mount the overlayfs over squashfs
+#
+# hint: this mounts an read-write overlayfs upperdir atop of the decompressed read-only lowerdir squashfs
+#
+echo "Mounting overlayfs..."
+if ! mount -t overlay overlay -o lowerdir="$SQ_OVERLAY"/lower,upperdir="$SQ_OVERLAY"/upperdir,workdir="$SQ_OVERLAY"/workdir "$SQ_OVERLAY"/merged; then
+    printf "|> Failed to mount overlayfs. Dropping to shell.\n"
+    printf "|> Check if 'overlayfs' kernel module is loaded or compiled into kernel."
     exec /bin/sh && asciiart
 fi
-echo "SquashFS root filesystem mounted successfully."
+echo "Overlayfs mounted successfully to $SQ_OVERLAY/merged"
 
 
-# Unmount the ISO since it is not needed anymore
-umount /mnt/iso_live 2>/dev/null || true # Ignore if it fails (e.g., if busy)
+
+# Setup podman storage outside the overlay
+#
+echo "Mounting tmpfs at podman's graphroot storage directory..."
+mkdir -p "$SQ_OVERLAY/merged/var/lib/containers"
+mount -t tmpfs tmpfs "$SQ_OVERLAY/merged/var/lib/containers"
+
+mkdir -p "$SQ_OVERLAY/merged/run"
+mount -t tmpfs tmpfs "$SQ_OVERLAY/merged/run"
+
+# unmount base directories, rootfs init bootscript
+# will mount them again
+umount /proc
+umount /sys
+umount /dev
 
 printf "\n\n===========\n|> Switching root to the new filesystem...\n===============\n\n"
 # The 'switch_root' command expects the new root directory and the path to 'init'
 # within that new root.
-exec switch_root /new_root /sbin/init
+exec switch_root "$SQ_OVERLAY"/merged /sbin/init
+
 
 # Should not reach here if switch_root is successful
 echo "ERROR: switch_root failed! Dropping to shell."
 exec /bin/sh && asciiart
+
 
 INIT_EOF
-) | tee ./repack_initramfs/init
+) | tee "$ISO_DIR"/kernel/repack_initramfs/init
 
-chmod +x ./repack_initramfs/init
+chmod +x "$ISO_DIR"/kernel/repack_initramfs/init
 
-
-cd - || return
 else
     printf "\n|> ERROR: initramfs-ssh.cpio.gz file not found. Exiting now...\n\n"
 fi
 
 
- # create revised cpio.gz rootfs tarball
- #
-if [ -d "$ISO_DIR"/kernel/repack_initramfs ]; then
+# Create revised cpio.gz rootfs tarball
+#
+if [ "$(basename "$PWD")" = "kjx-headless" ] && [ -d "$ISO_DIR"/kernel/repack_initramfs ]; then
 cd "$ISO_DIR"/kernel/repack_initramfs || return
     mv ../initramfs-ssh.cpio.gz ../initramfs-ssh_bak.cpio.gz
     find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../initramfs-ssh.cpio.gz && \
-    echo done!!
+        echo "done!!"
 
 cd - || return
 else
     printf "\n|> Error: could not find the repack directory. Exiting now...\n\n"
 fi
-
-
-# Fix the rootfs init
-(
-cat <<EOF
-EOF
-) | tee "$ROOTFS_PATH/init"
-
-
-
 
 
 SOURCE_ROOTFS_DIR="./artifacts/burn/rootfs"
@@ -1152,28 +1286,31 @@ mkdir -p "$ISO_DIR/boot/grub/i386-pc"
 
 # 5. Package the final filesystem into an ISO9660 image using xorriso.
 # xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v2.iso \
-xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v3.iso \
-  -J -l \
-  -V "KJX_HEADLESS" \
-  -b syslinux/isolinux.bin \
-    -c boot/boot.cat \
-    -no-emul-boot \
-    -boot-load-size 4 \
-    -boot-info-table \
-  -eltorito-alt-boot \
-    -e boot/grub/efi.img \
-    -no-emul-boot \
-    -isohybrid-mbr artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin \
-    -isohybrid-gpt-basdat \
-    -r "$ISO_DIR" \
-    -m 'rootfs'
+#
+    if ! [ -f "$ISO_FINAL_PATH"/kjx-headless_v3.iso ]; then
+    xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v3.iso \
+      -J -l \
+      -V "KJX_HEADLESS" \
+      -b syslinux/isolinux.bin \
+        -c boot/boot.cat \
+        -no-emul-boot \
+        -boot-load-size 4 \
+        -boot-info-table \
+      -eltorito-alt-boot \
+        -e boot/grub/efi.img \
+        -no-emul-boot \
+        -isohybrid-mbr artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin \
+        -isohybrid-gpt-basdat \
+        -r "$ISO_DIR" \
+        -m 'rootfs'
+    else
+        printf "\n|> Error: a file was found with the same name. Exiting now...\n"
+    fi
 
 
 else
     printf "\n\n|> Error: not on the root of the kjx-headless repository. hint: Change dir and try again! \n|> Exiting now...\n\n"
 fi
-
-
 
 
 
