@@ -99,19 +99,16 @@ RUN <<EOF
 
 # Setup bpf-linker
 cargo install bpf-linker
-#cargo xtask build-ebpf
-
-# Build Userspace
-# cargo build
 
 # Build eBPF and Userspace
-#cargo xtask build
+cargo build
+
+# List all contents of current directory
+ls -allhtr
 
 # Run app
 # RUST_LOG=info cargo run 2>&1 > /app/cargotest_results.txt
 
-# Run XDP app
-#RUST_LOG=info cargo run -- --iface <network_interface>
 
 EOF
 
@@ -121,20 +118,15 @@ ENTRYPOINT ["/bin/sh", "-c"]
 # set argument to be fed to the entrypoint
 CMD ["echo build finished"]
 
-# ======== runtime
-# Fetch artifacts
-FROM alpine:3.20 as relay
-
-WORKDIR /app
-
-COPY --from=builder /app/cargotest_results.txt /app/
-
-# set command to be executed when the container starts
-ENTRYPOINT ["/bin/sh", "-c"]
-
-# set argument to be fed to the entrypoint
-CMD ["cat /app/cargotest_results.txt"]
-
-#CMD ["apk upgrade && apk update && \
-#    apk add --no-cache curl ca-certificates gcc &&
-#    RUST_LOG=info cargo xtask run "]
+## # Fetch artifacts
+## FROM alpine:3.20 as relay
+##
+## WORKDIR /app
+##
+## COPY --from=builder /app/cargotest_results.txt /app/
+##
+## # set command to be executed when the container starts
+## ENTRYPOINT ["/bin/sh", "-c"]
+##
+## # set argument to be fed to the entrypoint
+## CMD ["cat /app/cargotest_results.txt"]
