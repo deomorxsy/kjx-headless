@@ -10,23 +10,8 @@ ENV RUST_VERSION=1.90.0
 ENV RUSTUP_VERSION=1.28.2
 ENV LOCAL_BIN="/home/aya/cargo/bin"
 
-# create user and group
-RUN <<EOF
-addgroup -g 1000 -S "${AYA_USER}" && \
-    adduser -s /bin/sh -u 1000 -G "${AYA_USER}" \
-        -h "/home/${AYA_USER}" -D "${AYA_USER}"
-EOF
-
-# Switch to the custom user
-USER ${AYA_USER}
-
-# Set workdir
-WORKDIR /home/${AYA_USER}
 
 RUN <<EOF
-
-#apk upgrade && apk update && \
-#    apk add musl-dev clang-dev llvm
 
 # add musl-dev to get the crti shared object
 apk upgrade && apk update && \
@@ -52,6 +37,19 @@ RUSTUP_VERSION=1.28.2
 LOCAL_BIN="/home/aya/cargo/bin"
 
 EOF
+
+# create user and group
+RUN <<EOF
+addgroup -g 1000 -S "${AYA_USER}" && \
+    adduser -s /bin/sh -u 1000 -G "${AYA_USER}" \
+        -h "/home/${AYA_USER}" -D "${AYA_USER}"
+EOF
+
+# Switch to the custom user
+USER ${AYA_USER}
+
+# Set workdir
+WORKDIR /home/${AYA_USER}
 
 RUN <<EOF
 
