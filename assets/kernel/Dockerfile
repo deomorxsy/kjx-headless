@@ -280,6 +280,9 @@ echo "olddefconfig done"
 ./scripts/config --enable CONFIG_HAVE_MMIOTRACE_SUPPORT
 ./scripts/config --enable CONFIG_CC_HAS_SANCOV_TRACE_PC
 
+# Ftrace function profiler support
+./scripts/config --enable CONFIG_FUNCTION_PROFILER
+
 # hist-triggers trace support
 ./scripts/config --enable CONFIG_ARCH_HAVE_NMI_SAFE_CMPXCHG
 ./scripts/config --enable CONFIG_HIST_TRIGGERS
@@ -305,6 +308,61 @@ echo "olddefconfig done"
 ./scripts/config --enable CONFIG_DEBUG_INFO
 ./scripts/config --enable DEBUG_INFO
 
+# ensure 9P/9pfs options are available
+./scripts/config --enable CONFIG_NET_9P
+./scripts/config --enable CONFIG_9P_FS
+./scripts/config --enable CONFIG_9P_FS_SECURITY
+./scripts/config --enable CONFIG_NET_9P_VIRTIO
+./scripts/config --enable CONFIG_NET_9P_DEBUG # (Optional)
+./scripts/config --enable CONFIG_9P_FS_POSIX_ACL
+
+# PCI and virtio
+./scripts/config --enable CONFIG_PCI
+./scripts/config --enable CONFIG_VIRTIO_PCI
+./scripts/config --enable CONFIG_PCI_HOST_GENERIC # QEMU arm virt board
+
+# frame pointer for tracing kernel functions with kprobes
+./scripts/config --enable CONFIG_FRAME_POINTER
+
+# enable trace events for preempt and irq disable/enable
+./scripts/config --enable CONFIG_PREEMPTIRQ_EVENTS
+
+# enable tracing and statistics about kernel locks from /proc/lock_stat
+./scripts/config --enable CONFIG_LOCK_STAT
+
+# SLUB (unqueued allocator), a slab allocator
+./scripts/config --enable CONFIG_SLUB
+# SLUB is a slab allocator that minimizes cache line usage instead of managing queues of cached objects (SLAB approach). Per cpu caching is realized using slabs of objects instead of queues of objects. SLUB can use memory efficiently and has enhanced diagnostics. SLUB is the default choice for a slab allocator.
+
+# trace CPU statistics accuracy
+    # measures CPU utilization with a granularity of clock ticks [Weisbecker 13]
+    ./scripts/config --enable CONFIG_TICK_CPU_ACCOUNTING
+    # timer frequency
+    ./scripts/config --enable CONFIG_HZ_1000
+    ./scripts/config --set-val CONFIG_HZ 1000
+
+    ./scripts/config --enable CONFIG_VIRT_CPU_ACCOUNTING
+    ./scripts/config --enable CONFIG_VIRT_CPU_ACCOUNTING_GEN
+    ./scripts/config --enable CONFIG_HAVE_VIRT_CPU_ACCOUNTING_GEN
+
+    # Collect scheduler statistics
+    ./scripts/config --enable CONFIG_SCHEDSTATS
+    ./scripts/config --enable CONFIG_SCHED_DEBUG
+    ./scripts/config --enable CONFIG_PSI
+
+# Enable per-task delay accounting
+# ( sourced from /proc/schedstat but exposed with other delay accounting states
+# found in struct sched_info.
+
+    # pre-requisites for delay accounting
+    ./scripts/config --enable CONFIG_EXPERT
+    ./scripts/config --enable CONFIG_MULTIUSER
+    ./scripts/config --enable CONFIG_NET
+
+    # (* taskstats is a netlink-based interface to send per-task
+    # and per-process statistics from the kernel to userspace.*)
+    ./scripts/config --enable CONFIG_TASKSTATS
+    ./scripts/config --enable CONFIG_TASK_DELAY_ACCT
 
 # other security configs
 ./scripts/config --enable CONFIG_HAVE_ARCH_SECCOMP
@@ -346,7 +404,6 @@ echo "olddefconfig done"
 ./scripts/config --enable CONFIG_RPCSEC_GSS_KRB5_ENCTYPES_AES_SHA2
 ./scripts/config --enable CONFIG_CEPH_FS_SECURITY_LABEL
 ./scripts/config --enable CONFIG_CIFS_ALLOW_INSECURE_LEGACY
-./scripts/config --enable CONFIG_9P_FS_SECURITY
 ./scripts/config --enable CONFIG_SECURITY_DMESG_RESTRICT
 ./scripts/config --enable CONFIG_SECURITY
 ./scripts/config --enable CONFIG_SECURITYFS
