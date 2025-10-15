@@ -37,14 +37,35 @@ services:
       setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup))
       . /app/scripts/squashed.sh
     stop_signal: SIGINT
+  # tryout
+  libbpf_final:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./trace/libbpf-core/final/Dockerfile"
+      tags:
+        - "localhost:5000/final:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    # command: |
+    #   apk upgrade && apk update &&
+    #   apk add clang libelf elfutils-dev zlib-dev bpftool \
+    #     git make &&
+    #   setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) &&
+    #   setcap cap_sys_admin+eip $(readlink -f $(which parted)) &&
+    #   setcap cap_sys_admin,cap_dac_override,cap_dac_read_search+eip $(readlink -f $(which kpartx)) && \
+    #   setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) && \
+    #   setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup))
+    #   . /app/scripts/squashed.sh
+    stop_signal: SIGINT
   ayaya:
     environment:
       - git_hash=${git_hash:-default_git_hash}
       - RUSTUP_HOME=${RUSTUP_HOME:-/home/aya/rustup}
       - CARGO_HOME=${CARGO_HOME:-/home/aya/cargo}
-      - PATH=${PATH:-/usr/local/cargo/bin:$PATH}
-      - RUST_VERSION=${RUST_VERSION:-1.82.0}
-      - APPLICATION_USER=${APPLICATION_USER:-appuser}
+      - PATH=${PATH:-/usr/local/cargo/bin:/home/aya/cargo/bin:$PATH}
+      - RUST_VERSION=${RUST_VERSION:-1.90.0}
+      - APPLICATION_USER=${APPLICATION_USER:-aya}
       - APPLICATION_UID=${APPLICATION_UID:-1000}
     build:
       context: . # "./trace/ayaya"

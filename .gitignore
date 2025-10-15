@@ -102,6 +102,7 @@ trace/libbpf-core/examples/vmlinux.h
 trace/libbpf-core/examples/ocisnoop
 artifacts/ocisnoop
 trace/exporter-libbpfgo/vmlinux.h
+trace/libbpf-core/final/.output/*
 
 deploy/oci_cri/podman/Dockerfile
 airflow/
