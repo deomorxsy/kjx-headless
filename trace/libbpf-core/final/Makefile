@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 OUTPUT := .output
 CLANG ?= clang
-LIBBPF_SRC := $(abspath ../../libbpf/src)
+LIBBPF_SRC := $(abspath ../../../assets/libbpf/src)
 BPFTOOL_SRC := $(abspath ../../../assets/bpftool/src)
-#LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
-LIBBPF_OBJ := $(abspath $(OUTPUT)/../../../../assets/libbpf/src/libbpf.a)
+LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
+# LIBBPF_OBJ := $(abspath $(OUTPUT)/../../../../assets/libbpf/src/libbpf.a)
 BPFTOOL_OUTPUT ?= $(abspath $(OUTPUT)/bpftool)
 BPFTOOL ?= $(BPFTOOL_OUTPUT)/bootstrap/bpftool
-LIBBLAZESYM_SRC := $(abspath ../../blazesym/)
+LIBBLAZESYM_SRC := $(abspath ../../../assets/blazesym/)
 LIBBLAZESYM_INC := $(abspath $(LIBBLAZESYM_SRC)/capi/include)
 LIBBLAZESYM_OBJ := $(abspath $(OUTPUT)/libblazesym_c.a)
 ARCH ?= $(shell uname -m | sed 's/x86_64/x86/' \
@@ -17,7 +17,8 @@ ARCH ?= $(shell uname -m | sed 's/x86_64/x86/' \
 			 | sed 's/mips.*/mips/' \
 			 | sed 's/riscv64/riscv/' \
 			 | sed 's/loongarch64/loongarch/')
-VMLINUX := ./vmlinux.h
+#VMLINUX := ./vmlinux.h
+VMLINUX := ../../../assets/vmlinux.h/include/$(ARCH)/vmlinux.h
 # Use our own libbpf API headers and Linux UAPI headers distributed with
 # libbpf to avoid dependency on system-wide headers, which could be missing or
 # outdated
@@ -89,10 +90,9 @@ $(OUTPUT) $(OUTPUT)/libbpf $(BPFTOOL_OUTPUT):
 # Build libbpf
 $(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPUT)/libbpf
 	$(call msg,LIB,$@)
-	#$(Q)$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=1		      \
-	$(Q)$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=y		      \
-		    OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@)		      \
-		    INCLUDEDIR= LIBDIR= UAPIDIR=			      \
+	$(Q)$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=y	\
+		    OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@) 	\
+		    INCLUDEDIR= LIBDIR= UAPIDIR=			    \
 		    install
 
 # Build bpftool
