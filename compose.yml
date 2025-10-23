@@ -42,6 +42,7 @@ services:
     environment:
       - git_hash
     build:
+      # keep context for the root repository to provide Makefile dependencies
       context: "."
       dockerfile: "./trace/libbpf-core/final/Dockerfile"
       tags:
@@ -306,4 +307,19 @@ services:
       apk add dune ocaml musl-dev && \
       eval $(opam env --switch=utop)
 
-
+  # ========================
+  # android cross-compilation
+  # build with xmake
+  # =========================
+  android:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./trace/android/Dockerfile"
+      tags:
+        - "localhost:5000/android:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT

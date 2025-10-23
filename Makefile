@@ -1,3 +1,4 @@
+# -*- makefile -*- : Force emacs to use Makefile mode
 #.DEFAULT_GOAL := all
 #SHELL := /bin/sh
 
@@ -41,6 +42,10 @@ $(BUILD_DIR)/disk.bin: $(SRC_DISC)/btl.asm
 #clean:
 #	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
 
+#.PHONY: clean
+#clean:
+#	$(call msg,CLEAN)
+#	$(Q)rm -rf $(OUTPUT) $(APPS)
 
 # ====================
 # kernel-bound tasks
@@ -306,19 +311,20 @@ clean_lkm:
 lkmkjx:
 	gcc -Wl --no-as-needed -lcap -o ./scripts/libkjx/lkm_idk/lkm-sample ./scripts/libkjx/lkm_idk/main.c
 
-# ==========
-# libbpf-based tracing
-#
+
+
+# aya-rs
 .PHONY: ayaya
 ayaya:
 	BUILD_PAR="builder" . ./scripts/ayabuild.sh
 
-
+# aya-rs from the justfile
 .PHONY: justaya
 justaya:
 	(cd ./trace/ayaya || return) && just build && (cd - || return)
 
-
+# ==========
+# libbpf-based tracing
 .PHONY: libbpf-core
 libbpf-core:
 	$(MAKE) -C trace/libbpf-core/ bootstrap
@@ -377,3 +383,15 @@ runiso:
 .PHONY: wasm
 wasm:
 	. ./scripts/entrypoints/wasm-runner.sh
+
+.PHONY: final-builder
+final:
+	MODE="builder" . ./scripts/entrypoints/libbpf-static.sh
+
+.PHONY: runner-final
+runner-final:
+	MODE="runner" . ./scripts/entrypoints/libbpf-static.sh
+
+.PHONY: android
+android:
+   MODE="builder" . ./scripts/entrypoints/libbpf-android.sh
