@@ -14,6 +14,13 @@
 [![ayaya](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml)
 [![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml)
 [![ocaml-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml)
+[![zig-wasm-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/zig-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/zig-ci.yml)
+[![bpftrace-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/bpftrace-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/bpftrace-ci.yml)
+
+
+[![runit-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/runit-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/runit-ci.yml)
+
+[![libbpf-android](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml)
 
 Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 
