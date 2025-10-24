@@ -323,3 +323,15 @@ services:
     command: |
         echo hmm
     stop_signal: SIGINT
+  final_core:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./trace/libbpf-core/final/Dockerfile.ubuntu"
+      tags:
+        - "localhost:5000/android:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT

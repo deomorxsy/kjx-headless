@@ -1,26 +1,37 @@
 ### kjx-headless // WIP
-> POC for a custom headless LFS distro setup, deploy and monitoring
+> Setting up a custom headless busybox/LFS distro
 
-[![initramfs](https://github.com/deomorxsy/kjx-headless/actions/workflows/initramfs.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/initramfs.yml)
-[![bzImage](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel.yml)
-[![dropbear](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml)
-[![qemu-builder](https://github.com/deomorxsy/kjx-headless/actions/workflows/qdb.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/qdb.yml)
-[![eltorito.img](https://github.com/deomorxsy/kjx-headless/actions/workflows/eltorito.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/eltorito.yml)
-[![iso9660](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml)
+Tracers
 [![libbpf-core](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/bee.yml)
-[![cronaws](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml)
-[![unit-tests](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml)
 [![libbpfgo](https://github.com/deomorxsy/kjx-headless/actions/workflows/libbpfgo.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/libbpfgo.yml)
 [![ayaya](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ayaya.yml)
-[![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml)
 [![ocaml-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ocaml-ci.yml)
 [![zig-wasm-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/zig-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/zig-ci.yml)
 [![bpftrace-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/bpftrace-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/bpftrace-ci.yml)
 
-
+Core bootscripts
+[![initramfs](https://github.com/deomorxsy/kjx-headless/actions/workflows/initramfs.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/initramfs.yml)
+[![bzImage](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/kernel.yml)
+[![dropbear](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/dropbear.yml)
+[![eltorito.img](https://github.com/deomorxsy/kjx-headless/actions/workflows/eltorito.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/eltorito.yml)
 [![runit-ci](https://github.com/deomorxsy/kjx-headless/actions/workflows/runit-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/runit-ci.yml)
+[![qemu-builder](https://github.com/deomorxsy/kjx-headless/actions/workflows/qdb.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/qdb.yml)
+[![iso9660](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/ci.yml)
+[![vmdk](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/cronaws.yml)
 
+Versions per Microvms
+[![kjx-firecracker](https://github.com/deomorxsy/kjx-headless/actions/workflows/firecracker-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/runit-ci.yml)
+[![kjx-gvisor](https://github.com/deomorxsy/kjx-headless/actions/workflows/gvisor-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/runit-ci.yml)
+[![kjx-kata](https://github.com/deomorxsy/kjx-headless/actions/workflows/kata-ci.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/runit-ci.yml)
+
+ Tests (stalled)
+[![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml)
+[![unit-tests](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml)
+
+Platforms
 [![libbpf-android](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml)
+
+---
 
 Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 

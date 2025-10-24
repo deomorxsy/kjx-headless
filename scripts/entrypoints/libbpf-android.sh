@@ -7,10 +7,55 @@ CCR_MODE="checker" . ./scripts/ccr.sh && \
     docker compose -f ./compose.yml --progress=plain build --no-cache android
 }
 
+runner() {
+# set -euxo pipefail
+
+apt-get update -y && \
+    apt-get install -yqq \
+        build-essential clang llvm zlib1g-dev libc++-dev libc++abi-dev \
+        sudo git wget bash rlwrap unzip \
+        && \
+    apt-get -y clean
+
+
+wget -h
+
+# set -euxo pipefail
+
+BPF_USER="bpf"
+
+groupadd -g 1000 -r "${BPF_USER}" && \
+    useradd -s /bin/bash -u 1000 -g "${BPF_USER}" \
+        -d "/home/${BPF_USER}" -m "${BPF_USER}"
+
+# cp -r /app/* /home/bpf/app/
+# chmod -R ${BPF_USER}:${BPF_USER} /home/bpf/app/
+
+su bpf -c '
+wget https://xmake.io/shget.text -O - | bash
+
+source ~/.xmake/profile
+
+git clone https://github.com/libbpf/libbpf-bootstrap.git
+
+ls -allhtr
+
+if [ -d ./libbpf-bootstrap/examples/c/ ]; then
+    ls -allhtr ./libbpf-bootstrap/
+    cd ./libbpf-bootstrap/examples/c || return \
+    && xmake f -p android -a arm64-v8a --require-bpftool=y -y && xmake -y
+else
+    printf "\n|> Build path does not exist! Exiting now...\n\n"
+fi
+
+'
+
+}
+
 
 print_usage() {
 cat <<-END >&2
-USAGE: libbpf-static [-options]
+USAGE: libbpf-android [-options]
                 - runner
                 - builder
                 - version
