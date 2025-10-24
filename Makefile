@@ -397,3 +397,37 @@ android:
 	MODE="builder" . ./scripts/entrypoints/libbpf-android.sh
 
 
+# ==============
+# Microvms
+# ==============
+.PHONY: kata
+kata:
+	MODE="builder" . ./scripts/entrypoints/microvms.sh
+
+.PHONY: gvisor
+gvisor:
+	MODE="builder" . ./scripts/entrypoints/microvms.sh
+
+.PHONY: firecracker
+firecracker:
+	MODE="builder" . ./scripts/entrypoints/microvms.sh
+
+
+# ===========
+# HLCR: High-Level Container Runtime
+# ==============
+.PHONY: podman
+podman:
+	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+
+.PHONY: runc
+runc:
+	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+
+.PHONY: crun
+crun:
+	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+
+.PHONY: youki
+youki:
+	MODE="builder" . ./scripts/entrypoints/hlcr.sh
