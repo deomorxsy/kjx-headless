@@ -39,7 +39,7 @@ assets/FlameGraph
 assets/builda.sh
 assets/zstd-test
 /sample/
-
+assets/ipxe
 # misc file formats
 *.svg
 trace/ayaya/dsds/
@@ -130,7 +130,7 @@ trace/Ftrace/ftrace.sample.out
 
 # Assets
 assets/curl/
-assets/runit/
+#assets/runit/
 newart/
 assets/blazesym/
 assets/libbpf-bootstrap/
