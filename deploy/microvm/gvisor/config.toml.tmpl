@@ -1,8 +1,10 @@
 #/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl
-
-{{ template "base" . }}
+#{{ template "base" . }}
 
 [plugins."io.containerd.runtime.v1.linux"]
   shim_debug = true
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
   runtime_type = "io.containerd.runsc.v1"
+  [plugins."io.containerd.cri.v1.cri".containerd.runtimes.runsc.options]
+    BinaryName = "/usr/local/bin/containerd-shim-runsc-v1"
+

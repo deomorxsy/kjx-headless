@@ -20,4 +20,4 @@ spec:
       limits:
         memory: "100Mi" # max memory allowed
         cpu: "200m"     # max cpu allowed
-  nodeName: asari
+  nodeName: user
