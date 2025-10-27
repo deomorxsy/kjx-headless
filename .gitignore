@@ -116,11 +116,14 @@ containers/
 # dropbear
 artifacts/dropbear/*
 
-# ./scripts/qonq.sh
+# scripts
+./scripts/qonq.sh
 artifacts/replaSED-qonq.sh
+artifacts/unsealed-qonq.sh
+
+# more artifacts
 artifacts/ssh-keys/*
 artifacts/ssh-rootfs/*
-artifacts/unsealed-qonq.sh
 
 # bpftrace
 capable.bt

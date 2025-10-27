@@ -335,3 +335,18 @@ services:
     command: |
         echo hmm
     stop_signal: SIGINT
+  # visualization
+  #
+  grafana:
+    environment:
+      - git_hash
+    image: grafana/grafana-enterprise
+    # build:
+    #   context: "."
+    #   dockerfile: "./deploy/monitor/Dockerfile.grafana"
+    #   tags:
+    #     - "localhost:5000/grafana:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT

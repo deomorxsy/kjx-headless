@@ -89,6 +89,11 @@ builda_qemu:
 	. ./scripts/ccr.sh; checker; \
 	docker compose -f ./compose.yml --progress=plain build builda_qemu
 
+# builds the project and fetch binaries for qemu-storage-daemon on qemu automation for the builder
+.PHONY: qonq
+qonq:
+	MODE="-rep" . ./scripts/qonq-qdb.sh
+
 .PHONY: isogen
 isogen:
 	. ./scripts/ccr.sh; checker; \

@@ -1,9 +1,15 @@
 name: qemu distro builder
+# it fetches dependencies before the main run at ./.github/workflows/ci.yml
+# qonq-qdq: qemu on qemu, qemu distro builder
 
 # This rule triggers when the workflow will run
 on:
   # run the workflow manually from Actions tab
   workflow_dispatch:
+  pull_request:
+  schedule:
+    # bi-weekly format: every sunday and wednesday at 23:23
+    - cron: "23 23 * * 1,4"
 
 # jobs can run in sequence or parallel in a workflow
 jobs:
@@ -26,7 +32,9 @@ jobs:
 
       - name: build the rootfs for the qonq builder
         run: |
-          . ./scripts/qonq.sh -fq
+          # . ./scripts/qonq-qdb.sh -fq
+          # make qonq
+          MODE="-rep" . ./scripts/qonq-qdb.sh
 
 
       - name: Archive the build artifact
