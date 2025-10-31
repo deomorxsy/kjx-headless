@@ -332,7 +332,9 @@ echo "olddefconfig done"
 
 # SLUB (unqueued allocator), a slab allocator
 ./scripts/config --enable CONFIG_SLUB
-# SLUB is a slab allocator that minimizes cache line usage instead of managing queues of cached objects (SLAB approach). Per cpu caching is realized using slabs of objects instead of queues of objects. SLUB can use memory efficiently and has enhanced diagnostics. SLUB is the default choice for a slab allocator.
+# SLUB is a slab allocator that minimizes cache line usage instead of managing queues of cached objects (SLAB approach).
+# Per cpu caching is realized using slabs of objects instead of queues of objects. SLUB can use memory efficiently and
+# has enhanced diagnostics. SLUB is the default choice for a slab allocator.
 
 # trace CPU statistics accuracy
     # measures CPU utilization with a granularity of clock ticks [Weisbecker 13]
@@ -496,6 +498,10 @@ echo "olddefconfig done"
 # Ring buffer
 ./scripts/config --enable CONFIG_RING_BUFFER
 
+# Netboot/PXE
+./scripts/config --enable CONFIG_IP_PNP         # IP: kernel level autoconfiguration
+./scripts/config --enable CONFIG_IP_PNP_BOOTP   # BOOTP support. Check the if the network ROM already doesn't does it
+./scripts/config --enable CONFIG_IP_PNP_DHCP    # DHCP support
 # Add more missing modules
 ./scripts/config --enable CONFIG_USER_NS
 ./scripts/config --enable CONFIG_BLK_DEV_THROTTLING
