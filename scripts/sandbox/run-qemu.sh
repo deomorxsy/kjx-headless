@@ -10,11 +10,12 @@ rh3=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
 rh4=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
 
 bubo=$(command -v busybox)
-macaddress=$($bubo printf "52:54:%02x:%02x:%02x:%02x" \
+MACADDRESS=$($bubo printf "52:54:%02x:%02x:%02x:%02x" \
     "$rh1" "$rh2" \
     "$rh3" "$rh4")
 
-printf "\n\n%s\n" "$macaddress"
+export MACADDRESS
+printf "\n\n%s\n" "${MACADDRESS}"
 
 # printf -v macaddr "52:54:%02x:%02x:%02x:%02x" \
 #     $(( RANDOM & 0xff )) \
@@ -112,6 +113,7 @@ thirdver() {
 
 repack_switch() {
 
+# check for ./.github/workflows/dropbear.yml artifact
 if [ -f ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz ]; then
 
     # clean the rootfs tree if it exists
@@ -137,7 +139,9 @@ if [ -f ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz ]; then
     echo done!!
 
 else
-    printf "\n|> tarball file not found inside ./artifacts/ssh-rootfs .\n"
+    printf "\n|> tarball file not found inside ./artifacts/ssh-rootfs. Attempting to download...\n"
+
+    wget
 fi
 
 
@@ -148,6 +152,61 @@ echo
 patch_k3s() {
 
 fakerootdir="/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
+
+(
+cat <<EOF
+version = 2
+
+[plugins."io.containerd.internal.v1.opt"]
+  path = "/var/lib/rancher/k3s/agent/containerd"
+[plugins."io.containerd.grpc.v1.cri"]
+  stream_server_address = "127.0.0.1"
+  stream_server_port = "10010"
+  enable_selinux = false
+  enable_unprivileged_ports = true
+  enable_unprivileged_icmp = true
+  device_ownership_from_security_context = false
+  sandbox_image = "rancher/mirrored-pause:3.6"
+
+[plugins."io.containerd.grpc.v1.cri".containerd]
+  snapshotter = "overlayfs"
+  disable_snapshot_annotations = true
+
+[plugins."io.containerd.grpc.v1.cri".cni]
+  bin_dir = "/var/lib/rancher/k3s/data/cni"
+  conf_dir = "/var/lib/rancher/k3s/agent/etc/cni/net.d"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  BinaryName = "/usr/bin/runc"
+  SystemdCgroup = false
+
+[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/var/lib/rancher/k3s/agent/etc/containerd/certs.d"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."crun"]
+  runtime_type = "io.containerd.runc.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."crun".options]
+  BinaryName = "/usr/bin/crun"
+  SystemdCgroup = false
+
+# gVisor: https://gvisor.dev/
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.gvisor]
+  runtime_type = "io.containerd.runsc.v1"
+  BinaryName = "/usr/local/bin/runsc"
+# Kata Containers: https://katacontainers.io/
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata]
+  runtime_type = "io.containerd.kata.v2"
+  BinaryName = "/usr/local/bin/kata-runtime
+
+
+EOF
+) | tee /var/lib/rancher/k3s/agent/containerd/config.toml.tmpl
+
+
+# "/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
 
     # setup the k3s toml
 ( cat <<EOF
@@ -321,7 +380,6 @@ if ! [ -f "$TARBALL_ARTIFACT" ]; then
     save_registry
 fi
 
-
 if [ "$KJXPATH" = "kjx-headless" ]; then
 
     mkdir -p /tmp/k3s-unpack
@@ -403,7 +461,16 @@ airgap_k3s() {
     # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v22.cpio.gz"
     # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v23.cpio.gz"
     # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v24.cpio.gz"
-    ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v25.cpio.gz"
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v25.cpio.gz"
+
+    # new kernel modules properly setup
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v26.cpio.gz"
+
+    # gvisor runsv, kata and crun binaries enabled
+    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v27.cpio.gz"
+
+    # full podman dynamic binaries and shared objects
+    ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
 
 
     # PS: this kernel image needs to have squashfs support.
@@ -418,10 +485,14 @@ airgap_k3s() {
     # MISSING="$HOME/Downloads/kjxh-artifacts/7_missing/bzImage"
     # ORDERED="$HOME/Downloads/kjxh-artifacts/8_ordered/bzImage"
     # ORDERED="./assets/module_kernel_build/lfs/lib/modules/6.6.22/build/arch/x86/boot/bzImage"
-    TIDY="$HOME/Downloads/kjxh-artifacts/9_tidying/bzImage"
+    # TIDY="$HOME/Downloads/kjxh-artifacts/9_tidying/bzImage"
+    FUSE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
 
+    # Mind that this will need fuse-overlayfs since the -initrd flag
+    # runs an initramfs.cpio.gz over ramfs/tmpfs, that is, on RAM, and not
+    # in a filesystem storage. For overlayfs only, use the ISO.
     qemu-system-x86_64 \
-        -kernel "$TIDY" \
+        -kernel "$FUSE" \
         -initrd "$ANODA" \
         -enable-kvm \
         -m 3072 \
@@ -430,8 +501,10 @@ airgap_k3s() {
         -no-reboot \
         -drive file="./utils/storage/eulab-hd",format=raw \
         -drive file="./utils/storage/k3s-tarball-squashfs.img",format=raw \
-        -net nic,model=virtio,macaddr="$macaddr" \
-        -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0
+        -net nic,model=virtio,macaddr="${MACADDRESS}" \
+        -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
+        -virtfs local,path=./artifacts/qemu-sink/,mount_tag=hostshare,security_model=mapped-xattr
+        # -virtfs local,path="./artifacts/qemu-sink/",security_model=mapped-xattr \
         #-serial
         # -s -S
         #-serial pty
@@ -454,15 +527,23 @@ configure_vm_ssh() {
 # run the final iso artifact
 runiso() {
 
+# CURRENT_ISO="./artifacts/kjx-headless_v2.iso"
+CURRENT_ISO="./artifacts/kjx-headless_v3.iso"
+
+OLD_ISO="./artifacts/kjx-headless.iso"
+
 qemu-system-x86_64 \
     -m 1024 \
-    -cdrom ./artifacts/kjx-headless.iso \
+    -cdrom "$CURRENT_ISO" \
     -boot d \
     -enable-kvm \
     -nographic \
     -no-reboot \
     -cpu host \
-    -serial mon:stdio
+    -serial mon:stdio \
+    -drive file="./utils/storage/eulab-hd",format=raw \
+    -drive file="./utils/storage/k3s-tarball-squashfs.img",format=raw
+
 }
 
 print_usage() {

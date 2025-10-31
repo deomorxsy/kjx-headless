@@ -32,3 +32,6 @@
 [submodule "assets/async-profiler"]
 	path = assets/async-profiler
 	url = git@github.com:async-profiler/async-profiler.git
+[submodule "assets/ap-loader"]
+	path = assets/ap-loader
+	url = git@github.com:jvm-profiling-tools/ap-loader.git
