@@ -208,6 +208,8 @@ heatmap:
 		--title="Latency Heat Map: 15ms max" \
 		out.lat_us > out.latzoom.svg
 
+grafana:
+	MODE="runner" . ./scripts/monitor/grafana.sh
 monitor: exporter heatmap
 
 # ================
@@ -317,6 +319,9 @@ lkmkjx:
 	gcc -Wl --no-as-needed -lcap -o ./scripts/libkjx/lkm_idk/lkm-sample ./scripts/libkjx/lkm_idk/main.c
 
 
+# ====================
+# Tracers
+# ====================
 
 # aya-rs
 .PHONY: ayaya
@@ -328,12 +333,16 @@ ayaya:
 justaya:
 	(cd ./trace/ayaya || return) && just build && (cd - || return)
 
-# ==========
 # libbpf-based tracing
 .PHONY: libbpf-core
 libbpf-core:
 	$(MAKE) -C trace/libbpf-core/ bootstrap
 
+
+# honey-potion
+.PHONY: hpota
+hpota:
+	MODE="retriever" . ./scripts/tracers/hpota.sh
 
 # =========
 # qemu builder runtime

@@ -1,4 +1,4 @@
-FROM elixir:1.17.3-otp-27-alpine
+FROM elixir:1.19.1-otp-28-alpine
 
 ARG MIX_ENV="prod"
 
