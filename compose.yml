@@ -47,17 +47,8 @@ services:
       dockerfile: "./trace/libbpf-core/final/Dockerfile"
       tags:
         - "localhost:5000/final:latest"
-    entrypoint: ["/bin/sh", "-c"]
+    # entrypoint: ["/bin/sh", "-c"]
     # command: |
-    #   apk upgrade && apk update &&
-    #   apk add clang libelf elfutils-dev zlib-dev bpftool \
-    #     git make &&
-    #   setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) &&
-    #   setcap cap_sys_admin+eip $(readlink -f $(which parted)) &&
-    #   setcap cap_sys_admin,cap_dac_override,cap_dac_read_search+eip $(readlink -f $(which kpartx)) && \
-    #   setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) && \
-    #   setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup))
-    #   . /app/scripts/squashed.sh
     stop_signal: SIGINT
   ayaya:
     environment:
@@ -74,25 +65,20 @@ services:
       tags:
         - "localhost:5000/aya_rs:latest"
     entrypoint: ["/bin/sh", "-c"]
-    command: "echo hmm"
-
+    command: |
+      echo "aya-rs container"
+      printf "\n|> List of environment variables:\n\n"
+      env
     stop_signal: SIGINT
   builda_qemu:
+      container_name: qemu_kjx
       build:
         context: "."
         dockerfile: "./Dockerfile"
         tags:
           - "localhost:5000/qemu_kjx:latest"
       entrypoint: ["/bin/sh", "-c"]
-      command: |
-        apk upgrade && apk update &&
-        apk add libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
-          file multipath-tools e2fsprogs xorriso expect libseccomp &&
-        setcap cap_sys_admin,cap_dac_override+eip $(readlink -f $(which qemu-img)) && \
-        setcap cap_sys_admin+eip $(readlink -f $(which parted)) && \
-        setcap cap_sys_admin,cap_dac_override,cap_dac_read_search+eip $(readlink -f $(which kpartx)) && \
-        setcap cap_sys_admin+eip $(readlink -f $(which mkfs.ext4)) && \
-        setcap cap_sys_admin,cap_dac_override+ep $(readlink -f $(which losetup))
+      command: /scripts/bq-entrypoint.sh
   isogen_new:
     build:
       context: "."
@@ -338,15 +324,13 @@ services:
   # visualization
   #
   grafana:
+    container_name: grafana
     environment:
       - git_hash
     image: grafana/grafana-enterprise
-    # build:
-    #   context: "."
-    #   dockerfile: "./deploy/monitor/Dockerfile.grafana"
-    #   tags:
-    #     - "localhost:5000/grafana:latest"
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-        echo hmm
+    ports:
+      - "3000:3000"
+    # entrypoint: ["/bin/sh", "-c"]
+    # command: |
+    #    echo hmm
     stop_signal: SIGINT

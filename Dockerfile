@@ -7,10 +7,11 @@
 # 1. Builder Step
 # ==================
 
-FROM alpine:3.20 as builder
+FROM alpine:3.22 as builder
+
+COPY ./scripts/entrypoints/bq-runner.sh /scripts/
 
 WORKDIR /app/
-
 RUN <<"EOF"
 
 # extract with -xJvf
@@ -18,13 +19,15 @@ RUN <<"EOF"
 
 tarformat=".tar.bz2"
 # extract .tar.bz2 with xvf
-newver="qemu-9.2.3"
+newver="qemu-9.2.4" # "qemu-9.2.3 -> qemu-9.2.4"
 oldver="qemu-9.1.0"
 
+# install dependencies for qemu build
 apk upgrade && apk update && \
 apk add python3 musl-dev iasl \
     sparse xen-dev sphinx ninja git make bash fuse3-dev && \
 
+# build qemu
 mkdir -p downloads
 cd downloads/ || return
 wget https://download.qemu.org/"$newver.tar.bz2" && \
@@ -83,7 +86,7 @@ EOF
 # ==================
 # 2. relay step
 # ==================
-FROM alpine:3.20 as relay
+FROM alpine:3.22 as relay
 
 WORKDIR /app
 
@@ -103,17 +106,19 @@ RUN tar -xvf /app/shared_deps/archive.tar.gz && \
 WORKDIR /app
 RUN ls -allht
 RUN printf "\n===== Currently on /app directory ======\n\n"
-RUN chmod +x /app/scripts/squashed.sh
-
-RUN chmod +x /app/scripts/full.sh
+# RUN chmod +x /app/scripts/squashed.sh
+# RUN chmod +x /app/scripts/full.sh
+RUN chmod +x /app/scripts/tryout.sh
 
 RUN ls -allht
 
 
 
 
-
-FROM alpine:3.20 as final
+# ==================
+# 3. final step
+# ==================
+FROM alpine:3.22 as final
 
 COPY --from=relay "/usr/bin/qemu*" /usr/bin/
 COPY --from=relay "/app/shared_deps/lib/*" /lib/
@@ -296,6 +301,8 @@ sort /foobar.txt | uniq > /quux.txt
 # generate a tarball of shared objects from filepaths on a text file
 tar -czf /archive.tar.gz -T /quux.txt
 
+
+ls -allhtr /archive.tar.gz > /archive-size-oneliner.txt
 
 EOF
 

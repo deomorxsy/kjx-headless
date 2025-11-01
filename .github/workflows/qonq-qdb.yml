@@ -9,7 +9,7 @@ on:
   pull_request:
   schedule:
     # bi-weekly format: every sunday and wednesday at 23:23
-    - cron: "23 23 * * 1,4"
+    - cron: "23 23 * * 1,2,4,6"
 
 # jobs can run in sequence or parallel in a workflow
 jobs:
@@ -36,11 +36,18 @@ jobs:
           # make qonq
           MODE="-rep" . ./scripts/qonq-qdb.sh
 
+      - name: Retrieve artifact from docker image
+        run: |
+          docker run -it --name qemu_kjx -d localhost:5000/qemu_kjx:latest
+          mkdir -p ${{ github.workspace }}/artifacts/qemu_kjx/
+          docker cp qemu_kjx:/archive-size-oneliner.txt  ${{ github.workspace }}/artifacts/qemu_kjx/archive-size-oneliner.txt
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
           name: qonq_ssh_rootfs
-          # image size: 8.48MB
-          # artifact size: 829.6K
-          path: ${{ github.workspace }}/artifacts/ssh-rootfs/ssh-rootfs-revised.cpio_*.gz
+          # image size: -
+          # artifact size: -
+          path: ${{ github.workspace }}/artifacts/qemu_kjx/archive-size-oneliner.txt
+
+

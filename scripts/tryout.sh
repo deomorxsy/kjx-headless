@@ -30,7 +30,8 @@ ISO_GRUB_PRELOAD_MODULES="part_gpt part_msdos ext2 normal linux iso9660 udf all_
 
 
 KERNEL_PATH="$HOME/Downloads/kjxh-artifacts/bzImage"
-RAMDISK_PATH="$HOME/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
+#RAMDISK_PATH="$HOME/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
+RAMDISK_PATH="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
 ROOTFS_PATH="./artifacts/burn/rootfs"
 #ROOTFS_PATH="./artifacts/qcow2-rootfs/rootfs"
 
@@ -50,8 +51,6 @@ ISO_FINAL_PATH="$PWD/artifacts"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
 
 
-INITRAMFS_BASENAME=$(basename "$RAMDISK_PATH")
-KERNEL_BASENAME=$(basename "$KERNEL_PATH")
 
 SOURCE_ROOTFS_DIR="./artifacts/burn/rootfs"
 SQUASHFS_IMAGE="./artifacts/rootfs.sqfs"
@@ -61,7 +60,7 @@ ISO_INITRAMFS="initramfs-ssh.cpio.gz"
 BUILDER_ROOTFS_DIR="$HOME"/Downloads/kjxh-artifacts/another/newfrdir
 }
 
-
+set_vars
 
 #scaffolding() {
 # ==================================================================
@@ -87,6 +86,10 @@ else
     printf "\n\n======\nImage already exists: skipping....\n=========\n\n"
 fi
 
+printf '##                     (10%%)\r'
+sleep 1
+
+
 # 2.
 partit=$(parted -s "$IMAGE_PATH" print 2>&1 | grep "Partition" | awk 'NR==1 {print $3}')
 
@@ -104,6 +107,8 @@ else
 
 fi
 
+printf '##                     (15%%)\r'
+sleep 1
 
 which qemu-img
 # 4. convert raw sparse file to qcow2
@@ -117,6 +122,9 @@ else
     printf "\n=======\nQCOW2 image found at %s , Skipping..... \n========\n" "$QCOW_PATH"
 fi
 
+printf '##                     (20%%)\r'
+sleep 1
+
 # 5. call to *.img destructor
 #rm "$IMAGE_PATH"
 
@@ -129,6 +137,9 @@ losetup -fP "$QCOW_PATH"
 
 # 8. check if user_allow_other is enabled on /etc/fuse.conf for rootless passing
 IS_FUSE_ALLOWED=$(grep -E '^user_allow_other' /etc/fuse.conf)
+
+printf '##                     (21%%)\r'
+sleep 1
 
 # if user_allow_other is non-zero:
 if [ -n "$IS_FUSE_ALLOWED" ]; then
@@ -155,6 +166,9 @@ qemu-img info "$QCOW_PATH"
 else
      printf "\n|> Error: Could not start qemu-storage-daemon process since user_allow_other is not enabled at /etc/fuse.conf.\n\n"
 fi
+
+printf '##                     (25%%)\r'
+sleep 1
 
 
 # 13. mount the loop device (use util-linux/losetup)
@@ -184,6 +198,9 @@ UPPER_BASE_IMG=$(losetup  | awk 'NR==2 {print $6}')
 #sudo
 printf "\n\n=====\nCreating filesystem...[BUSYBOX]\n=======\n\n"
 mkfs.ext4 -F "$UPPER_LOOPDEV" #/dev/loop0p1
+
+printf '##                     (28%%)\r'
+sleep 1
 
 # # =========
 # # this expect is to be run on a capability-enabled environment
@@ -218,6 +235,9 @@ fi
 
 # decompress and extract initramfs into rootfs_path // sudo
 busybox gzip -dc "$RAMDISK_PATH" | (cd "$ROOTFS_PATH" || return && busybox cpio -idmv && cd - || return)
+
+printf '##                     (30%%)\r'
+sleep 1
 
 
 # newfrdir
@@ -264,13 +284,18 @@ mkdir -pv "$KJX/run"
 # chapter 5 - fake the cross-compiler toolchain
 mkdir -pv "$KJX/tools"
 
+
+printf '##                     (32%%)\r'
+sleep 1
+
+
 # mounts are for compiled LFS step
 ## populating /dev for the kjx mount (before chroot), all sudo
 sudo mount -t devtmpfs devtmpfs "$KJX/dev/" #
 sudo mount -t tmpfs tmpfs "$KJX/tmp/"
 
 ## mounting virtual kernel filesystems (before chroot), all sudo
-sudo mount -vt devpts devpts -o gid=5,mode=0620 $KJX/dev/pts
+sudo mount -vt devpts devpts -o gid=5,mode=0620 "$KJX/dev/pts"
 sudo mount -vt proc proc "$KJX/proc"
 sudo mount -vt sysfs sysfs "$KJX/sys"
 sudo mount -vt tmpfs tmpfs "$KJX/run"
@@ -749,7 +774,7 @@ mksquashfs "$SQ_ROOTFS" "$SQ_SQUASHFS/busybox.squashfs" -comp xz -b 256K -Xbcj x
 # use fuse-overlayfs to stack files and install additional programs
 sudo mount -t squashfs "$SQ_SQUASHFS/busybox.squashfs" "$SQ_OVERLAY/merged"
 
-sudo fuse-overlayfs -o lowerdir="$SQ_OVERLAY/merged",upperdir="$SQ_OVERLAY/upperdir",workdir="$SQ_OVERLAY/workdir" "$SQ_OVERLAY/merged"
+sudo fuse-overlayfs -o lowerdir=$SQ_OVERLAY/merged,upperdir="${SQ_OVERLAY}/upperdir",workdir="$SQ_OVERLAY/workdir" "$SQ_OVERLAY/merged"
 # unmounting:
 # fusermount -u "$SQ_OVERLAY/merged"
 # umount "$SQ_OVERLAY/merged"
@@ -820,13 +845,18 @@ cp ./artifacts/distro/syslinux-6.03/bios/memdisk/memdisk "$ISO_DIR/kernel/"
 KERNEL_BASENAME=$(basename "$KERNEL_PATH")
 INITRAMFS_BASENAME=$(basename "$RAMDISK_PATH")
 
+#ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
+
 #cp $INITRAMFS_BASENAME $ISO_DIR/kernel/
 
-sudo tee "$ISO_DIR/syslinux/isolinux.cfg" > /dev/null <<EOF
+# "initrd=/kernel/rootfs_v28.cpio.gz"
+(
+cat <<EOF
+
 DEFAULT linux
 
 LABEL linux
-    KERNEL  /kernel/${KERNEL_BASENAME}
+    KERNEL  /kernel/bzImage
     APPEND  initrd=/kernel/${INITRAMFS_BASENAME} security=selinux console=ttyS0 root=/dev/sr0 rootfs_path=/images/rootfs.sqfs earlyprintk net.ifnames=0 cgroup_no_v1=all
 
 LABEL fallback
@@ -851,8 +881,10 @@ LABEL memtestp
     KERNEL /kernel/memtp170
 
 EOF
+) | tee "$ISO_DIR/syslinux/isolinux.cfg"
 
-sudo tee "$ISO_DIR/syslinux/boot.txt" > /dev/null <<"EOF"
+(
+cat <<EOF
 ☼09a☼07 - Boot A:
 ☼09b☼07 - Boot first HDD
 ☼09c☼07 - Boot next device
@@ -861,6 +893,7 @@ sudo tee "$ISO_DIR/syslinux/boot.txt" > /dev/null <<"EOF"
 ☼092☼07 - Darik's Boot and Nuke
 ☼093☼07 - memtest86+
 EOF
+) | tee "$ISO_DIR/syslinux/boot.txt"
 
 #}
 #isolinux_config
@@ -1277,12 +1310,26 @@ if [ "$(basename "$PWD")" = "kjx-headless" ] && [ -d "$SOURCE_ROOTFS_DIR" ] && [
 mkdir -p "$ISO_DIR"/images/
 cp $SQUASHFS_IMAGE "$ISO_DIR"/images/
 
+# ======================
+# Eltorito
+#
+# no-emulation setup with xorriso and the ISOLINUX's isohybrid
+#
+# ${ISO_GRUB_PRELOAD_MODULES} was previously used on grub-mkimage for an alternate
+# way of getting the eltorito artifact. Now located at ./assets/grub/Dockerfile
+# ISO_GRUB_PRELOAD_MODULES="part_gpt part_msdos ext2 normal linux iso9660 udf all_video video_fb search configfile echo cat"
 
-# Used on grub-mkimage for an alternate way of getting the eltorito part
-# now located at ./assets/grub/Dockerfile
-ISO_GRUB_PRELOAD_MODULES="part_gpt part_msdos ext2 normal linux iso9660 udf all_video video_fb search configfile echo cat"
+# Fetch eltorito artifact and place it under the ./burn/boot/grub/i386-pc/eltorito.img path
+
+#ELTORITO_PATH="./eltorito.img"
 mkdir -p "$ISO_DIR/boot/grub/i386-pc"
+if ! [ -f "${ELTORITO_PATH}" ]; then
 
+    cp "${ELTORITO_PATH}" "${ISO_DIR}"/boot/grub/i386-pc/
+else
+    printf "\n|> Error: eltorito file was not found. Exiting now...\n"
+
+fi
 
 # 5. Package the final filesystem into an ISO9660 image using xorriso.
 # xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v2.iso \
