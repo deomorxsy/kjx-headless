@@ -2,6 +2,13 @@ name: honey-potion
 
 # This rule triggers when the workflow will run
 on:
+  push:
+    branches:
+      - 'tracers/hpota'
+  pull_request:
+    branches:
+      - main
+      - 'releases/**'
   # run the workflow manually from Actions tab
   workflow_dispatch:
 

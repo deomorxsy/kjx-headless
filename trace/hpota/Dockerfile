@@ -1,4 +1,4 @@
-FROM elixir:1.19.1-otp-28-alpine
+FROM elixir:1.19.1-otp-28-alpine as build
 
 ARG MIX_ENV="prod"
 
@@ -23,7 +23,7 @@ RUN mix release
 # =============
 # artifact
 # =============
-FROM alpine:3.20 as relay
+FROM alpine:3.22 as relay
 
 ARG MIX_ENV
 
