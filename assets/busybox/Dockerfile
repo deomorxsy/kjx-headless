@@ -106,12 +106,12 @@ sysctl -w kernel.printk="2 4 1 7"
 echo && echo
 
 # get rootfs UUID from kernel parameters on /proc/cmdline
-ROOTFS=$(cat /proc/cmdline | awk -F= 'NR==1 {print $4}' | awk '{print $1}')
-exec /bin/busybox switch_root -c /dev/console $ROOTFS /usr/bin/init
+# ROOTFS=$(cat /proc/cmdline | awk -F= 'NR==1 {print $4}' | awk '{print $1}')
+# exec /bin/busybox switch_root -c /dev/console $ROOTFS /usr/bin/init
 
-current_commit_hash = subprocess.run(["git", "rev-parse", "--short", "HEAD"], stdout=subprocess.PIPE, text=True)
-current_commit_hash = current_commit_hash.stdout.strip()
-print ("\033[93;1;4mCurrent Commit Hash    : " + current_commit_hash + "\033[0m")
+#current_commit_hash = subprocess.run(["git", "rev-parse", "--short", "HEAD"], stdout=subprocess.PIPE, text=True)
+#current_commit_hash = current_commit_hash.stdout.strip()
+#print ("\033[93;1;4mCurrent Commit Hash    : " + current_commit_hash + "\033[0m")
 
 cat << 'asciiart'
  .-"``"-.
