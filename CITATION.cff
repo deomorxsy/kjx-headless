@@ -1,9 +1,11 @@
 cff-version: 1.2.0
-message: "Citation below."
-authors:
-    - deomorxsy
+message: "If you use this software, please cite it as below."
 title: "kjx-headless"
+abstract: "deploy, trace and monitor a busybox/LFS based distro."
+authors:
+- nickname: deomorxsy
+  orcid: https://orcid.org/0009-0002-8685-3460
 version: 2.0.4
-identifiers:
-  - type: "other"
+doi: none
 date-released: 2024-06-06
+url: "https://github.com/deomorxsy/kjx-headless"

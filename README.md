@@ -25,9 +25,9 @@
 
 Taking up from where [eulab-poc](https://github.com/deomorxsy/eulab-poc) left ;D
 
-This proof-of-concept monorepo gathers concepts from several [1] constrained systems to create a *NIX Distro, Linux-based. The distribution is compose by Busybox/LFS. This repository applies basic CI for infrastructure automation, much like the AUFS project. CD is current a work in progress. Aimed to explore the performance of virtualized environments.
+This proof-of-concept monorepo gathers concepts from several [1] constrained systems to create a *NIX Distro, Linux-based. The distribution is composed by Busybox/LFS. Continuous Integration is applied for infrastructure build automation much like AUFS. Aimed to explore performance and inner working of virtualized environments.
 
-Check the [Gitlab mirror]() for an example using Jenkins instead of Github Actions.
+Check the [Gitlab mirror](https://gitlab.com/deomorxsy/kjx-headless) for an example with the platform's CI.
 
 
 ```sh
