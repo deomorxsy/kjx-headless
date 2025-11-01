@@ -177,10 +177,11 @@ services:
         - "localhost:5000/exporter-static:latest"
     stop_signal: SIGINT
   hpota: # ebpf-exporter
+    container_name: hpota
     build:
-      context: "./trace/hpota/"
+      context: "."
       # Dockerfile's location is relative to the context field (the base directory).
-      dockerfile: "./Dockerfile"
+      dockerfile: "./trace/hpota/Dockerfile"
       tags:
         - "localhost:5000/hpota:latest"
     stop_signal: SIGINT
