@@ -1,4 +1,4 @@
-### kjx-headless // WIP
+### kjx-headless
 > Setting up a custom headless busybox/LFS distro
 
 | **Category** | **CI** |
@@ -11,14 +11,6 @@
 | **Paravirt** | [![virtio](https://github.com/deomorxsy/kjx-headless/actions/workflows/virtio.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/virtio.yml) [![crosvm](https://github.com/deomorxsy/kjx-headless/actions/workflows/crosvm.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/crosvm.yml) [![rutabaga](https://github.com/deomorxsy/kjx-headless/actions/workflows/rutabaga.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/rutabaga.yml) |
 | **Tests (stalled)** | [![coverage](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/coverage.yml) [![unit-tests](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/unit.yml) |
 | **Platforms** | [![libbpf-android](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml) |
-
-
-[![libbpf-android](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml/badge.svg)](https://github.com/deomorxsy/kjx-headless/actions/workflows/build-android.yml)
-
-
-
-
-
 
 
 ---
