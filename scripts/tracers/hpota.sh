@@ -4,7 +4,8 @@
 runner() {
     podman run --rm \
         -it \
-        -v ./:/app/ \
+        --name="hpota_runner" \
+        -v ./trace/hpota/:/app/:ro \
         --entrypoint=/bin/sh \
         elixir:1.19.1-otp-28-alpine
 }
@@ -15,10 +16,7 @@ builder() {
 FETCH_REGISTRY=$(docker run -d -p 5000:5000 --name registry registry:latest)
 
 CCR_MODE="checker" . ./scripts/ccr.sh && \
-    if ! "${FETCH_REGISTRY}"; then
-        echo "|> Error: It seems the name registry is already being used."
-    fi &&
-    docker start registry && \
+    docker run -d -p 5000:5000 --name registry registry:latest && \
     docker compose -f ./compose.yml --progress=plain build --no-cache hpota && \
     docker push localhost:5000/hpota:latest
 }
@@ -30,7 +28,7 @@ retriever() {
 builder
 
 CONTAINER_NAME="hpota"
-CONTAINER_CREATE="$(docker compose -f ./compose.yaml create hpota)"
+CONTAINER_CREATE="$(docker compose -f ./compose.yml create hpota)"
 CONTAINER_COPY="$(docker cp hpota:/hpota.txt ./artifacts/tracers/)"
 
 mkdir -p ./artifacts/tracers/
@@ -61,13 +59,15 @@ cat <<-END >&2
 USAGE: hpota [-options]
                 - builder
                 - retriever
+                - runner
                 - version
                 - help
 e.g.,
-hpota -builder  # builds the project
-hpota -retriever  # builds the project
-hpota -version  # shows script version
-hpota -help     # shows this help message
+hpota -builder      # builds the project
+hpota -retriever    # builds the project
+hpota -runner       # runs container in interactive mode
+hpota -version      # shows script version
+hpota -help         # shows this help message
 
 See the man page and example file for more info.
 
@@ -77,10 +77,12 @@ END
 
 
 # Check the argument passed from the command line
-if [ "$MODE" = "-builder" ] || [ "$MODE" = "--builder" ] || [ "$MODE" = "builder" ]; then
+ if [ "$MODE" = "-builder" ] || [ "$MODE" = "--builder" ] || [ "$MODE" = "builder" ]; then
     builder
 elif [ "$MODE" = "-retriever" ] || [ "$MODE" = "--retriever" ] || [ "$MODE" = "retriever" ]; then
     retriever
+elif [ "$MODE" = "-runner" ] || [ "$MODE" = "--runner" ] || [ "$MODE" = "runner" ]; then
+    runner
 elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     print_usage
 elif [ "$1" = "version" ] || [ "$1" = "-v" ] || [ "$1" = "--version" ]; then

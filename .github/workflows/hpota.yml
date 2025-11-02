@@ -30,7 +30,7 @@ jobs:
           ref: ${{ github.ref }}
 
 
-      - name: Build && retrieve OCI image
+      - name: Build OCI image
         run: |
           docker run -d -p 5000:5000 --name registry registry:latest
           docker compose -f ./compose.yml --progress=plain build hpota
@@ -40,9 +40,8 @@ jobs:
         run: |
           # docker create hpota -d localhost:5000/hpota:latest
           docker compose -f ./compose.yml create hpota
-          docker cp hpota:/hpota.txt ./artifacts/tracers/
-          mkdir -p ${{ github.workspace }}/artifacts/tracers/
-          docker cp hpota:/foo.txt ${{ github.workspace }}/artifacts/tracers/foo.txt
+          mkdir -p "${{ github.workspace }}"/artifacts/tracers/
+          docker cp hpota:/foo.txt "${{ github.workspace }}"/artifacts/tracers/foo.txt
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
@@ -73,7 +72,6 @@ jobs:
         run: |
           # docker create hpota -d localhost:5000/hpota:latest
           docker compose -f ./compose.yml create hpota
-          docker cp hpota:/hpota.txt ./artifacts/tracers/
           mkdir -p "${{ github.workspace }}"/artifacts/tracers/
           docker cp hpota:/foo.txt "${{ github.workspace }}"/artifacts/tracers/foo.txt
 
