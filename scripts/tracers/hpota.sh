@@ -13,7 +13,7 @@ runner() {
 # Build OCI image
 builder() {
 
-FETCH_REGISTRY=$(docker run -d -p 5000:5000 --name registry registry:latest)
+#FETCH_REGISTRY=$(docker run -d -p 5000:5000 --name registry registry:latest)
 
 CCR_MODE="checker" . ./scripts/ccr.sh && \
     docker run -d -p 5000:5000 --name registry registry:latest && \
