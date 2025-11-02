@@ -17,7 +17,7 @@ builder() {
 
 CCR_MODE="checker" . ./scripts/ccr.sh && \
     docker run -d -p 5000:5000 --name registry registry:latest && \
-    docker compose -f ./compose.yml --progress=plain build --no-cache hpota && \
+    docker compose -f ./compose.yml --progress=plain build hpota && \
     docker push localhost:5000/hpota:latest
 }
 
