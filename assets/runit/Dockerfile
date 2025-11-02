@@ -1,8 +1,9 @@
-FROM busybox:1.36.1-musl as builder
+FROM busybox:1.37.0-musl as builder
 # just to get the statically compiled files
 
-# FROM ubuntu
-FROM alpine:3.18 as base
+FROM alpine:3.20 as base
+
+COPY --from=builder /* /
 
 # RUN apt-get update && apt-get install --yes runit
 RUN <<EOF
@@ -12,13 +13,20 @@ apk upgrade && apk update && \
 EOF
 
 RUN <<EOF
-mkdir /etc/service/my_service \
-    && /bin/sh -c "echo -e '"'#!/bin/sh\nexec /my_service/my_service\n'"' > /etc/service/my_service/run" \
-    && chmod +x /etc/service/my_service/run
+mkdir -p /etc/service/my_service
 
-#RUN
+(
+cat <<EOL
+#!/bin/sh
 
-mkdir -vp /etc/init.d/ && ln -s /usr/bin/sv /etc/init.d/my_service
+exec /my_service/my_service
+
+EOL
+) | tee /etc/service/my_service/run && \
+    chmod +x /etc/service/my_service/run
+
+mkdir -vp /etc/init.d/ && \
+ln -s /usr/bin/sv /etc/init.d/my_service
 
 EOF
 
