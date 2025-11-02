@@ -342,7 +342,11 @@ libbpf-core:
 # honey-potion
 .PHONY: hpota
 hpota:
-	MODE="retriever" . ./scripts/tracers/hpota.sh
+	MODE="builder" . ./scripts/tracers/hpota.sh
+
+.PHONY: hpota_runner
+hpota_runner:
+	MODE="runner" . ./scripts/tracers/hpota.sh
 
 # =========
 # qemu builder runtime

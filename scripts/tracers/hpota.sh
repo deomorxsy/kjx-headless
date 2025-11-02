@@ -1,11 +1,25 @@
 #!/bin/sh
 
+# Run a REPL with the environment dependencies
+runner() {
+    podman run --rm \
+        -it \
+        -v ./:/app/ \
+        --entrypoint=/bin/sh \
+        elixir:1.19.1-otp-28-alpine
+}
+
 # Build OCI image
 builder() {
 
+FETCH_REGISTRY=$(docker run -d -p 5000:5000 --name registry registry:latest)
+
 CCR_MODE="checker" . ./scripts/ccr.sh && \
-    docker run -d -p 5000:5000 --name registry registry:latest
-    docker compose -f ./compose.yml --progress=plain build --no-cache hpota
+    if ! "${FETCH_REGISTRY}"; then
+        echo "|> Error: It seems the name registry is already being used."
+    fi &&
+    docker start registry && \
+    docker compose -f ./compose.yml --progress=plain build --no-cache hpota && \
     docker push localhost:5000/hpota:latest
 }
 

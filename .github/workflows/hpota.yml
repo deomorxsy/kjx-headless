@@ -38,15 +38,17 @@ jobs:
 
       - name: Retrieve artifact from docker image
         run: |
-          docker run -it --name hpota -d localhost:5000/hpota:latest
+          # docker create hpota -d localhost:5000/hpota:latest
+          docker compose -f ./compose.yml create hpota
+          docker cp hpota:/hpota.txt ./artifacts/tracers/
           mkdir -p ${{ github.workspace }}/artifacts/tracers/
-          docker cp hpota:/hpota.txt ${{ github.workspace }}/artifacts/tracers/
+          docker cp hpota:/foo.txt ${{ github.workspace }}/artifacts/tracers/foo.txt
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
           name: hpota
-          path: ${{ github.workspace }}/artifacts/tracers/hpota.txt
+          path: ${{ github.workspace }}/artifacts/tracers/foo.txt
 
   make:
     # Specify the operating system for the runner job
@@ -63,15 +65,23 @@ jobs:
           ref: ${{ github.ref }}
 
 
-      - name: Build AND retrieve OCI image
+      - name: Build OCI image
         run: |
           make hpota
+
+      - name: Retrieve artifact from OCI image
+        run: |
+          # docker create hpota -d localhost:5000/hpota:latest
+          docker compose -f ./compose.yml create hpota
+          docker cp hpota:/hpota.txt ./artifacts/tracers/
+          mkdir -p "${{ github.workspace }}"/artifacts/tracers/
+          docker cp hpota:/foo.txt "${{ github.workspace }}"/artifacts/tracers/foo.txt
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
           name: hpota
-          path: ${{ github.workspace }}/artifacts/tracers/hpota.txt
+          path: ${{ github.workspace }}/artifacts/tracers/foo.txt
 
 
 
