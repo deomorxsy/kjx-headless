@@ -3,7 +3,7 @@ defmodule Hpota.Application do
   # for more information on OTP Applications
   @moduledoc false
 
-  use Application
+  #use Application
   use Honey, license: "Dual BSD/GPL"
 
   @sec "tracepoint/syscalls/sys_enter_kill"
@@ -14,16 +14,17 @@ defmodule Hpota.Application do
     Honey.Bpf_helpers.bpf_printk(["Hello, world!", nil_var])
   end
 
-  #@impl true
-  #def start(_type, _args) do
-  #  children = [
-      # Starts a worker by calling: Hpota.Worker.start_link(arg)
-      # {Hpota.Worker, arg}
-  #  ]
+  ### @impl true
+  ### def start(_type, _args) do
+  ###   children = [
+  ###      #Starts a worker by calling:
+  ###      Hpota.Worker.start_link(arg)
+  ###      {Hpota.Worker, arg}
+  ###   ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    #opts = [strategy: :one_for_one, name: Hpota.Supervisor]
-    #Supervisor.start_link(children, opts)
-  #end
+  ###   # See https://hexdocs.pm/elixir/Supervisor.html
+  ###   # for other strategies and supported options
+  ###   opts = [strategy: :one_for_one, name: Hpota.Supervisor]
+  ###   Supervisor.start_link(children, opts)
+  ### end
 end
