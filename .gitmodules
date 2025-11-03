@@ -35,3 +35,12 @@
 [submodule "assets/ap-loader"]
 	path = assets/ap-loader
 	url = git@github.com:jvm-profiling-tools/ap-loader.git
+[submodule "assets/non-oci/rkt"]
+	path = assets/non-oci/rkt
+	url = git@github.com:rkt/rkt.git
+[submodule "assets/non-oci/lxc"]
+	path = assets/non-oci/lxc
+	url = git@github.com:lxc/lxc.git
+[submodule "assets/non-oci/libvzctl"]
+	path = assets/non-oci/libvzctl
+	url = git@github.com:OpenVZ/libvzctl.git
