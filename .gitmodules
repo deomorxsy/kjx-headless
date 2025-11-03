@@ -35,3 +35,6 @@
 [submodule "assets/ap-loader"]
 	path = assets/ap-loader
 	url = git@github.com:jvm-profiling-tools/ap-loader.git
+[submodule "assets/solo5"]
+	path = assets/solo5
+	url = git@github.com:Solo5/solo5.git
