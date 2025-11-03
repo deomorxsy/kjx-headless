@@ -27,7 +27,7 @@
 	path = assets/bcc
 	url = git@github.com:iovisor/bcc.git
 [submodule "assets/ipxe"]
-	path = assets/ipxe
+	path = assets/bootloaders/ipxe
 	url = https://github.com/ipxe/ipxe
 [submodule "assets/async-profiler"]
 	path = assets/async-profiler
@@ -35,3 +35,6 @@
 [submodule "assets/ap-loader"]
 	path = assets/ap-loader
 	url = git@github.com:jvm-profiling-tools/ap-loader.git
+[submodule "assets/bootloaders/edk2"]
+	path = assets/bootloaders/edk2
+	url = git@github.com:tianocore/edk2.git
