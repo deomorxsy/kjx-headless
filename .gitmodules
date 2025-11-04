@@ -35,7 +35,6 @@
 [submodule "assets/ap-loader"]
 	path = assets/ap-loader
 	url = git@github.com:jvm-profiling-tools/ap-loader.git
-
 [submodule "assets/oci-cri/railcar"]
 	path = assets/oci-cri/railcar
 	url = git@github.com:oracle/railcar.git
@@ -47,4 +46,40 @@
 	url = git@github.com:kubernetes-retired/frakti.git
 [submodule "assets/oci-cri/dragonfly"]
 	path = assets/oci-cri/dragonfly
-	url = git@github.com:dragonflyoss/dragonfly.git
+    url = git@github.com:dragonflyoss/dragonfly.git
+[submodule "assets/solo5"]
+	path = assets/unikernels/solo5
+	url = git@github.com:Solo5/solo5.git
+[submodule "assets/unikernels/clive"]
+	path = assets/unikernels/clive
+	url = git@github.com:fjballest/clive.git
+[submodule "assets/unikernels/HaLVM"]
+	path = assets/unikernels/HaLVM
+	url = git@github.com:GaloisInc/HaLVM.git
+[submodule "assets/unikernels/unikraft"]
+	path = assets/unikernels/unikraft
+	url = git@github.com:unikraft/unikraft.git
+[submodule "assets/unikernels/ling"]
+	path = assets/unikernels/ling
+	url = git@github.com:cloudozer/ling.git
+[submodule "assets/unikernels/nanos"]
+	path = assets/unikernels/nanos
+	url = git@github.com:nanovms/nanos.git
+[submodule "assets/unikernels/IncludeOS"]
+	path = assets/unikernels/IncludeOS
+	url = git@github.com:includeos/IncludeOS.git
+[submodule "assets/unikernels/runtime"]
+	path = assets/unikernels/runtime
+	url = git@github.com:runtimejs-comm/runtime.git
+[submodule "assets/unikernels/osv"]
+	path = assets/unikernels/osv
+	url = git@github.com:cloudius-systems/osv.git
+[submodule "assets/unikernels/hermit-rs"]
+	path = assets/unikernels/hermit-rs
+	url = git@github.com:hermit-os/hermit-rs.git
+[submodule "assets/unikernels/ukl"]
+	path = assets/unikernels/ukl
+	url = git@github.com:unikernelLinux/ukl.git
+[submodule "assets/unikernels/Core"]
+	path = assets/unikernels/Core
+	url = git@github.com:ultibohub/Core.git
