@@ -35,6 +35,18 @@
 [submodule "assets/ap-loader"]
 	path = assets/ap-loader
 	url = git@github.com:jvm-profiling-tools/ap-loader.git
+[submodule "assets/oci-cri/railcar"]
+	path = assets/oci-cri/railcar
+	url = git@github.com:oracle/railcar.git
+[submodule "assets/oci-cri/runv"]
+	path = assets/oci-cri/runv
+	url = git@github.com:hyperhq/runv.git
+[submodule "assets/oci-cri/frakti"]
+	path = assets/oci-cri/frakti
+	url = git@github.com:kubernetes-retired/frakti.git
+[submodule "assets/oci-cri/dragonfly"]
+	path = assets/oci-cri/dragonfly
+    url = git@github.com:dragonflyoss/dragonfly.git
 [submodule "assets/solo5"]
 	path = assets/unikernels/solo5
 	url = git@github.com:Solo5/solo5.git
