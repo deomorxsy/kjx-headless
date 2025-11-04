@@ -26,15 +26,20 @@
 [submodule "assets/bcc"]
 	path = assets/bcc
 	url = git@github.com:iovisor/bcc.git
-[submodule "assets/ipxe"]
-	path = assets/ipxe
-	url = https://github.com/ipxe/ipxe
 [submodule "assets/async-profiler"]
 	path = assets/async-profiler
 	url = git@github.com:async-profiler/async-profiler.git
 [submodule "assets/ap-loader"]
 	path = assets/ap-loader
 	url = git@github.com:jvm-profiling-tools/ap-loader.git
+
+[submodule "assets/bootloaders/edk2"]
+	path = assets/bootloaders/edk2
+    url = git@github.com:tianocore/edk2.git
+[submodule "assets/ipxe"]
+	path = assets/bootloaders/ipxe
+	url = https://github.com/ipxe/ipxe
+
 [submodule "assets/oci-cri/railcar"]
 	path = assets/oci-cri/railcar
 	url = git@github.com:oracle/railcar.git
@@ -82,4 +87,4 @@
 	url = git@github.com:unikernelLinux/ukl.git
 [submodule "assets/unikernels/Core"]
 	path = assets/unikernels/Core
-	url = git@github.com:ultibohub/Core.git
+	url = git@github.com:ultibohub/Core.git 
