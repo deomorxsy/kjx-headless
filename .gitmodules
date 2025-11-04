@@ -40,6 +40,17 @@
 	path = assets/bootloaders/ipxe
 	url = https://github.com/ipxe/ipxe
 
+[submodule "assets/non-oci/rkt"]
+	path = assets/non-oci/rkt
+	url = git@github.com:rkt/rkt.git
+[submodule "assets/non-oci/lxc"]
+	path = assets/non-oci/lxc
+	url = git@github.com:lxc/lxc.git
+[submodule "assets/non-oci/libvzctl"]
+	path = assets/non-oci/libvzctl
+    url = git@github.com:OpenVZ/libvzctl.git
+
+
 [submodule "assets/oci-cri/railcar"]
 	path = assets/oci-cri/railcar
 	url = git@github.com:oracle/railcar.git
