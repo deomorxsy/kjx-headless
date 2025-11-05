@@ -101,6 +101,7 @@ trace/libbpf-core/examples/*.o
 trace/libbpf-core/examples/*.skel.h
 trace/libbpf-core/examples/vmlinux.h
 trace/libbpf-core/examples/ocisnoop
+trace/libbpf-core/final/vmlinux.h
 artifacts/ocisnoop
 trace/exporter-libbpfgo/vmlinux.h
 trace/libbpf-core/final/.output/*
@@ -193,3 +194,8 @@ assets/HeatMap/
 # do not include iso generated files
 *.iso
 
+# commits helper
+artifacts/commits-memo.txt
+
+# beetor trace post-bootscript
+scripts/libkjx/unused-scripts/beetor
