@@ -239,16 +239,23 @@ k8s:
 # ===============
 # runit supervised scripts
 #
+
+# libkjx/beetor_bwc
 .PHONY: beetor
 beetor:
-	MODE="beetor" . ./scripts/entrypoints/static_beetor.sh
+	MODE="builder" PROGRAM="beetor" . ./scripts/entrypoints/static_beetor.sh
 
 
 # fix beetor synchronization program
-.PHONY: bwc_off
-bwc_off:
+.PHONY: bwc
+bwc:
 	#gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
-	MODE="bwc" . ./scripts/entrypoints/static_beetor.sh
+	MODE="builder" PROGRAM="bwc" . ./scripts/entrypoints/static_beetor.sh
+
+#.PHONY: libkjx_valgrind
+#libkjx_valgrind: beetor, bwc
+#   MODE="-profiler"
+
 
 # old setcap script
 # untested

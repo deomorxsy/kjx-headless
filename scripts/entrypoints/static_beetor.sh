@@ -4,9 +4,10 @@ BEETOR_PATH=./scripts/libkjx/beetor
 
 builder() {
 
+PROGRAM="$1"
  # ci context
 
-MODE="builder" . ./scripts/ccr.sh  && \
+CCR_MODE="-checker" . ./scripts/ccr.sh  && \
 	docker run -d -p 5000:5000 --name registry registry:3.0 && \
 	docker start registry && \
 
@@ -14,18 +15,18 @@ if [ "${PROGRAM}" = "beetor" ]; then
 	docker compose -f ./compose.yml --progress=plain build beetor && \
 	docker push localhost:5000/beetor:latest && \
 	docker stop registry
-else
+elif [ "${PROGRAM}" = "bwc" ]; then
 	docker run -d -p 5000:5000 --name registry registry:3.0
 	docker start registry && \
-	docker compose -f ./compose.yml --progress=plain build beetor && \
-	docker push localhost:5000/beetor:latest && \
+	docker compose -f ./compose.yml --progress=plain build bwc && \
+	docker push localhost:5000/bwc:latest && \
 	docker stop registry
 fi
 
 
 }
 
-artifact() {
+beetor() {
 set -e
 
 cd ./assets || return
@@ -51,6 +52,8 @@ gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off > /
 }
 
 profiler() {
+# valgrind, callgrind and vgdb debug
+
     if [ -f "$1" ]; then
         valgrind --tool=callgrind --trace-children=yes --dump-instr=yes --callgrind-out-file=./beetor.cg.out --vgdb-error=0 --collect-jumps=yes "$1"
         #valgrind --tool=callgrind --trace-children=yes --dump-instr=yes --callgrind-out-file=./bwc_off.cg.out --vgdb-error=0 --collect-jumps=yes ./bwc_off
@@ -62,8 +65,61 @@ profiler() {
 
 
 
-if [ "$1" = "profiler" ]; then
-    profiler "$BEETOR_PATH"
-elif [ "$1" = "artifact" ]; then
-    artifact
+
+print_usage() {
+cat <<-END >&2
+USAGE: static_beetor [-options]
+                - builder
+                - profiler
+                - version
+                - help
+eg,
+static_beetor -builder PROGRAM    # builds either beetor or bwc
+static_beetor -profile PROF_BIN   # profile the built binary with Valgrind for callgrind
+static_beetor -version # shows script version
+static_beetor -help    # shows this help message
+
+See the man page and example file for more info.
+
+END
+
+}
+
+
+# Check the argument passed from the command line
+if [ "$MODE" = "-builder" ] || [ "$MODE" = "--builder" ] || [ "$MODE" = "builder" ]; then
+    if  [ -z "${PROGRAM}" ]; then
+
+        printf "\n|> Error: PROGRAM was either not defined or called for a different function."
+        printf "\n\t|> Available Functions: beetor, bwc...\n"
+        echo "Exiting now..."
+        return
+    elif  [ "${PROGRAM}" = "beetor" ] || [ "${PROGRAM}" = "bwc" ]; then
+        builder "${PROGRAM}"
+    else
+        printf "\n|> Error: PROGRAM was either not defined or called for a different function."
+        printf "\n\t|> Available Functions: beetor, bwc...\n"
+        echo "Exiting now..."
+        return
+    fi
+elif [ "$MODE" = "-profiler" ] || [ "$MODE" = "--profiler" ] || [ "$MODE" = "profiler" ]; then
+    if ! [ -z "${PROF_BIN}" ] || ! [ -f "${PROF_BIN}" ]; then
+        # printf "\n|> Error: the profiler() function of static_beetor must have an argument. Try again! \n\n"
+        printf "\n|> Error: PROF_BIN was either not defined or called for a different function."
+        printf "\n\t|> Available Functions: XXXX, YYYY"
+        echo "Exiting now..."
+        return
+    fi
+    profiler "${PROF_ARG}"
+elif [ "$MODE" = "help" ] || [ "$MODE" = "-h" ] || [ "$MODE" = "--help" ]; then
+    echo
+    print_usage
+elif [ "$MODE" = "version" ] || [ "$MODE" = "-v" ] || [ "$MODE" = "--version" ]; then
+    echo
+    printf "version"
+else
+    echo
+    echo "Invalid function name. Please specify one of: function1, function2, function3"
+    print_usage
 fi
+

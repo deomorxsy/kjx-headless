@@ -255,24 +255,31 @@ services:
       - git_hash
     build:
       context: "."
-      dockerfile: "./scripts/libkjx/Dockerfile"
+      dockerfile: "./scripts/libkjx/Dockerfile.bwc"
       tags:
         - "localhost:5000/bwc:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      apk upgrade && apk update &&
+      apk add git musl-gcc openssl-dev \
+        libcrypto zlib elfutils-dev && \
+      MODE="builder" PROGRAM="bwc" . ./scripts/entrypoints/static_beetor.sh
+    stop_signal: SIGINT
   beetor:
     container_name: beetor
     environment:
       - git_hash
     build:
       context: "."
-      dockerfile: "./scripts/libkjx/Dockerfile"
+      dockerfile: "./scripts/libkjx/Dockerfile.beetor"
       tags:
         - "localhost:5000/beetor:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
       apk upgrade && apk update &&
       apk add git musl-gcc openssl-dev \
-              libcrypto zlib elfutils-dev && \
-      . /libkjx/static_beetor.sh
+        libcrypto zlib elfutils-dev && \
+        MODE="builder" PROGRAM="beetor" . ./scripts/entrypoints/static_beetor.sh
     stop_signal: SIGINT
   # ========================
   # libguestfs library with ocaml
