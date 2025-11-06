@@ -198,4 +198,7 @@ assets/HeatMap/
 artifacts/commits-memo.txt
 
 # beetor trace post-bootscript
-scripts/libkjx/unused-scripts/beetor
+scripts/libkjx/unused-scripts/*
+
+# trace/libbpf-core
+trace/libbpf-core/vmlinux.h
