@@ -102,3 +102,6 @@
 [submodule "assets/bootloaders/seabios"]
 	path = assets/bootloaders/seabios
 	url = git@github.com:coreboot/seabios.git
+[submodule "assets/inferno-ds"]
+	path = assets/inferno-ds
+	url = git@github.com:deomorxsy/inferno-ds.git
