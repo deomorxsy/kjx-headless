@@ -66,9 +66,10 @@ EOF
 ENTRYPOINT ["/bin/sh", "-c"]
 
 # set argument to be fed to the entrypoint
-CMD ["apk upgrade && apk update &&
-      apk add git musl-gcc openssl-dev \
-      libcrypto zlib elfutils-dev && \
-      cd /app || return && \
-      MODE="beetor" . ./scripts/libkjx/static_beetor.sh"
+CMD ["echo", "hmm"]
+# CMD ["apk upgrade && apk update &&
+#       apk add git musl-gcc openssl-dev \
+#       libcrypto zlib elfutils-dev && \
+#       cd /app || return && \
+#       MODE="builder" PROGRAM="beetor" . ./scripts/entrypoints/static_beetor.sh
 #CMD ["printf \"===== UNIT TEST =====\\n\\n\" && cat /tests/test_result.txt && printf \"\\n\\n===== UNIT COVERAGE =======\\n\\n\" && cat /tests/coverage_go.out && printf \"\\n\\n===== FUZZA =======\\n\\n\" && printf \"no-file-yet\""]
