@@ -249,7 +249,6 @@ beetor:
 # fix beetor synchronization program
 .PHONY: bwc
 bwc:
-	#gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
 	MODE="builder" PROGRAM="bwc" . ./scripts/entrypoints/static_beetor.sh
 
 #.PHONY: libkjx_valgrind

@@ -8,8 +8,14 @@ PROGRAM="$1"
  # ci context
 
 CCR_MODE="-checker" . ./scripts/ccr.sh  && \
-	docker run -d -p 5000:5000 --name registry registry:3.0 && \
-	docker start registry && \
+    if [ "$(docker ps -a | grep registry | awk '{ print $13 }')" = "registry" ]; then
+        if ! grep -q "registry" "$(docker ps | grep registry)"; then
+            docker start registry
+        fi
+    else
+        docker run -d -p 5000:5000 --name registry registry:3.0
+    fi && \
+
 
 if [ "${PROGRAM}" = "beetor" ]; then
 	docker compose -f ./compose.yml --progress=plain build beetor && \
