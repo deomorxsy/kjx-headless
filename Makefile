@@ -241,19 +241,14 @@ k8s:
 #
 .PHONY: beetor
 beetor:
-	MODE="builder" . ./scripts/ccr.sh; checker; \
-	docker run -d -p 5000:5000 --name registry registry:3.0
-	docker start registry && \
-	docker compose -f ./compose.yml --progress=plain build beetor && \
-	docker compose images | grep beetor | awk '{ print $4 }' && \
-	docker push localhost:5000/beetor:latest && \
-	docker stop registry
+	MODE="beetor" . ./scripts/entrypoints/static_beetor.sh
 
 
 # fix beetor synchronization program
 .PHONY: bwc_off
 bwc_off:
-	gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
+	#gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
+	MODE="bwc" . ./scripts/entrypoints/static_beetor.sh
 
 # old setcap script
 # untested
