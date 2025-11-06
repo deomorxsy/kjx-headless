@@ -249,7 +249,17 @@ services:
   # ====================
   # runit supervised scripts
   # ====================
+  bwc:
+    container_name: bwc
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/libkjx/Dockerfile"
+      tags:
+        - "localhost:5000/bwc:latest"
   beetor:
+    container_name: beetor
     environment:
       - git_hash
     build:

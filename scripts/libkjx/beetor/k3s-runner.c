@@ -21,7 +21,7 @@ void run_k3s_cmd(char *const argv[]) {
     }
 }
 
-int main() {
+int main_k3s_runner() {
     // Start the server in background
     pid_t server_pid = fork();
     if (server_pid == 0) {

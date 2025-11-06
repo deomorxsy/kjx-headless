@@ -84,19 +84,19 @@ void signal_resume_child1(int sig) {
 }
 
 
-void run_k3s_cmd(char *const argv[]) {
-    pid_t pid = fork();
-    if (pid == 0) {
-        execve("/bin/k3s", argv, environ);
-        perror("execve failed");
-        exit(1);
-    } else if (pid > 0) {
-        waitpid(pid, NULL, 0);  // Wait for the command to complete
-    } else {
-        perror("fork failed");
-        exit(1);
-    }
-}
+// void run_k3s_cmd(char *const argv[]) {
+//     pid_t pid = fork();
+//     if (pid == 0) {
+//         execve("/bin/k3s", argv, environ);
+//         perror("execve failed");
+//         exit(1);
+//     } else if (pid > 0) {
+//         waitpid(pid, NULL, 0);  // Wait for the command to complete
+//     } else {
+//         perror("fork failed");
+//         exit(1);
+//     }
+// }
 
 int main(void) {
 

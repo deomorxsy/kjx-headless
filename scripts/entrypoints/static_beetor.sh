@@ -2,6 +2,29 @@
 
 BEETOR_PATH=./scripts/libkjx/beetor
 
+builder() {
+
+ # ci context
+
+MODE="builder" . ./scripts/ccr.sh  && \
+	docker run -d -p 5000:5000 --name registry registry:3.0 && \
+	docker start registry && \
+
+if [ "${PROGRAM}" = "beetor" ]; then
+	docker compose -f ./compose.yml --progress=plain build beetor && \
+	docker push localhost:5000/beetor:latest && \
+	docker stop registry
+else
+	docker run -d -p 5000:5000 --name registry registry:3.0
+	docker start registry && \
+	docker compose -f ./compose.yml --progress=plain build beetor && \
+	docker push localhost:5000/beetor:latest && \
+	docker stop registry
+fi
+
+
+}
+
 artifact() {
 set -e
 
@@ -22,12 +45,8 @@ gcc ./scripts/libkjx/beetor.c ./artifacts/libs/libcurl.a -lssl -lcrypto -ldl -lm
 }
 
 bwc() {
-set -e
 
-cd ./assets || return
-#git clone
-
-gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
+gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off > /artifacts/foo.txt
 
 }
 

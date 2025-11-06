@@ -241,7 +241,7 @@ k8s:
 #
 .PHONY: beetor
 beetor:
-	. ./scripts/ccr.sh; checker; \
+	MODE="builder" . ./scripts/ccr.sh; checker; \
 	docker run -d -p 5000:5000 --name registry registry:3.0
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build beetor && \
