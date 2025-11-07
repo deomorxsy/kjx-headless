@@ -11,8 +11,19 @@ WORKDIR /app
 
 RUN <<EOF
 apk upgrade && apk update && \
-    apk add git musl-gcc openssl-dev \
+    apk add git musl openssl-dev \
       libcrypto zlib elfutils-dev
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+apk add libcrypto3 musl
+
 
 LIBKJX_USER=beetor_bwc
 
