@@ -37,7 +37,7 @@ adduser -s /bin/sh -u 1000 -G "${LIBKJX_USER}" \
 
 mkdir -p /home/${LIBKJX_USER}/app/ && \
 
-cp -r /app/* /home/${LIBKJX_USER} && \
+cp -r /app/* /home/${LIBKJX_USER}/app/ && \
 # certify it will have the correct user:group permissions
 chown -R ${LIBKJX_USER}:${LIBKJX_USER} /home/${LIBKJX_USER}  && \
 
