@@ -17,9 +17,12 @@ on:
   #workflow_call:
   workflow_run:
     workflows: [docker, podman, crio]
+    types:
+      - completed
+    branches: ['hlcr/aio']
 
 jobs:
-  build_libbpf_bootstrap_android:
+  build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
