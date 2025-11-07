@@ -3,9 +3,9 @@
 # ==================
 FROM alpine:3.22 AS builder
 
-COPY ./scripts/ /app/
-COPY ./assets/ /app/
-COPY ./artifacts/ /app/
+COPY ./scripts/ /app/scripts/
+# COPY ./assets/ /app/
+# COPY ./artifacts/ /app/
 
 WORKDIR /app
 

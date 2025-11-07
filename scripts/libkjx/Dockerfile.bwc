@@ -3,9 +3,9 @@
 # ==================
 FROM alpine:3.22 AS builder
 
-COPY ./scripts/ /app/
-COPY ./assets/ /app/
-COPY ./artifacts/ /app/
+COPY ./scripts/ /app/scripts/
+# COPY ./assets/ /app/
+# COPY ./artifacts/ /app/
 
 WORKDIR /app
 
@@ -43,6 +43,9 @@ su "${LIBKJX_USER}" -c "
 
 cd /home/beetor_bwc/app/ || return
 
+ls -allhtr .
+# ls -allhtr ./entrypoints/
+
 MODE="bwc" . ./scripts/entrypoints/static_beetor.sh     > /home/beetor_bwc/app/foo-bwc.txt
 
 "
@@ -63,10 +66,10 @@ BWC="./foo-bwc.txt"
 if ! [ -f "${BWC}"]; then
     printf "\n|> "${BWC}" was NOT found. Exiting now...\n\n"
     exit
-fi && \
+fi  && \
 
 printf "\n|> "${BWC}" found. Printing now...\n\n" && \
-cat "${BWC}" && \
+cat "${BWC}"
 
 EOF
 
