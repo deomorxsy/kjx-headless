@@ -7,8 +7,15 @@ set_insec_registry() {
 REG_CONF="/etc/containers/registries.conf"
 LOCAL_REG_CONF="${HOME}/.config/containers/registries.conf"
 
+mkdir -p "$(dirname "${REG_CONF}")"
+mkdir -p "$(dirname "${LOCAL_REG_CONF}")"
+
 DOCKER_JSON="/etc/docker/daemon.json"
 LOCAL_DOCKER_JSON="${HOME}/.config/docker/daemon.json"
+
+mkdir -p "$(dirname "${DOCKER_JSON}")"
+mkdir -p "$(dirname "${LOCAL_DOCKER_JSON}")"
+
 
 if [ "${GITHUB_ACTIONS}" = "true" ]; then
 
