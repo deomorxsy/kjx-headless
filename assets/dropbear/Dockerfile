@@ -41,9 +41,12 @@ EOF
 
 BUILD_EOF
 
-#
+
 # interfaces (network devices)
 RUN <<BUILD_EOF
+
+mkdir -p /ramdisk/etc/network/
+
 (
 cat  <<EOF
 # loopback interface
