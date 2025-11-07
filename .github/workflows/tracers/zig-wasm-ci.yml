@@ -1,0 +1,44 @@
+name: zig-wasm-bpf
+
+on:
+  push:
+    branches:
+      - 'tracers/zig-wasm'
+      - 'pipelines/ci-cd'
+  pull_request:
+    branches:
+      - 'main'
+      - 'releases/**'
+  schedule:
+    - cron: '11 12 * * 1,3,6'
+  # run the workflow manually from Actions tab
+  workflow_dispatch:
+
+jobs:
+  build_libbpf_bootstrap_android:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [armeabi-v7a, arm64-v8a, x86_64]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Build OCI image (cross-compile)
+      run: |
+        make android
+
+    # - uses: xmake-io/github-action-setup-xmake@v1
+    #   with:
+    #     xmake-version: branch@master
+    # - name: Install Dependencies
+    #   run: |
+    #     sudo apt-get update -y && sudo apt-get install -yqq \
+    #       build-essential clang llvm zlib1g-dev libc++-dev libc++abi-dev \
+    #       sudo \
+    #       && sudo apt-get -y clean
+    # - name: Build xmake android examples/c
+    #   run: |
+    #     cd examples/c && xmake f -p android -a ${{ matrix.arch }} --require-bpftool=y -y && xmake -y

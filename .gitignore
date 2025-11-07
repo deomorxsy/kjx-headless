@@ -143,8 +143,8 @@ assets/blazesym/
 assets/libbpf-bootstrap/
 
 # Workflows
-.github/workflows/downloader.yml
-.github/workflows/qemu.yml
+#.github/workflows/downloader.yml
+#.github/workflows/qemu.yml
 
 # Kernel assets
 assets/kernel/app/
