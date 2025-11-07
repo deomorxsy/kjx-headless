@@ -197,5 +197,10 @@ assets/HeatMap/
 # commits helper
 artifacts/commits-memo.txt
 
-# beetor trace post-bootscript
+# beetor/bwc trace related entrypoints
+# and derived artifacts
 scripts/libkjx/unused-scripts/beetor
+artifacts/bwc_off
+
+# virtfs artifacts
+artifacts/qemu-sink/*
