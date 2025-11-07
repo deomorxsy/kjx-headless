@@ -17,6 +17,21 @@ on:
 
 # jobs can run in sequence or parallel in a workflow
 jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./artifacts/pr
+          echo $PR_NUMBER > ./artifacts/pr/pr_number
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr_number
+          path: ./artifacts/pr/
+
   # This single job is called "build"
   build:
     # Specify the operating system for the runner job
