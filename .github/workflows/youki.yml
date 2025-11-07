@@ -1,4 +1,4 @@
-name: llcr-youki
+name: youki
 #
 on:
   push:
@@ -15,12 +15,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_libbpf_bootstrap_android:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [gvisor, kata, firecracker]
+    # strategy:
+    #   fail-fast: false
+    #   matrix:
+    #     arch: [gvisor, kata, firecracker]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -28,5 +28,5 @@ jobs:
 
     - name: Build OCI image (cross-compile)
       run: |
-        make ${{ matrix.arch }}
+        make youki
 
