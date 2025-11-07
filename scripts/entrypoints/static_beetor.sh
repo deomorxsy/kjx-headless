@@ -2,10 +2,40 @@
 
 BEETOR_PATH=./scripts/libkjx/beetor
 
+set_insec_registry() {
+
+REG_CONF="/etc/containers/registries.conf"
+if [ "${GITHUB_ACTIONS}" = "true" ]; then
+
+printf "\n|> Running on Github Actions. Creating registries.conf..."
+
+(
+cat <<EOF
+# For more information on this configuration file, see containers-registries.conf(5).
+#
+# NOTE: RISK OF USING UNQUALIFIED IMAGE NAMES
+#
+# # An array of host[:port] registries to try when pulling an unqualified image, in order.
+  unqualified-search-registries = ['docker.io', 'localhost:5000', 'registry.fedoraproject.org', 'registry.access.redhat.com', 'registry.centos.org']
+#
+[[registry]]
+location = "localhost:5000"
+insecure = true
+#
+EOF
+) | tee /etc/containers/registries.conf
+
+fi
+
+}
+
 builder() {
 
 PROGRAM="$1"
- # ci context
+
+# ci context
+set_insec_registry
+
 
 CCR_MODE="-checker" . ./scripts/ccr.sh  && \
     if [ "$(docker ps -a | grep registry | awk '{ print $13 }')" = "registry" ]; then
