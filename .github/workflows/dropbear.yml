@@ -4,6 +4,10 @@ name: ssh-enabled-rootfs
 on:
   push:
     branches:
+      - 'ramdisk/initramfs'
+      - 'main'
+  pull_request:
+    branches:
       - 'main'
       - 'releases/**'
   # run the workflow manually from Actions tab
@@ -28,7 +32,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          docker run -d -p 5000:5000 --name registry registry:2.7
+          docker run -d -p 5000:5000 --name registry registry:3.0
           # env git_hash env goes into the compose.yml
           docker compose -f ./compose.yml --progress=plain build dropbear
           docker push localhost:5000/dropbear:latest

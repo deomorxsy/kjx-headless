@@ -79,9 +79,11 @@ kernel:
 bzImage:
 	. ./scripts/gen-bzimage.sh
 
+.PHONY: dropbear
 dropbear:
-	. ./scripts/ccr.sh; checker; \
-	docker compose -f ./compose.yml --progress=plain build dropbear
+	MODE="-builder" . ./scripts/entrypoints/build-dropbear.sh
+	#. ./scripts/ccr.sh; checker; \
+	#docker compose -f ./compose.yml --progress=plain build dropbear
 	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
 
 
