@@ -1,4 +1,4 @@
-name: microvm-gvisor
+name: gvisor
 #
 on:
   push:
@@ -17,7 +17,7 @@ on:
   workflow_call:
 
 jobs:
-  build_libbpf_bootstrap_android:
+  build:
     runs-on: ubuntu-latest
     # strategy:
     #  fail-fast: false
