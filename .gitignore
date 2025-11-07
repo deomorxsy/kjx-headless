@@ -33,6 +33,8 @@ dot-dump-valgrind
 out.*
 
 # include submodules for nvim-telescope
+assets/oci-cri
+assets/non-oci
 assets/async-profiler/*
 assets/apk-tools
 assets/ebpf_exporter
