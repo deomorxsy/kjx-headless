@@ -401,8 +401,9 @@ itoeltor:
 runiso:
 	. ./scripts/sandbox/run-qemu.sh -runiso
 
-.PHONY: wasm
-wasm:
+# zig-wasm-typescript-deno-bpf
+.PHONY: zwtd-bpf
+zwtd-bpf:
 	. ./scripts/entrypoints/wasm-runner.sh
 
 .PHONY: final-builder
@@ -417,6 +418,9 @@ runner-final:
 android:
 	MODE="builder" . ./scripts/entrypoints/libbpf-android.sh
 
+.PHONY: libbpfgo
+libbpfgo:
+	MODE="builder" . ./scripts/entrypoints/libbpf-go.sh
 
 # ==============
 # Microvms
