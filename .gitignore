@@ -33,6 +33,7 @@ dot-dump-valgrind
 out.*
 
 # include submodules for nvim-telescope
+assets/unikernels
 assets/oci-cri
 assets/non-oci
 assets/async-profiler/*
