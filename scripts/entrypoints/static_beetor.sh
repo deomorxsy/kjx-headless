@@ -5,6 +5,11 @@ BEETOR_PATH=./scripts/libkjx/beetor
 set_insec_registry() {
 
 REG_CONF="/etc/containers/registries.conf"
+LOCAL_REG_CONF="${HOME}/.config/containers/registries.conf"
+
+DOCKER_JSON="/etc/docker/daemon.json"
+LOCAL_DOCKER_JSON="${HOME}/.config/docker/daemon.json"
+
 if [ "${GITHUB_ACTIONS}" = "true" ]; then
 
 printf "\n|> Running on Github Actions. Creating registries.conf..."
@@ -23,7 +28,16 @@ location = "localhost:5000"
 insecure = true
 #
 EOF
-) | tee /etc/containers/registries.conf
+) | tee "${LOCAL_REG_CONF}"
+
+
+(
+cat <<EOF
+{
+  "insecure-registries": ["localhost:5000"]
+}
+EOF
+) | tee "${LOCAL_DOCKER_JSON}"
 
 fi
 
