@@ -3,7 +3,7 @@ name: bpftrace-ci
 on:
   push:
     branches:
-      - 'tracers/zig-wasm'
+      - 'tracers/bpftrace'
       - 'pipelines/ci-cd'
   pull_request:
     branches:

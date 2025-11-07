@@ -1,9 +1,9 @@
-name: zig-wasm-bpf
+name: Ftrace-ci
 
 on:
   push:
     branches:
-      - 'tracers/zig-wasm'
+      - 'tracers/ftrace'
       - 'pipelines/ci-cd'
   pull_request:
     branches:

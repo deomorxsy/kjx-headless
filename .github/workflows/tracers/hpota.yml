@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - 'tracers/hpota'
+      - 'pipelines/ci-cd'
   pull_request:
     branches:
       - 'main'
