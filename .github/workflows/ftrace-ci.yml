@@ -1,4 +1,4 @@
-name: Ftrace-ci
+name: ftrace-ci
 
 on:
   push:
@@ -17,10 +17,10 @@ on:
 jobs:
   build_libbpf_bootstrap_android:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [armeabi-v7a, arm64-v8a, x86_64]
+    # strategy:
+    #   fail-fast: false
+    #   matrix:
+    #     arch: [armeabi-v7a, arm64-v8a, x86_64]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -28,7 +28,7 @@ jobs:
 
     - name: Build OCI image (cross-compile)
       run: |
-        make android
+        make ftrace
 
     # - uses: xmake-io/github-action-setup-xmake@v1
     #   with:
