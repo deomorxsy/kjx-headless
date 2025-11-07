@@ -17,21 +17,35 @@ on:
   #workflow_call:
   workflow_run:
     workflows: [runc, crun, containerd, youki]
+    types:
+      - completed
+    branches: ['llcr/aio']
 
 
 jobs:
-  build:
+  on-success:
     runs-on: ubuntu-latest
-    # strategy:
-    #   fail-fast: false
-    #   matrix:
-    #     arch: [gvisor, kata, firecracker]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
+      - run: echo 'The triggering workflow passed'
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'The triggering workflow failed'
 
-    - name: Build OCI image (cross-compile)
-      run: |
-        make llcr-aio
+  # build:
+  #   runs-on: ubuntu-latest
+  #   # strategy:
+  #   #   fail-fast: false
+  #   #   matrix:
+  #   #     arch: [gvisor, kata, firecracker]
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     with:
+  #       submodules: true
+
+  #   - name: Build OCI image (cross-compile)
+  #     run: |
+  #       make llcr-aio
 
