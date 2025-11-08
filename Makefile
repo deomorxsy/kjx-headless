@@ -466,20 +466,20 @@ youki:
 fa-kernel:
 .PHONY: fa-initramfs
 fa-initramfs:
-	MODE="" . ./scripts/fa-gha.sh
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-ssh-rootfs
 fa-ssh-rootfs:
-	MODE="" . ./scripts/fa-gha.sh
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-qonq-qdb
 fa-qonq-qdb:
-	MODE="" . ./scripts/fa-gha.sh
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-beetor
 fa-beetor:
-	MODE="" . ./scripts/fa-gha.sh
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-runit
 fa-runit:
-	MODE="" . ./scripts/fa-gha.sh
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-iso
 fa-iso:
-	MODE="" . ./scripts/fa-gha.sh
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
 
