@@ -3,8 +3,7 @@ name: kata
 on:
   push:
     branches:
-      - 'microvms/kata'
-      - 'pipelines/ci-cd'
+      - 'microvms/aio'
   pull_request:
     branches:
       - 'main'

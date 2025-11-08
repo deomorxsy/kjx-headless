@@ -3,8 +3,7 @@ name: firecracker
 on:
   push:
     branches:
-      - 'microvms/firecracker'
-      - 'pipelines/ci-cd'
+      - 'microvms/aio'
   pull_request:
     branches:
       - 'main'
