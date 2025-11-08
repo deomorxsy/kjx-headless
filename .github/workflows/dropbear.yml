@@ -4,7 +4,8 @@ name: ssh-enabled-rootfs
 on:
   push:
     branches:
-      - 'ramdisk/initramfs'
+      - 'isogen/initramfs'
+      - 'isogen/iso9660'
       - 'pipelines/ci-cd'
   pull_request:
     branches:
