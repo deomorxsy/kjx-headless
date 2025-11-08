@@ -456,3 +456,30 @@ crun:
 .PHONY: youki
 youki:
 	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+
+# ==========================
+# Fetch-GHA Artifacts logic
+#
+# ==========================
+#
+.PHONY: fa-kernel
+fa-kernel:
+.PHONY: fa-initramfs
+fa-initramfs:
+	MODE="" . ./scripts/fa-gha.sh
+.PHONY: fa-ssh-rootfs
+fa-ssh-rootfs:
+	MODE="" . ./scripts/fa-gha.sh
+.PHONY: fa-qonq-qdb
+fa-qonq-qdb:
+	MODE="" . ./scripts/fa-gha.sh
+.PHONY: fa-beetor
+fa-beetor:
+	MODE="" . ./scripts/fa-gha.sh
+.PHONY: fa-runit
+fa-runit:
+	MODE="" . ./scripts/fa-gha.sh
+.PHONY: fa-iso
+fa-iso:
+	MODE="" . ./scripts/fa-gha.sh
+
