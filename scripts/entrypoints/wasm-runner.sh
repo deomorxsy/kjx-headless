@@ -1,4 +1,4 @@
 #!/bin/sh
 
 CCR=checker . ./scripts/ccr.sh && \
-    docker compose build wasm_bpf -f ./compose.yml
+    docker compose build zwtd_bpf -f ./compose.yml
