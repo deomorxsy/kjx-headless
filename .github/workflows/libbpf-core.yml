@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - 'tracers/libbpf-core'
-      - 'pipelines/ci-cd'
+      - 'isogen/iso9660'
   pull_request:
     branches:
       - 'main'

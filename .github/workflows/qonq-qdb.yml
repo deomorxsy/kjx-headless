@@ -6,8 +6,7 @@ name: qemu distro builder
 on:
   push:
     branches:
-      - 'isogen/qonq-qdb'
-      - 'pipelines/ci-cd'
+      - 'isogen/iso9660'
   pull_request:
     branches:
       - 'main'
@@ -17,7 +16,8 @@ on:
     - cron: "23 23 * * 1,4"
   # run the workflow manually from Actions tab
   workflow_dispatch:
-
+  # run the workflow when called from another workflow
+  workflow_call:
 
 # jobs can run in sequence or parallel in a workflow
 jobs:

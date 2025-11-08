@@ -1,13 +1,10 @@
 name: initramfs
 
 # This rule triggers when the workflow will run
-#
 on:
   push:
     branches:
-      - 'isogen/initramfs'
       - 'isogen/iso9660'
-      - 'pipelines/ci-cd'
   pull_request:
     branches:
       - 'main'
