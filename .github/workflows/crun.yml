@@ -3,8 +3,7 @@ name: crun
 on:
   push:
     branches:
-      - 'llcr/crun'
-      - 'pipelines/ci-cd'
+      - 'llcr/aio'
   pull_request:
     branches:
       - 'main'

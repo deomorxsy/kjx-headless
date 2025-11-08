@@ -3,8 +3,7 @@ name: runc
 on:
   push:
     branches:
-      - 'llcr/runc'
-      - 'pipelines/ci-cd'
+      - 'llcr/aio'
   pull_request:
     branches:
       - 'main'

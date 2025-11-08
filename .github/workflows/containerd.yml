@@ -3,8 +3,7 @@ name: containerd
 on:
   push:
     branches:
-      - 'llcr/containerd'
-      - 'pipelines/ci-cd'
+      - 'llcr/aio'
   pull_request:
     branches:
       - 'main'
