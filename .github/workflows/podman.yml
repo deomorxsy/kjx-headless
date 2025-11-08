@@ -3,8 +3,7 @@ name: podman
 on:
   push:
     branches:
-      - 'hlcr/podman'
-      - 'pipelines/ci-cd'
+      - 'hlcr/aio'
   pull_request:
     branches:
       - 'main'

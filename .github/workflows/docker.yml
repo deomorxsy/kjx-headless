@@ -3,8 +3,7 @@ name: docker
 on:
   push:
     branches:
-      - 'hlcr/crio'
-      - 'pipelines/ci-cd'
+      - 'hlcr/aio'
   pull_request:
     branches:
       - 'main'
