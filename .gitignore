@@ -202,3 +202,10 @@ scripts/libkjx/unused-scripts/*
 
 # trace/libbpf-core
 trace/libbpf-core/vmlinux.h
+# beetor/bwc trace related entrypoints
+# and derived artifacts
+scripts/libkjx/unused-scripts/beetor
+artifacts/bwc_off
+
+# virtfs artifacts
+artifacts/qemu-sink/*

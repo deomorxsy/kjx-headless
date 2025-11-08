@@ -11,7 +11,7 @@ ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
 
 WORKDIR /ramdisk/
-RUN mkdir -p bin dev etc lib mnt/root proc root sbin sys tmp var && \
+RUN mkdir -p bin dev etc lib mnt/root proc root sbin sys tmp var
 # ======== NETWORK SETUP ===========
 # system hostname
 RUN <<BUILD_EOF
@@ -41,9 +41,12 @@ EOF
 
 BUILD_EOF
 
-#
+
 # interfaces (network devices)
 RUN <<BUILD_EOF
+
+mkdir -p /ramdisk/etc/network/
+
 (
 cat  <<EOF
 # loopback interface

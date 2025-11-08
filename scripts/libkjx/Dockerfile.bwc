@@ -1,0 +1,87 @@
+# ==================
+# 1. Builder Step
+# ==================
+FROM alpine:3.22 AS builder
+
+COPY ./scripts/ /app/scripts/
+# COPY ./assets/ /app/
+# COPY ./artifacts/ /app/
+
+WORKDIR /app
+
+RUN <<EOF
+apk upgrade && apk update && \
+    apk add git musl openssl-dev \
+      libcrypto zlib elfutils-dev
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+apk add libcrypto3 musl
+
+
+LIBKJX_USER=beetor_bwc
+
+# create user and group
+addgroup -g 1000 -S "${LIBKJX_USER}" && \
+adduser -s /bin/sh -u 1000 -G "${LIBKJX_USER}" \
+    -h "/home/${LIBKJX_USER}" -D "${LIBKJX_USER}" && \
+
+
+mkdir -p /home/${LIBKJX_USER}/app/ && \
+
+cp -r /app/* /home/${LIBKJX_USER}/app/ && \
+# certify it will have the correct user:group permissions
+chown -R ${LIBKJX_USER}:${LIBKJX_USER} /home/${LIBKJX_USER}  && \
+
+su "${LIBKJX_USER}" -c "
+
+cd /home/beetor_bwc/app/ || return
+
+ls -allhtr .
+# ls -allhtr ./entrypoints/
+
+MODE="bwc" . ./scripts/entrypoints/static_beetor.sh     > /home/beetor_bwc/app/foo-bwc.txt
+
+"
+EOF
+
+FROM alpine:3.22 AS relay
+
+WORKDIR /app
+
+COPY --from=builder /home/beetor_bwc/app/foo-bwc.txt    .
+
+RUN <<EOF
+
+ls -allhtr
+
+BWC="./foo-bwc.txt"
+
+if ! [ -f "${BWC}"]; then
+    printf "\n|> "${BWC}" was NOT found. Exiting now...\n\n"
+    exit
+fi  && \
+
+printf "\n|> "${BWC}" found. Printing now...\n\n" && \
+cat "${BWC}"
+
+EOF
+
+
+# set command to be executed when the container starts
+ENTRYPOINT ["/bin/sh", "-c"]
+
+# set argument to be fed to the entrypoint
+CMD ["echo", "hmm"]
+# CMD ["apk upgrade && apk update && \
+#       apk add git musl-gcc openssl-dev \
+#       libcrypto zlib elfutils-dev && \
+#       cd /app || return && \
+#       MODE="builder" PROGRAM="bwc" . ./scripts/entrypoints/static_beetor.sh
+#CMD ["printf \"===== UNIT TEST =====\\n\\n\" && cat /tests/test_result.txt && printf \"\\n\\n===== UNIT COVERAGE =======\\n\\n\" && cat /tests/coverage_go.out && printf \"\\n\\n===== FUZZA =======\\n\\n\" && printf \"no-file-yet\""]

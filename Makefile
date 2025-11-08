@@ -79,9 +79,11 @@ kernel:
 bzImage:
 	. ./scripts/gen-bzimage.sh
 
+.PHONY: dropbear
 dropbear:
-	. ./scripts/ccr.sh; checker; \
-	docker compose -f ./compose.yml --progress=plain build dropbear
+	MODE="-builder" . ./scripts/entrypoints/build-dropbear.sh
+	#. ./scripts/ccr.sh; checker; \
+	#docker compose -f ./compose.yml --progress=plain build dropbear
 	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
 
 
@@ -239,21 +241,22 @@ k8s:
 # ===============
 # runit supervised scripts
 #
+
+# libkjx/beetor_bwc
 .PHONY: beetor
 beetor:
-	. ./scripts/ccr.sh; checker; \
-	docker run -d -p 5000:5000 --name registry registry:3.0
-	docker start registry && \
-	docker compose -f ./compose.yml --progress=plain build beetor && \
-	docker compose images | grep beetor | awk '{ print $4 }' && \
-	docker push localhost:5000/beetor:latest && \
-	docker stop registry
+	MODE="builder" PROGRAM="beetor" . ./scripts/entrypoints/static_beetor.sh
 
 
 # fix beetor synchronization program
-.PHONY: bwc_off
-bwc_off:
-	gcc ./scripts/libkjx/bwc_off.c -O0 -Wall -lpthread -g -o ./artifacts/bwc_off
+.PHONY: bwc
+bwc:
+	MODE="builder" PROGRAM="bwc" . ./scripts/entrypoints/static_beetor.sh
+
+#.PHONY: libkjx_valgrind
+#libkjx_valgrind: beetor, bwc
+#   MODE="-profiler"
+
 
 # old setcap script
 # untested
