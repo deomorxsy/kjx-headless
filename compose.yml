@@ -5,8 +5,8 @@ volumes:
     grafana_data: {}
 
 services:
-  # zig + wasm + typescript + deno
-  wasm_bpf:
+  # zig-wasm-typescript-deno-bpf
+  zwtd_bpf:
     environment:
       - git_hash
     build:
@@ -168,6 +168,14 @@ services:
       tags:
         - "localhost:5000/linux_build:latest"
     stop_signal: SIGINT
+  libbpfgo:
+    build:
+      context: "./trace/libbpfgo"
+      # Dockerfile's location is relative to the context field (the base directory).
+      dockerfile: "./Dockerfile"
+      tags:
+        - "localhost:5000/libbpfgo:latest"
+    stop_signal: SIGINT
   exporter: # ebpf-exporter
     build:
       context: "./assets/ebpf_exporter/"
@@ -176,7 +184,8 @@ services:
       tags:
         - "localhost:5000/exporter-static:latest"
     stop_signal: SIGINT
-  hpota: # ebpf-exporter
+  # honey-potion
+  hpota:
     container_name: hpota
     build:
       context: "."
@@ -185,39 +194,8 @@ services:
       tags:
         - "localhost:5000/hpota:latest"
     stop_signal: SIGINT
-  # =======================
-  # standalone prometheus
-  # =======================
-  node-exporter:  # prometheus node-exporter
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    restart: unless-stopped
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    ports:
-      - 9100:9100
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
-    volumes:
-      - ./prom-metrics.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-    ports:
-      - 9090:9090
+
+
   # =======================
   # AWS provider emulation
   # =======================
@@ -246,6 +224,7 @@ services:
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+
   # ====================
   # runit supervised scripts
   # ====================
@@ -281,6 +260,7 @@ services:
         libcrypto zlib elfutils-dev && \
         MODE="builder" PROGRAM="beetor" . ./scripts/entrypoints/static_beetor.sh
     stop_signal: SIGINT
+
   # ========================
   # libguestfs library with ocaml
   # =========================
@@ -310,7 +290,7 @@ services:
       apk upgrade && apk update && \
       apk add dune ocaml musl-dev && \
       eval $(opam env --switch=utop)
-
+ #
   # ========================
   # android cross-compilation
   # build with xmake
@@ -339,8 +319,11 @@ services:
     command: |
         echo hmm
     stop_signal: SIGINT
-  # visualization
-  #
+
+  # ========================
+  # visualization &
+  # observability
+  # =========================
   grafana:
     container_name: grafana
     environment:
@@ -352,3 +335,36 @@ services:
     # command: |
     #    echo hmm
     stop_signal: SIGINT
+
+  # standalone prometheus
+  node-exporter:  # prometheus node-exporter
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - 9100:9100
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prom-metrics.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - 9090:9090
+
