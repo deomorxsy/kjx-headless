@@ -22,18 +22,25 @@ on:
     branches: ['hlcr/aio']
 
 jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo 'The triggering workflow passed'
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'The triggering workflow failed'
+
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [gvisor, kata, firecracker]
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: true
 
-    - name: Build OCI image (cross-compile)
+    - name: Build OCI image
       run: |
-        make ${{ matrix.arch }}
+        make hlcr-aio
 

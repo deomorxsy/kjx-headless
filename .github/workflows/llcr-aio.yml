@@ -34,18 +34,14 @@ jobs:
     steps:
       - run: echo 'The triggering workflow failed'
 
-  # build:
-  #   runs-on: ubuntu-latest
-  #   # strategy:
-  #   #   fail-fast: false
-  #   #   matrix:
-  #   #     arch: [gvisor, kata, firecracker]
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #     with:
-  #       submodules: true
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
 
-  #   - name: Build OCI image (cross-compile)
-  #     run: |
-  #       make llcr-aio
+    - name: Build OCI image (cross-compile)
+      run: |
+        make llcr-aio
 
