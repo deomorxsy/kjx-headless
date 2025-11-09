@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'hlcr/aio'
+      - 'pipelines/ci-cd'
   pull_request:
     branches:
       - 'main'
