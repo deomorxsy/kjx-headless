@@ -41,7 +41,7 @@ jobs:
       with:
         submodules: true
 
-    - name: Build OCI image (cross-compile)
+    - name: Build OCI image
       run: |
         make llcr-aio
 
