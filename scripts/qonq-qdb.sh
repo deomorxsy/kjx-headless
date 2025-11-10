@@ -3,14 +3,29 @@
 # builds the project and fetch binaries for
 # qemu-storage-daemon on qemu automation for the builder
 
-# global variables
+# N. global variables
 SEC_SED="./scripts/rep-secrets.sed"
 THIS_SCRIPT="./scripts/qonq-qdb.sh"
 REPLACED_SCRIPT="./artifacts/replaSED-qonq.sh"
 
-# final_qemu global variables
+# N. final_qemu global variables
+QEMU_NEWART="./newart"
 OTHER_BINARIES_DIR="./newart/other-bins"
 QEMU_BINARIES_DIR="./newart/qemu-bins"
+
+# N. ssh-enabled-rootfs
+DBSSH_PATH="./artifacts/ssh-rootfs"
+ROOTFS_ZIP="rootfs-tarball.zip"
+DBSSH_FAKEROOTDIR="${DBSSH_PATH}"/fakerootdir
+SSH_ROOTFS_COMPRESSED="${DBSSH_PATH}/${ROOTFS_ZIP}"
+ROOTFS_CPIO_GZ="./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz"
+
+# N. ssh-enabled-rootfs: dropbear SSH logic setup
+DROPBEAR_DIR="${DBSSH_FAKEROOTDIR}/etc/dropbear/"
+DROPBEAR_SSH_KEYS_DIR="./artifacts/ssh-keys"
+DROPBEAR_KEYPAIR="./artifacts/ssh-keys/kjx-keypair"
+DROPBEAR_PUB_KEY="./artifacts/ssh-keys/kjx-keypair.pub"
+
 
 bqm() {
 
@@ -65,7 +80,7 @@ fi
 }
 
 # ====================
-# Distro core dependencies
+# Distro core binary dependencies
 #
 # ====================
 
@@ -73,87 +88,84 @@ fi
 core_deps() {
 
     # get the linkage tarball
-    docker cp "${QEMU_KJX_LINKED}":/app/shared_deps/archive.tar.gz ./newart/              && \
+    docker cp qemu_kjx:/app/shared_deps/archive.tar.gz ./newart/              && \
 
     # get the qemu binaries
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-edid "${QEMU_BINARIES_DIR}"/                 && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-ga "${QEMU_BINARIES_DIR}"/                   && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-img "${QEMU_BINARIES_DIR}"/                  && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-io "${QEMU_BINARIES_DIR}"/                   && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-nbd "${QEMU_BINARIES_DIR}"/                  && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-pr-helper "${QEMU_BINARIES_DIR}"/            && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-storage-daemon "${QEMU_BINARIES_DIR}"/       && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-system-x86_64 "${QEMU_BINARIES_DIR}"/        && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/qemu-vmsr-helper "${QEMU_BINARIES_DIR}"/          && \
+    docker cp qemu_kjx:/usr/bin/qemu-edid "${QEMU_BINARIES_DIR}"/                 && \
+    docker cp qemu_kjx:/usr/bin/qemu-ga "${QEMU_BINARIES_DIR}"/                   && \
+    docker cp qemu_kjx:/usr/bin/qemu-img "${QEMU_BINARIES_DIR}"/                  && \
+    docker cp qemu_kjx:/usr/bin/qemu-io "${QEMU_BINARIES_DIR}"/                   && \
+    docker cp qemu_kjx:/usr/bin/qemu-nbd "${QEMU_BINARIES_DIR}"/                  && \
+    docker cp qemu_kjx:/usr/bin/qemu-pr-helper "${QEMU_BINARIES_DIR}"/            && \
+    docker cp qemu_kjx:/usr/bin/qemu-storage-daemon "${QEMU_BINARIES_DIR}"/       && \
+    docker cp qemu_kjx:/usr/bin/qemu-system-x86_64 "${QEMU_BINARIES_DIR}"/        && \
+    docker cp qemu_kjx:/usr/bin/qemu-vmsr-helper "${QEMU_BINARIES_DIR}"/          && \
 
     # get the other binaries
-    docker cp "${QEMU_KJX_LINKED}":/usr/sbin/setcap   "${OTHER_BINARIES_DIR}"/usr/sbin/       && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/sbin/parted   "${OTHER_BINARIES_DIR}"/usr/sbin/       && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/sbin/kpartx   "${OTHER_BINARIES_DIR}"/usr/sbin/       && \
-    docker cp "${QEMU_KJX_LINKED}":/sbin/mkfs.ext4    "${OTHER_BINARIES_DIR}"/sbin/           && \
+    docker cp qemu_kjx:/usr/sbin/setcap   "${OTHER_BINARIES_DIR}"/usr/sbin/       && \
+    docker cp qemu_kjx:/usr/sbin/parted   "${OTHER_BINARIES_DIR}"/usr/sbin/       && \
+    docker cp qemu_kjx:/usr/sbin/kpartx   "${OTHER_BINARIES_DIR}"/usr/sbin/       && \
+    docker cp qemu_kjx:/sbin/mkfs.ext4    "${OTHER_BINARIES_DIR}"/sbin/           && \
 
     # from fuser3
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/fusermount3   "${OTHER_BINARIES_DIR}"/usr/bin/    && \
+    docker cp qemu_kjx:/usr/bin/fusermount3   "${OTHER_BINARIES_DIR}"/usr/bin/    && \
 
     # fuse-overlayfs as an snapshotter alternative for k3s
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/fuse-overlayfs "${OTHER_BINARIES_DIR}"/usr/bin/fuse-overlayfs           && \
+    docker cp qemu_kjx:/usr/bin/fuse-overlayfs "${OTHER_BINARIES_DIR}"/usr/bin/fuse-overlayfs           && \
 
     # it must be based on util-linux/losetup, not on the busybox/losetup version.
-    docker cp "${QEMU_KJX_LINKED}":/sbin/losetup     "${OTHER_BINARIES_DIR}"/sbin/
+    docker cp qemu_kjx:/sbin/losetup     "${OTHER_BINARIES_DIR}"/sbin/
 }
 
 # Setup tracers:
 tracers() {
     # get bpftrace binary
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/bpftrace "${OTHER_BINARIES_DIR}"/usr/bin/bpftrace
+    docker cp qemu_kjx:/usr/bin/bpftrace "${OTHER_BINARIES_DIR}"/usr/bin/bpftrace
 
 }
 
 # Setup Linux Kernel Modules (LKM) support: get kmod
 lkm() {
-    docker cp "${QEMU_KJX_LINKED}":/app/kmod-34.2/build/kmod "${OTHER_BINARIES_DIR}"/app/kmod/                      && \
-    docker cp "${QEMU_KJX_LINKED}":/archive.tar.gz "${OTHER_BINARIES_DIR}"/app/kmod-archive.tar.gz                  && \
-    docker cp "${QEMU_KJX_LINKED}":/app/kmod-34.2/build/libkmod.so.2.5.1 "${OTHER_BINARIES_DIR}"/app/kmod-deps/
+    docker cp qemu_kjx:/app/kmod-34.2/build/kmod "${OTHER_BINARIES_DIR}"/app/kmod/                      && \
+    docker cp qemu_kjx:/archive.tar.gz "${OTHER_BINARIES_DIR}"/app/kmod-archive.tar.gz                  && \
+    docker cp qemu_kjx:/app/kmod-34.2/build/libkmod.so.2.5.1 "${OTHER_BINARIES_DIR}"/app/kmod-deps/
 }
 
 # Setup high-level container runtimes:
 hlcr() {
     # setup podman and its dependencies
-    docker cp "${QEMU_KJX_LINKED}":/podman-so.tar.gz "${OTHER_BINARIES_DIR}"/app/                   && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/podman "${OTHER_BINARIES_DIR}"/app/                     && \
+    docker cp qemu_kjx:/podman-so.tar.gz "${OTHER_BINARIES_DIR}"/app/                   && \
+    docker cp qemu_kjx:/usr/bin/podman "${OTHER_BINARIES_DIR}"/app/                     && \
     mkdir -p "${OTHER_BINARIES_DIR}"/usr/libexec/podman/                                            && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/libexec/podman/netavark "${OTHER_BINARIES_DIR}"/app/        && \
+    docker cp qemu_kjx:/usr/libexec/podman/netavark "${OTHER_BINARIES_DIR}"/app/        && \
 
     # setup netavark, aardvark-dns, rootlessport and catatonit init
-    docker cp "${QEMU_KJX_LINKED}":/usr/libexec/podman/netavark       "${OTHER_BINARIES_DIR}"/usr/libexec/podman/netavark        && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/libexec/podman/aardvark-dns   "${OTHER_BINARIES_DIR}"/usr/libexec/podman/aardvark-dns    && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/libexec/podman/rootlessport   "${OTHER_BINARIES_DIR}"/usr/libexec/podman/rootlessport    && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/catatonit                 "${OTHER_BINARIES_DIR}"/usr/bin/catatonit                  && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/libexec/podman/catatonit      "${OTHER_BINARIES_DIR}"/usr/libexec/podman/catatonit       && \
+    docker cp qemu_kjx:/usr/libexec/podman/netavark       "${OTHER_BINARIES_DIR}"/usr/libexec/podman/netavark        && \
+    docker cp qemu_kjx:/usr/libexec/podman/aardvark-dns   "${OTHER_BINARIES_DIR}"/usr/libexec/podman/aardvark-dns    && \
+    docker cp qemu_kjx:/usr/libexec/podman/rootlessport   "${OTHER_BINARIES_DIR}"/usr/libexec/podman/rootlessport    && \
+    docker cp qemu_kjx:/usr/bin/catatonit                 "${OTHER_BINARIES_DIR}"/usr/bin/catatonit                  && \
+    docker cp qemu_kjx:/usr/libexec/podman/catatonit      "${OTHER_BINARIES_DIR}"/usr/libexec/podman/catatonit       && \
     ln -s "${OTHER_BINARIES_DIR}"/usr/bin/catatonit "${OTHER_BINARIES_DIR}"/usr/libexec/podman/catatonit
 
     # get conmon
-    docker cp "${QEMU_KJX_LINKED}":/conmon-archive.tar.gz "${OTHER_BINARIES_DIR}"/app/  && \
-    docker cp "${QEMU_KJX_LINKED}":/usr/bin/conmon "${OTHER_BINARIES_DIR}"/usr/bin/
+    docker cp qemu_kjx:/conmon-archive.tar.gz "${OTHER_BINARIES_DIR}"/app/  && \
+    docker cp qemu_kjx:/usr/bin/conmon "${OTHER_BINARIES_DIR}"/usr/bin/
 
 }
 
 # Setup low-level container runtimes:
 llcr() {
 # get crun
-docker cp "${QEMU_KJX_LINKED}":/usr/bin/crun "${OTHER_BINARIES_DIR}"/usr/bin/ && \
-docker cp "${QEMU_KJX_LINKED}":/archive.tar.gz ./app/crun-archive.tar.gz
+docker cp qemu_kjx:/usr/bin/crun "${OTHER_BINARIES_DIR}"/usr/bin/ && \
+docker cp qemu_kjx:/archive.tar.gz ./app/crun-archive.tar.gz
 }
 
 
 
 
-# the ccr script should be called before this function
-final_qemu() {
 
-# opt1 = build all high-level container runtime
-# opt2 = build all low-level container runtime
-# opt3 = build all microvms
+final_qemu_aio() {
+
 
 # OTHER_BINARIES_DIR is old newfrdir
 OTHER_BINARIES_DIR="./newart/other-bins"
@@ -164,42 +176,37 @@ printf "\n|> Building qemu_kjx image..."
 
 CCR_MODE="checker" . ./scripts/ccr.sh && \
 
-#if [ "${QEMU_KJX_LINKED}" = "" ]; then
-#    printf "\n|> did not found the qemu_kjx image. Building it now...\n\n"
-
-# FUNCTION CALL: the builda_qemu container specified on the ./compose.yml
+# ========================================
+# FUNCTION CALL: the builda_qemu container
+# specified on the ./compose.yml
 bqm
 
-# check if built image exists
-if ! docker ps | grep qemu_kjx | awk '{print $1}'; then
-    printf "\n|> There is no built container called qemu_kjx. Exiting now...\n\n"
-    return
-else
-    QEMU_KJX_LINKED=$(docker ps | grep qemu_kjx | awk '{print $1}')
-    printf "\n|> Found the qemu_kjx image. Preparing...\n\n"
-fi && \
-
-# create directories
+# Create directories
 mkdir -p "${OTHER_BINARIES_DIR}"            && \
 mkdir -p "${QEMU_BINARIES_DIR}"             && \
 
 
 # Run all build jobs
 CCR_MODE="checker" . ./scripts/ccr.sh       && \
+    # ========================================
     # FUNCTION CALL: Setup core dependencies
     core_deps && \
+    # ========================================
     # FUNCTION CALL: Setup tracers
     tracers && \
+    # ========================================
     # FUNCTION CALL: Linux Kernel Modules (LKM) support
     lkm && \
+    # ========================================
     # FUNCTION CALL: High-Level Container Runtime support
     hlcr && \
+    # ========================================
     # FUNCTION CALL: Low-Level Container Runtime support
     llcr && \
 
 
 # ================
-# remaining binaries
+# Remaining binaries
 
 
 # trace loading, debugging and dumping;
@@ -233,17 +240,13 @@ getnames=$(docker exec "$TMP_CONT_NAME" sh -c '
   readlink -f "$(which expect)"
   ')
 
-# reference:
-# /home/asari/Downloads/kjxh-artifacts/another/
-# "${OTHER_BINARIES_DIR}"
-#
 # make sure dir pathname exist beforehand
 mkdir -p "${OTHER_BINARIES_DIR}"/usr/sbin/
 mkdir -p "${OTHER_BINARIES_DIR}"/usr/bin/
 
 # without quotes for word splitting
 for index in $getnames; do
-    docker cp "$TMP_CONT_NAME:$index" ""${OTHER_BINARIES_DIR}"$index"
+    docker cp "$TMP_CONT_NAME:$index" "${OTHER_BINARIES_DIR}$index"
 done
 
 
@@ -282,24 +285,29 @@ BASECONT=$(docker run -it -d alpine:3.20 /bin/sh)
 docker exec -it "$BASECONT" \
     sh -c "apk upgrade && apk update && apk add curl jq && curl -L -H \"Authorization: token $PAT_KJX_ARTIFACT\" -o rootfs-tarball.zip ${CUSTOM_ROOTFS_BUILDER}"
 
-#
-DBSSH_PATH="./artifacts/ssh-rootfs"
-DBSSH_FAKEROOTDIR="${DBSSH_PATH}"/fakerootdir
+# ========================================================================
+# N. ssh-enabled-rootfs
+# ========================================================================
+
 
 # cleanup 1
-#rm -rf "./artifacts/ssh-rootfs/*"
-mkdir -p "./artifacts/ssh-rootfs/"
+if [ -d "${DBSSH_PATH}" ] && ls -allhtr "${DBSSH_PATH}"; then
+    rm -rf "${DBSSH_PATH}"
+fi
+mkdir -p "${DBSSH_PATH}"
 
 # cleanup 2
-#rm -rf "./artifacts/ssh-rootfs/fakerootdir/*"
-mkdir -p "./artifacts/ssh-rootfs/fakerootdir/"
+if [ -d "${DBSSH_FAKEROOTDIR}" ] && ls -allhtr "${DBSSH_FAKEROOTDIR}"; then
+    rm -rf "${DBSSH_FAKEROOTDIR}"
+fi
+mkdir -p "${DBSSH_FAKEROOTDIR}"
 
 # cleanup 3
-#rm ./artifacts/ssh-rootfs/rootfs-tarball.zip
-
-#now copy the artifact outside and then come back to the function
-#docker cp "$BASECONT":rootfs-tarball.zip "$DBSSH_PATH"
-docker cp "${BASECONT}":rootfs-tarball.zip ./artifacts/ssh-rootfs/rootfs-tarball.zip
+if [ -f "${SSH_ROOTFS_COMPRESSED}" ]; then
+    rm -rf "${SSH_ROOTFS_COMPRESSED}"
+fi
+# Copy the artifact outside and then come back to the function
+docker cp "${BASECONT}":rootfs-tarball.zip "${SSH_ROOTFS_COMPRESSED}"
 
 # stop and remove the container
 docker stop "${BASECONT}"
@@ -307,66 +315,85 @@ docker rm "${BASECONT}" --force
 
 
 # check if the decompressed rootfs cpio.gz already exists to avoid unzip dialog
-if [ -f ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz ]; then
-    rm ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz
+if [ -f "${ROOTFS_CPIO_GZ}" ]; then
+    rm "${ROOTFS_CPIO_GZ}"
 fi
 
-# unzip the zip tarball containin the cpio.gz
-# cd "$DBSSH_PATH" || return
-cd ./artifacts/ssh-rootfs/ || return
-unzip ./rootfs-tarball.zip
+# Unzip the zip tarball containin the cpio.gz
+cd "${DBSSH_PATH}" || return
+
+if ! [ -f "${ROOTFS_ZIP}" ]; then
+    printf "\n\n|> Error: %s does not exist."  "${ROOTFS_ZIP}"
+    return
+fi
+unzip "./${ROOTFS_ZIP}"
 cd - || return
 
-# clean the rootfs tree if it exists
-#rm -rf "./artifacts/ssh-rootfs/fakerootdir/*" && \
+# Clean the fakerootdir tree if it exists
+if [ -d "${DBSSH_FAKEROOTDIR}" ]; then
+    rm -rf "${DBSSH_FAKEROOTDIR}"
+fi && \
 
-# decompress gunzip and then cpio to the specified path
-gzip -cd ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz \
-    | cpio -idmv -D ./artifacts/ssh-rootfs/fakerootdir/
+# Decompress gunzip and then cpio to the specified path
+if ! (gzip -cd "${ROOTFS_CPIO_GZ}" | cpio -idmv -D "${DBSSH_FAKEROOTDIR}") ; then
 
+    printf "\n\n|> Error: could NOT decompress gunzip and cpio to specified path at %s" "${DBSSH_FAKEROOTDIR}. Exiting now..."
+    return
 
-# setup dropbear keypair
-mkdir -p ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/
-
-
-# make sure the directory exists and keypair
-# already exists (locally) to avoid dialog
-mkdir -p ./artifacts/ssh-keys
-
-if [ -f ./artifacts/ssh-keys/kjx-keypair ]; then
-    rm ./artifacts/ssh-keys/kjx-keypair
 fi
 
-
-ssh-keygen -t ed25519 \
-        -C "dropbear" \
-        -f ./artifacts/ssh-keys/kjx-keypair \
-        -N ""
-
-cat ./artifacts/ssh-keys/kjx-keypair.pub >> ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/authorized_keys
-
-# setup qemu binaries
-cp -r ./newart/lib/* ./artifacts/ssh-rootfs/fakerootdir/lib/
-cp -r ./newart/usr/* ./artifacts/ssh-rootfs/fakerootdir/usr/
-cp -r "${QEMU_BINARIES_DIR}"/* ./artifacts/ssh-rootfs/fakerootdir/bin/
-
-
-# enter dir just to run find
-cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
-
-# patch the specified file with anything
+# ========================================================
 #
-#ROOTFS_SEMVER=0.3.1
-ROOTFS_SEMVER=0.3.3
+# 3. ssh-enabled-rootfs: dropbear SSH logic setup
+
+# Setup dropbear keypair directory
+mkdir -p "${DROPBEAR_DIR}"
+
+# Make sure the directory exists and keypair
+# already exists (locally) to avoid dialog
+mkdir -p "${DROPBEAR_SSH_KEYS_DIR}"
+
+# Clean last keypair if it exists
+if [ -f "${DROPBEAR_KEYPAIR}" ]; then
+    rm "${DROPBEAR_KEYPAIR}"
+fi
+
+# Create SSH keypair
+if ! ssh-keygen -t ed25519 \
+        -C "dropbear" \
+        -f "${DROPBEAR_KEYPAIR}" \
+        -N ""; then
+
+    printf "\n\n|> Error: could not generate ssh keypair to specified path. Exiting now..."
+    return
+fi
+
+# Mark generated public key as authorized by dropbear
+if ! [ -f "${DROPBEAR_DIR}/authorized_keys" ] && [ -f "${DROPBEAR_PUB_KEY}" ]; then
+    printf "\n\n|> Error: dropbear directory authorized_keys and public ssh key path were not found. Exiting now..."
+    return
+fi
+cat "${DROPBEAR_PUB_KEY}" >> "${DROPBEAR_DIR}/authorized_keys"
+
+# =====================
+
+# Setup qemu binaries
+cp -r "${QEMU_NEWART}/lib/*"      "${DBSSH_FAKEROOTDIR}/lib/"
+cp -r "${QEMU_NEWART}/usr/*"      "${DBSSH_FAKEROOTDIR}/usr/"
+cp -r "${QEMU_BINARIES_DIR}/*"    "${DBSSH_FAKEROOTDIR}/bin/"
+
+
+# Enter dir just to run find
+cd "${DBSSH_FAKEROOTDIR}" || return && \
+
+# Patch the specified file with anything
+# TODO
+# ROOTFS_SEMVER=1.0.3
 
 # create revised cpio.gz rootfs tarball
-find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > "../ssh-rootfs-revised_${ROOTFS_SEMVER}.cpio.gz" && \
-    cd - || return && \
-printf "\n|> done!! Exiting now...\n\n"
-
-
-# find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../rootfs_v7.cpio.gz
-
+#find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > "../ssh-rootfs-revised_${ROOTFS_SEMVER}.cpio.gz" && \
+find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > "../ssh-rootfs.cpio.gz" && \
+cd - || return && \
 printf "\n|> done!! Exiting now...\n\n"
 
 }
@@ -400,9 +427,242 @@ END
 }
 
 
+builder() {
+# opt1 = build all high-level container runtime
+# opt2 = build all low-level container runtime
+# opt3 = build all microvms
+
+core_deps
+
+##############################
+
+if ! [ -z "${MICROVM_RC}" ]; then
+    case "${MICROVM_RC}" in
+        "microvm-aio")
+            . ./scripts/sandbox/microvm-setup.sh
+            ;;
+        "firecracker")
+            . ./scripts/sandbox/firecracker-startup.sh
+            ;;
+        "gvisor")
+            . ./scripts/sandbox/gvisor-setup.sh
+            ;;
+        "kata")
+            . ./scripts/sandbox/kata-setup.sh
+            ;;
+        *)
+            echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"
+            print_usage
+            ;;
+    esac
+    fi
+
+    # high-level container runtime
+    if ! [ -z "${HLCR_RC}" ]; then
+    case "${HLCR_RC}" in
+        "docker")
+            hlcr docker
+            ;;
+        "podman")
+            hlcr podman
+            ;;
+        "crio")
+            hlcr crio
+            ;;
+        "aio")
+            hlcr aio
+            ;;
+        *)
+            echo "Invalid hlcr. Please specify one of: docker, podman, crio"
+            print_usage
+            ;;
+    esac
+    fi
+
+    # runc, crun, containerd, youki
+    if ! [ -z "${LLCR_RC}" ]; then
+    case "${LLCR_RC}" in
+        "runc")
+            llcr runc
+            ;;
+        "crun")
+            llcr crun
+            ;;
+        "containerd")
+            llcr containerd
+            ;;
+        "youki")
+            # builder "${LLCR_RC}"
+            ;;
+        "aio")
+            printf "\n|> Not ready yet!"
+            #builder "${LLCR_RC}"
+            ;;
+        *)
+            echo "Invalid hlcr. Please specify one of: runc, crun, containerd, youki, aio".
+
+            print_usage
+            ;;
+    esac
+    fi
+
+    if ! [ -z "${TRACER}" ]; then
+    case "${TRACER}" in
+        "libbpf-core")
+            builder "${TRACER}"
+            ;;
+        "ayaya")
+            builder "${TRACER}"
+            ;;
+        "ftrace")
+            builder "${TRACER}"
+            ;;
+        "bpftrace")
+            builder "${TRACER}"
+            ;;
+        #"libbpfgo")
+            #builder "${TRACER}"
+            #;;
+        #"ocaml")
+            #builder "${TRACER}"
+            #;;
+        #"zig-wasm")
+            #builder "${TRACER}"
+            #;;
+        *)
+            echo "Invalid hlcr. Please specify one of: runc, crun, containerd, youki, aio".
+
+            print_usage
+            ;;
+    esac
+    fi
+
+
+### # Run all build jobs
+### CCR_MODE="checker" . ./scripts/ccr.sh       && \
+###     # ========================================
+###     # FUNCTION CALL: Setup core dependencies
+###     core_deps && \
+###     # ========================================
+###     # FUNCTION CALL: Setup tracers
+###     tracers && \
+###     # ========================================
+###     # FUNCTION CALL: Linux Kernel Modules (LKM) support
+###     lkm && \
+###     # ========================================
+###     # FUNCTION CALL: High-Level Container Runtime support
+###     hlcr && \
+###     # ========================================
+###     # FUNCTION CALL: Low-Level Container Runtime support
+###     llcr
+
+
+}
+
 # Check the argument passed from the command line
-if [ "$MODE" = "-fq" ] || [ "$MODE" = "--final_qemu" ] || [ "$MODE" = "final_qemu" ] ; then
-    final_qemu
+# if [ "$MODE" = "-fq" ] || [ "$MODE" = "--builder" ] || [ "$MODE" = "builder" ] ; then
+if [ "$MODE" = "-builder" ] || [ "$MODE" = "--builder" ] || [ "$MODE" = "builder" ] ; then
+    if ! [ -z "${MICROVM_RC}" ]; then
+    case "${MICROVM_RC}" in
+        "firecracker")
+            builder "${MICROVM_RC}"
+            ;;
+        "gvisor")
+            builder "${MICROVM_RC}"
+            ;;
+        "kata")
+            builder "${MICROVM_RC}"
+            ;;
+        *)
+            echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"
+            print_usage
+            ;;
+    esac
+    fi
+
+    # high-level container runtime
+    if ! [ -z "${HLCR_RC}" ]; then
+    case "${HLCR_RC}" in
+        "docker")
+        #    builder "${HLCR_RC}"
+            printf "\n|> Not ready yet!"
+            ;;
+        "podman")
+            builder "${HLCR_RC}"
+            ;;
+        "crio")
+        #    builder "${HLCR_RC}"
+            printf "\n|> Not ready yet!"
+            ;;
+        "aio")
+            builder "${HLCR_RC}"
+            ;;
+        *)
+            echo "Invalid hlcr. Please specify one of: docker, podman, crio"
+            print_usage
+            ;;
+    esac
+    fi
+
+    # runc, crun, containerd, youki
+    if ! [ -z "${LLCR_RC}" ]; then
+    case "${LLCR_RC}" in
+        "runc")
+            builder "${LLCR_RC}"
+            ;;
+        "crun")
+            builder "${LLCR_RC}"
+            ;;
+        "containerd")
+            printf "\n|> Not ready yet!"
+            # builder "${LLCR_RC}"
+            ;;
+        "youki")
+            # builder "${LLCR_RC}"
+            ;;
+        "aio")
+            printf "\n|> Not ready yet!"
+            #builder "${LLCR_RC}"
+            ;;
+        *)
+            echo "Invalid hlcr. Please specify one of: runc, crun, containerd, youki, aio".
+
+            print_usage
+            ;;
+    esac
+    fi
+
+    if ! [ -z "${TRACER}" ]; then
+    case "${TRACER}" in
+        "libbpf-core")
+            builder "${TRACER}"
+            ;;
+        "ayaya")
+            builder "${TRACER}"
+            ;;
+        "ftrace")
+            builder "${TRACER}"
+            ;;
+        "bpftrace")
+            builder "${TRACER}"
+            ;;
+        #"libbpfgo")
+            #builder "${TRACER}"
+            #;;
+        #"ocaml")
+            #builder "${TRACER}"
+            #;;
+        #"zig-wasm")
+            #builder "${TRACER}"
+            #;;
+        *)
+            echo "Invalid hlcr. Please specify one of: runc, crun, containerd, youki, aio".
+
+            print_usage
+            ;;
+    esac
+    fi
+
 elif [ "$MODE" = "-rep" ] || [ "$MODE" = "--rep" ] || [ "$MODE" = "replace" ] ; then
     replace
 elif [ "$MODE" = "help" ] || [ "$MODE" = "-h" ] || [ "$MODE" = "--help" ]; then
