@@ -29,5 +29,5 @@ jobs:
 
     - name: Build OCI image (cross-compile)
       run: |
-        make gvisor
+        make mvm-gvisor
 

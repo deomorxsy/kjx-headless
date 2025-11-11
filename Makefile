@@ -424,38 +424,69 @@ libbpfgo:
 
 # ==============
 # Microvms
+#
+# uses: qonq-qdb
 # ==============
-.PHONY: kata
-kata:
-	MODE="builder" . ./scripts/entrypoints/microvms.sh
+.PHONY: microvms-aio
+microvms-aio:
+	MODE="microvms-aio" . ./scripts/entrypoints/microvms.sh
 
-.PHONY: gvisor
-gvisor:
-	MODE="builder" . ./scripts/entrypoints/microvms.sh
+.PHONY: mvm-kata
+mvm-kata:
+	MODE="kata" . ./scripts/entrypoints/microvms.sh
 
-.PHONY: firecracker
-firecracker:
-	MODE="builder" . ./scripts/entrypoints/microvms.sh
+.PHONY: mvm-gvisor
+mvm-gvisor:
+	MODE="gvisor" . ./scripts/entrypoints/microvms.sh
+
+.PHONY: mvm-firecracker
+mvm-firecracker:
+	MODE="firecracker" . ./scripts/entrypoints/microvms.sh
 
 
 # ===========
 # HLCR: High-Level Container Runtime
+#
+# uses: qonq-qdb
 # ==============
-.PHONY: podman
-podman:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+.PHONY: hlcr-aio: hlcr-docker hlcr-podman hlcr-crio
+hlcr-aio:
+	MODE="hlcr-aio" . ./scripts/entrypoints/hlcr.sh
 
-.PHONY: runc
-runc:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+.PHONY: hlcr-docker
+hlcr-docker:
+	MODE="hlcr-docker" . ./scripts/entrypoints/hlcr.sh
 
-.PHONY: crun
-crun:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+.PHONY: hlcr-podman
+hlcr-podman:
+	MODE="hlcr-podman" . ./scripts/entrypoints/hlcr.sh
 
-.PHONY: youki
-youki:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+.PHONY: hlcr-crio
+hlcr-crio:
+	MODE="hlcr-crio" . ./scripts/entrypoints/hlcr.sh
+
+# ===========
+# LLCR: High-Level Container Runtime
+# ==============
+.PHONY: llcr-aio: hlcr-docker hlcr-podman hlcr-crio
+llcr-aio:
+	MODE="llcr-aio" . ./scripts/entrypoints/llcr.sh
+
+.PHONY: llcr-runc
+llcr-runc:
+	MODE="llcr-runc" . ./scripts/entrypoints/llcr.sh
+
+.PHONY: llcr-crun
+llcr-crun:
+	MODE="llcr-crun" . ./scripts/entrypoints/llcr.sh
+
+.PHONY: llcr-containerd
+llcr-containerd:
+	MODE="llcr-containerd" . ./scripts/entrypoints/llcr.sh
+
+.PHONY: llcr-youki
+llcr-youki:
+	MODE="llcr-youki" . ./scripts/entrypoints/llcr.sh
 
 # ==========================
 # Fetch-GHA Artifacts logic
@@ -466,20 +497,21 @@ youki:
 fa-kernel:
 .PHONY: fa-initramfs
 fa-initramfs:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-initramfs" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-ssh-rootfs
 fa-ssh-rootfs:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-ssh-rootfs" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-qonq-qdb
 fa-qonq-qdb:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-qonq-qdb" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-beetor
 fa-beetor:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-beetor" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-runit
 fa-runit:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-runit" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-iso
 fa-iso:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-iso" . ./scripts/ci-cd/fa-gha.sh
+
 
