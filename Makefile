@@ -449,8 +449,8 @@ mvm-firecracker:
 #
 # uses: qonq-qdb
 # ==============
-.PHONY: hlcr-aio: hlcr-docker hlcr-podman hlcr-crio
-hlcr-aio:
+.PHONY: hlcr-aio
+hlcr-aio: hlcr-docker hlcr-podman hlcr-crio
 	MODE="hlcr-aio" . ./scripts/entrypoints/hlcr.sh
 
 .PHONY: hlcr-docker
@@ -468,8 +468,8 @@ hlcr-crio:
 # ===========
 # LLCR: High-Level Container Runtime
 # ==============
-.PHONY: llcr-aio: hlcr-docker hlcr-podman hlcr-crio
-llcr-aio:
+.PHONY: llcr-aio
+llcr-aio: llcr-runc llcr-crun llcr-containerd llcr-youki
 	MODE="llcr-aio" . ./scripts/entrypoints/llcr.sh
 
 .PHONY: llcr-runc
@@ -495,6 +495,7 @@ llcr-youki:
 #
 .PHONY: fa-kernel
 fa-kernel:
+	MODE="-kernel" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-initramfs
 fa-initramfs:
 	MODE="-initramfs" . ./scripts/ci-cd/fa-gha.sh
