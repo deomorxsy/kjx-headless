@@ -1,0 +1,130 @@
+name: iso9660
+
+# This rule triggers when the workflow will run
+on:
+  push:
+    branches:
+      - 'isogen/iso9660'
+      - 'pipelines/ci-cd'
+  pull_request:
+    branches:
+      - 'main'
+      - 'releases/**'
+  schedule:
+    - cron: '11 12 * * 1,3,6'
+  # run the workflow manually from Actions tab
+  workflow_dispatch:
+  # run the workflow when called from another workflow
+  #workflow_call:
+  workflow_run:
+    workflows:
+      - bzImage
+      - initramfs
+      - ssh-enabled-rootfs
+      - qonq-qdb
+      - beetor-bwc
+      - runit-ci
+      - libbpf-core
+    types:
+      - completed
+    branches: ['isogen/iso9660']
+
+# jobs can run in sequence or parallel in a workflow
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./artifacts/pr
+          echo $PR_NUMBER > ./artifacts/pr/pr_number
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr_number
+          path: ./artifacts/pr/
+
+  # This single job is called "build"
+  build:
+    # Specify the operating system for the runner job
+    runs-on: ubuntu-latest
+    env:
+      git_hash: $(git rev-parse --short "$GITHUB_SHA")
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # the job gets runned into $GITHUB_WORKSPACE, that is the environment variable for the repo
+      - name: Access current repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Retrieve bzImage artifact from previous actions workflow
+        run: |
+          make fa-kernel
+
+      - name: Retrieve initramfs artifact from previous actions workflow
+        run: |
+          make fa-initramfs
+
+      - name: Retrieve dropbear-based ssh-enabled-rootfs artifact from previous actions workflow
+        run: |
+          make fa-ssh-rootfs
+
+      - name: Retrieve qonq-qdb virtualization software artifact
+        run: |
+          make fa-qonq-qdb
+
+      - name: Retrieve beetor_bwc signal-based tracing orchestration from previous actions workflow
+        run: |
+          make fa-beetor
+
+      - name: Retrieve runit service tree
+        run: |
+          make fa-runit
+
+      - name: Build ISO9660
+        run: |
+          make iso9660
+
+
+
+  # This single job is called "export"
+  export:
+    # Specify the operating system for the runner job
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: ${{ needs.build.result == 'success' }}
+    env:
+      git_hash: $(git rev-parse --short "$GITHUB_SHA")
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # the job gets runned into $GITHUB_WORKSPACE, that is the environment variable for the repo
+      - name: Access current repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Retrieve ISO9660 artifact from previous job on the same action
+        run: |
+          set -e
+          echo
+          echo
+          sleep(10)
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+

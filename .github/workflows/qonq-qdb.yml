@@ -4,12 +4,20 @@ name: qemu distro builder
 
 # This rule triggers when the workflow will run
 on:
-  # run the workflow manually from Actions tab
-  workflow_dispatch:
+  push:
+    branches:
+      - 'isogen/iso9660'
   pull_request:
+    branches:
+      - 'main'
+      - 'releases/**'
   schedule:
     # bi-weekly format: every sunday and wednesday at 23:23
-    - cron: "23 23 * * 1,2,4,6"
+    - cron: "23 23 * * 1,4"
+  # run the workflow manually from Actions tab
+  workflow_dispatch:
+  # run the workflow when called from another workflow
+  workflow_call:
 
 # jobs can run in sequence or parallel in a workflow
 jobs:

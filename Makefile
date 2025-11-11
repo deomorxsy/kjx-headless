@@ -401,8 +401,9 @@ itoeltor:
 runiso:
 	. ./scripts/sandbox/run-qemu.sh -runiso
 
-.PHONY: wasm
-wasm:
+# zig-wasm-typescript-deno-bpf
+.PHONY: zwtd-bpf
+zwtd-bpf:
 	. ./scripts/entrypoints/wasm-runner.sh
 
 .PHONY: final-builder
@@ -417,6 +418,9 @@ runner-final:
 android:
 	MODE="builder" . ./scripts/entrypoints/libbpf-android.sh
 
+.PHONY: libbpfgo
+libbpfgo:
+	MODE="builder" . ./scripts/entrypoints/libbpf-go.sh
 
 # ==============
 # Microvms
@@ -452,3 +456,30 @@ crun:
 .PHONY: youki
 youki:
 	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+
+# ==========================
+# Fetch-GHA Artifacts logic
+#
+# ==========================
+#
+.PHONY: fa-kernel
+fa-kernel:
+.PHONY: fa-initramfs
+fa-initramfs:
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
+.PHONY: fa-ssh-rootfs
+fa-ssh-rootfs:
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
+.PHONY: fa-qonq-qdb
+fa-qonq-qdb:
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
+.PHONY: fa-beetor
+fa-beetor:
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
+.PHONY: fa-runit
+fa-runit:
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
+.PHONY: fa-iso
+fa-iso:
+	MODE="" . ./scripts/ci-cd/fa-gha.sh
+

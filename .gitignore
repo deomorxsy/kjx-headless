@@ -33,6 +33,9 @@ dot-dump-valgrind
 out.*
 
 # include submodules for nvim-telescope
+assets/unikernels
+assets/oci-cri
+assets/non-oci
 assets/async-profiler/*
 assets/apk-tools
 assets/ebpf_exporter
@@ -141,8 +144,8 @@ assets/blazesym/
 assets/libbpf-bootstrap/
 
 # Workflows
-.github/workflows/downloader.yml
-.github/workflows/qemu.yml
+#.github/workflows/downloader.yml
+#.github/workflows/qemu.yml
 
 # Kernel assets
 assets/kernel/app/
