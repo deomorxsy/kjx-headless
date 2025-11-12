@@ -8,13 +8,12 @@ mvm_aio() {
 
 mvm_firecracker() {
 
-    MODE="microvm" STACK="firecracker" . ./scripts/qonq-qdb.sh
+    CCR_MODE="-checker" . ./scripts/ccr.sh && \
+        docker compose -f ./compose.yml --progress=plain build firecracker
 }
 
 mvm_gvisor() {
 
-    # MODE="microvm" STACK="gvisor" . ./scripts/qonq-qdb.sh
-    # MODE="build" . ./scripts/sandbox/gvisor-startup.sh
     CCR_MODE="-checker" . ./scripts/ccr.sh && \
         docker compose -f ./compose.yml --progress=plain build gvisor
 
@@ -22,7 +21,8 @@ mvm_gvisor() {
 
 mvm_kata() {
 
-    MODE="microvm" STACK="kata" . ./scripts/qonq-qdb.sh
+    CCR_MODE="-checker" . ./scripts/ccr.sh && \
+        docker compose -f ./compose.yml --progress=plain build kata
 }
 
 print_usage() {
