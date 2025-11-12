@@ -119,8 +119,10 @@ int main(void) {
     sigaddset(&set, SIGUSR2);
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 
-    // low-level runtimes
-    char llrt[5][10] ={"runc", "crun", "runsc", "youki"};
+    // runtimes
+    char llcr[5][10]={"runc", "crun", "containerd", "youki"};
+    char hlcr[5][10]={"docker", "podman", "crio"};
+    char microvm[5][12]={"firecracker", "gvisor-runsc", "kata"};
     char runtime_arg[64];
     // snprintf(runtime_arg, sizeof(runtime_arg), "--disable-agent --default-runtime=%s --disable=traefik, --snapshotter=fuse-overlayfs", llrt[0], NULL);
     // k3s server --disable-agent --default-runtime=runc --disable=traefik --snapshotter=fuse-overlayfs > /dev/null 2>&1 &
