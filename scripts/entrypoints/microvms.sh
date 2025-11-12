@@ -2,22 +2,23 @@
 
 mvm_aio() {
 
-    MODE="microvm, hlcr" STACK="firecracker, podman" . ./scripts/qonq-qdb.sh
+    #MODE="microvm, hlcr" STACK="firecracker, podman" . ./scripts/qonq-qdb.sh
+    MODE="microvm" STACK="firecracker, gvisor, kata" . ./scripts/qonq-qdb.sh
 }
 
 mvm_firecracker() {
 
-    MODE="microvm, hlcr" STACK="firecracker, podman" . ./scripts/qonq-qdb.sh
+    MODE="microvm" STACK="firecracker" . ./scripts/qonq-qdb.sh
 }
 
 mvm_gvisor() {
 
-    MODE="microvm, hlcr" STACK="gvisor, podman" . ./scripts/qonq-qdb.sh
+    MODE="microvm" STACK="gvisor" . ./scripts/qonq-qdb.sh
 }
 
 mvm_kata() {
 
-    MODE="microvm, hlcr" STACK="kata, podman" . ./scripts/qonq-qdb.sh
+    MODE="microvm" STACK="kata" . ./scripts/qonq-qdb.sh
 }
 
 print_usage() {
@@ -45,25 +46,32 @@ END
 
 
 # Check the argument passed from the command line
-if [ "$MODE" = "-initramfs" ] || [ "$MODE" = "--initramfs" ] || [ "$MODE" = "initramfs" ]; then
-    fetch_initramfs
-elif [ "$MODE" = "-kernel" ] || [ "$MODE" = "--kernel" ] || [ "$MODE" = "kernel" ]; then
-    fetch_kernel
-elif [ "$MODE" = "-beetor" ] || [ "$MODE" = "--beetor" ] || [ "$MODE" = "beetor" ]; then
-    fetch_beetor_bwc
-elif [ "$MODE" = "-runit" ] || [ "$MODE" = "--runit" ] || [ "$MODE" = "runit" ]; then
-    fetch_runit
-elif [ "$MODE" = "-iso" ] || [ "$MODE" = "--iso" ] || [ "$MODE" = "iso" ]; then
-    # if [ -z "${FILE_PATH}" ]; then
-    #     return # unconditional branch
-    # fi
-    # main logic
-    #fa-gha "${FILE_PATH}"
-    fetch_isogen
-elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+if ! [ -z "${MODE}" ]; then
+    case "${MODE}" in
+        "microvms-aio")
+            mvm-aio
+            ;;
+        "firecracker")
+            mvm-firecracker
+            ;;
+        "gvisor")
+            mvm-gvisor
+            ;;
+        "kata")
+            mvm-kata
+            ;;
+        *)
+            echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"
+            print_usage
+            ;;
+    esac
+fi
+
+
+if [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
     print_usage
-elif [ "$1" = "version" ] || [ "$1" = "-v" ] || [ "$1" = "--version" ]; then
-    printf "\n|> Version: "
+elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
+    printf "\n|> Version: microvms 1.0.0"
 else
     echo "Invalid function name. Please specify one of the available functions:"
     print_usage

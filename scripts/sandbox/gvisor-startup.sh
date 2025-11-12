@@ -23,45 +23,40 @@
 
 UPPER_MOUNTPOINT="./artifacts/qcow2-rootfs"
 KJX="/mnt/kjx"
-ROOTFS_PATH="$UPPER_MOUNTPOINT/rootfs"
+ROOTFS_PATH="${UPPER_MOUNTPOINT}/rootfs"
+FETCH_GVISOR_SOURCES_DIR="./artifacts/sources"
 
 # manual builds
 build_gvisor() {
 
 KJX="/mnt/kjx"
-FETCH_GVISOR_SOURCES_DIR=./artifacts/sources
 #./gvaizado
 # ./artifacts/sources will eventually be copied into $KJX/sources/bin.
+if ! [ -d "${FETCH_GVISOR_SOURCES_DIR}" ]; then
+    printf "\n|> Error: sources directory does not exist. Creating...\n\n"
+fi
+mkdir -p "${FETCH_GVISOR_SOURCES_DIR}/bin"
 
 # ./assets/gvisor
-if [ -z "$(ls -l "$KJX/sources/bin/gvisor-release"*)" ]; then
+#if [ -z "$(ls -l "$KJX/sources/bin/gvisor-release"*)" ]; then
+if ! [ -f "${FETCH_GVISOR_SOURCES_DIR}/bin/gvisor-*" ]; then
 (
   set -e
   ARCH=$(uname -m)
-  URL=https://storage.googleapis.com/gvisor/releases/release/latest${ARCH}
+  URL=https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}
   wget "${URL}/runsc" "${URL}/runsc.sha512" \
     "${URL}/containerd-shim-runsc-v1" "${URL}/containerd-shim-runsc-v1.sha512" \
-    --directory-prefix="$FETCH_GVISOR_SOURCES_DIR"
+    --directory-prefix="${FETCH_GVISOR_SOURCES_DIR}" && \
 
-  cd $FETCH_GVISOR_SOURCES_DIR || return
-  sha512sum -c runsc.sha512 -c containerd-shim-runsc-v1.sha512
-  checksum=$?
+  cd "${FETCH_GVISOR_SOURCES_DIR}" || return &&
+  sha512sum -c runsc.sha512 -c containerd-shim-runsc-v1.sha512 && \
+  checksum=$? && \
 
   if [ "$checksum" -eq 0 ]; then
-      rm -f ./*.sha512
-      chmod a+rx ./runsc ./containerd-shim-runsc-v1
+      rm -f ./*.sha512 && \
+      chmod a+rx ./runsc ./containerd-shim-runsc-v1 && \
       #sudo mv
-      cp ./runsc ./containerd-shim-runsc-v1 "../$ROOTFS_PATH/usr/local/bin"
-      #
-      # enter a mount namespace beforehand.
-      pivot_root "../$ROOTFS_PATH/usr/local/bin/runsc install"
-      # invoke podman with runsc as high-level container runtime
-      ../../scripts/ccr.sh; checker && \
-        docker run --rm -it --runtime=runsc hello-world && \
-        sleep 15 && \
-        docker stop hello-world
-      umount -l
-
+      tar -czf ./gvisor-core.tar.gz .
   fi
   cd - || return
 )

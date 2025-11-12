@@ -21,6 +21,11 @@ CCR_MODE="checker" . ./scripts/ccr.sh && \
     docker push localhost:5000/runit:latest
 }
 
+microvms() {
+
+MODE="runit_service" . ./scripts/sandbox/gvisor-startup.sh
+
+}
 
 print_usage() {
 cat <<-END >&2

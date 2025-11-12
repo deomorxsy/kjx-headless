@@ -511,8 +511,11 @@ fa-beetor:
 .PHONY: fa-runit
 fa-runit:
 	MODE="-runit" . ./scripts/ci-cd/fa-gha.sh
-.PHONY: fa-iso
-fa-iso:
-	MODE="-iso" . ./scripts/ci-cd/fa-gha.sh
+# .PHONY: fa-iso
+# fa-iso:
+# 	MODE="-iso" . ./scripts/ci-cd/fa-gha.sh
 
+.PHONY: iso9660
+iso9660:
+	MODE="isogen" . ./scripts/tryout.sh
 
