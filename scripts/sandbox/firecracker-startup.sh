@@ -1,12 +1,31 @@
 #!/bin/sh
 
-fire_up() {
+build_release() {
 
-if [ -z "$(ls -l ./assets/firecracker)" ]; then
-    git clone https://github.com/firecracker-microvm/firecracker ./assets
-    cd firecracker || return
-    tools/devtool build
-    toolchain="$(uname -m)-unknown-linux-musl"
+KJX="/app/kjx"
+FIRE_URL="https://github.com/firecracker-microvm/firecracker/releases/download/v1.13.1/firecracker-v1.13.1-x86_64.tgz"
+
+if ! [ -d "${KJX}" ]; then
+
+    mkdir -p "${KJX}/sources" || return && \
+        cd "${KJX}/sources" || return && \
+    wget "${FIRE_URL}" --continue --directory-prefix="${KJX}/sources"
+fi
+}
+
+build_firecracker() {
+
+echo TESTTTTTTTTTTTTTTT
+
+ls -allhtr
+
+if ! [ -d "./assets/firecracker" ]; then
+    mkdir -p ./assets/          && \
+    cd ./assets/ || return      && \
+    git clone https://github.com/firecracker-microvm/firecracker && \
+    tools/devtool build && \
+    tools/devtool test && \
+    toolchain="$(uname -m)-unknown-linux-musl" && \
 
     cd - || return
 fi
@@ -89,3 +108,37 @@ sudo curl --unix-socket /tmp/firecracker.socket -i \
         "action_type": "InstanceStart"
     }'
 }
+
+
+
+print_usage() {
+cat <<-END >&2
+USAGE: firecracker-startup [-options]
+                - build
+                - version
+                - help
+eg,
+MODE="build"        ./firecracker-startup.sh   # Fetch dependencies for all-in-one gvisor
+MODE="version"      ./firecracker-startup.sh   # shows script version
+MODE="help"         ./firecracker-startup.sh   # shows this help message
+
+See the man page and example file for more info.
+
+END
+
+}
+
+
+if [ "${MODE}" = "-build" ] || [ "${MODE}" = "--build" ] || [ "${MODE}" = "build" ]; then
+    #build_firecracker
+    build_release
+elif [ "${MODE}" = "-help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
+    print_usage
+elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
+    printf "\n|> Version: firecracker-startup 1.0.0"
+else
+    echo "Invalid function name. Please specify one of the available functions:"
+    print_usage
+fi
+
+
