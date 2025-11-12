@@ -23,7 +23,14 @@ jobs:
       with:
         submodules: true
 
-    - name: Build OCI image (cross-compile)
+    - name: Build OCI image
       run: |
+        docker run -d -p 5000:5000 --name registry registry:3.0
         make mvm-firecracker
+        docker push localhost:5000/firecracker:latest
+
+    - name: Retrieve artifact from docker image
+      run: |
+        docker run -it --name firecracker -d localhost:5000/firecracker:latest
+        docker cp firecracker:/firecracker-core.tar.gz ${{ github.workspace }}/artifacts/firecracker-core.tar.gz
 
