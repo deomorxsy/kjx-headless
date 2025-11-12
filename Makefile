@@ -65,15 +65,15 @@ vmlinux:
 #
 
 localstack:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build localstack
 
 initramfs:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build initramfs
 
 kernel:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build kernel
 
 bzImage:
@@ -82,13 +82,13 @@ bzImage:
 .PHONY: dropbear
 dropbear:
 	MODE="-builder" . ./scripts/entrypoints/build-dropbear.sh
-	#. ./scripts/ccr.sh; checker; \
+	#CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	#docker compose -f ./compose.yml --progress=plain build dropbear
 	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
 
 
 builda_qemu:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build builda_qemu
 
 # builds the project and fetch binaries for qemu-storage-daemon on qemu automation for the builder
@@ -98,7 +98,7 @@ qonq:
 
 .PHONY: isogen
 isogen:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build --no-cache isogen_new && \
 	docker compose images | grep isogen | awk '{ print $4 }' && \
@@ -129,7 +129,7 @@ contname=$(finalbase)$(semver)
 
 #generate: check_build_timestamp
 generate:
-	. ./scripts/ccr.sh; checker;  \
+	CCR_MODE="-checker" . ./scripts/ccr.sh;  \
 	docker start registry; \
 	docker create --userns=auto --cap-drop=ALL --cap-add=CAP_SYS_ADMIN,CAP_DAC_OVERRIDE --rm --name kjx_isogen $(podman images | head | grep isogen_new | awk 'NR==2 {print $3}') 2>&1 | grep "already in use"; \
 	if [ $$? -eq 0 ]; then \
@@ -151,7 +151,7 @@ generate:
 #system-test-iso, STI
 sti:
 	chmod +x ./scripts/fuse-blkexp.sh
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build iso_system_test
 
 #docker run -d -p 5000:5000 --name registry registry:latest \
@@ -159,7 +159,7 @@ sti:
 
 mock_sti:
 	chmod +x ./scripts/fuse-blkexp.sh;
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build mock_ist && \
 	docker compose images | awk 'NR==2 { print $4 }' && \
@@ -169,7 +169,7 @@ mock_sti:
 #podman create -rm --name mock_ist localhost:5000/mock_ist:latest 2>&1 | grep "already in use"
 # solve  ImagePullBackOff
 kube_mock:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker create --name mock_ist localhost:5000/mock_ist:latest 2>&1 | grep "already in use";  \
 	if [ $? -eq 0 ]; then echo hmmm && \
 	docker start registry && \
@@ -198,7 +198,7 @@ kube_mock:
 # Observability and Monitoring
 #
 exporter:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build exporter
 
 heatmap:
@@ -377,7 +377,7 @@ squash:
 eltorito:
 	#. ./scripts/usfs.sh
 	# --rm -it
-	. ./scripts/ccr.sh; checker && \
+	CCR_MODE="-checker" . ./scripts/ccr.sh && \
 	docker run -d --name eltorito-builder  \
 		-v "$$PWD/scripts:/app/scripts/" \
 		alpine:3.20 \
@@ -393,7 +393,7 @@ eltorito:
 
 .PHONY: itoeltor
 itoeltor:
-	. ./scripts/ccr.sh; checker && \
+	CCR_MODE="-checker" . ./scripts/ccr.sh && \
 	docker compose -f ./compose.yml --progress=plain build grub
 
 # GOTO: airgap instead
