@@ -9,20 +9,20 @@ mvm_aio() {
 mvm_firecracker() {
 
     CCR_MODE="-checker" . ./scripts/ccr.sh && \
-        docker compose -f ./compose.yml --progress=plain build firecracker
+        docker compose -f ./compose.yml --progress=plain build --no-cache firecracker
 }
 
 mvm_gvisor() {
 
     CCR_MODE="-checker" . ./scripts/ccr.sh && \
-        docker compose -f ./compose.yml --progress=plain build gvisor
+        docker compose -f ./compose.yml --progress=plain build --no-cache gvisor
 
 }
 
 mvm_kata() {
 
     CCR_MODE="-checker" . ./scripts/ccr.sh && \
-        docker compose -f ./compose.yml --progress=plain build kata
+        docker compose -f ./compose.yml --progress=plain build --no-cache kata
 }
 
 print_usage() {
