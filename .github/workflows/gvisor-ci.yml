@@ -29,7 +29,9 @@ jobs:
 
     - name: Build OCI image (cross-compile)
       run: |
+        docker run -d -p 5000:5000 --name registry registry:3.0
         make mvm-gvisor
+        docker push localhost:5000/gvisor:latest
 
     - name: Retrieve artifact from docker image
       run: |
