@@ -10,6 +10,21 @@ RUN <<EOF
 apk upgrade && apk update && \
     apk add runit
 
+
+# Create tarball
+tar -czf /app/runit.tar.gz  \
+    /usr/sbin/chpst         \
+    /usr/sbin/runit-init    \
+    /usr/sbin/runit         \
+    /usr/sbin/runsv         \
+    /usr/sbin/runsvchdir    \
+    /usr/sbin/runsvdir      \
+    /usr/sbin/sv            \
+    /usr/sbin/svlogd        \
+    /usr/sbin/utmpset
+
+
+
 EOF
 
 RUN <<EOF
