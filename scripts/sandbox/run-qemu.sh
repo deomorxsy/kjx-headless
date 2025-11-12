@@ -1,5 +1,9 @@
 #!/bin/sh
 #
+# global vars
+RVDSF_EULAB="./utils/storage/eulab-hd"
+K3S_TARBALL="./utils/storage/k3s-tarball-squashfs.img"
+
 random_mac() {
 
 #check_shell=$(ps -p $$ | awk "NR==2" | awk '{ print $4 }')
@@ -328,6 +332,17 @@ dropbear() {
     #echo HMMMMMMMMM
 }
 
+create_rvdsf() {
+    if ! [ -f "${RVDSF_EULAB}" ]; then
+        printf "|> Raw Virtual Disk Sparse File was not found. Creating..."
+    else
+        printf "|> Raw Virtual Disk Sparse File already exist. Exiting now..."
+        return
+    fi
+    MODE="-sf" . ./scripts/isogen/rvdsf.sh
+
+}
+
 save_registry() {
 # function that saves the registry for
 # containerd
@@ -440,6 +455,11 @@ airgap_k3s() {
     if ! [ -f ./utils/storage/k3s-tarball-squashfs.img ]; then
         squash_k3s
     fi
+
+    if ! [ -f "${RVDSF_EULAB}" ]; then
+        create_rvdsf
+    fi
+
 
     # ANODA is the initramfs.cpio.gz that serves temporarily as a rootfs
     #
