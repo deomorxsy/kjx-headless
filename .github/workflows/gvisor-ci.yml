@@ -31,3 +31,16 @@ jobs:
       run: |
         make mvm-gvisor
 
+    - name: Retrieve artifact from docker image
+      run: |
+          docker run -it --name gvisor -d localhost:5000/gvisor:latest
+          docker cp gvisor:/gvisor-core.tar.gz ${{ github.workspace }}/artifacts/gvisor-core.tar.gz
+
+    # - name: Archive the build artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: gvisor-core.tar.gz
+    #     # image size: 8.48MB
+    #     # artifact size: 829.6K
+    #     path: ${{ github.workspace }}/artifacts/gvisor-core.tar.gz
+

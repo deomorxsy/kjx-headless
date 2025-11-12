@@ -367,4 +367,18 @@ services:
       - '--web.enable-lifecycle'
     ports:
       - 9090:9090
-
+  # =============
+  # microvms
+  # =============
+  gvisor:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./deploy/microvm/gvisor/Dockerfile"
+      tags:
+        - "localhost:5000/gvisor:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT

@@ -160,8 +160,27 @@ docker cp qemu_kjx:/usr/bin/crun "${OTHER_BINARIES_DIR}"/usr/bin/ && \
 docker cp qemu_kjx:/archive.tar.gz ./app/crun-archive.tar.gz
 }
 
+##############################3
+# microvms
+#
 
+mvm_aio() {
+echo
+}
 
+mvm_firecracker() {
+
+if [ -d ./artifacts/ ]; then
+    command ...
+else
+    command ...
+fi
+
+}
+
+mvm_gvisor() {
+    echo
+}
 
 
 final_qemu_aio() {
@@ -439,16 +458,19 @@ core_deps
 if ! [ -z "${MICROVM_RC}" ]; then
     case "${MICROVM_RC}" in
         "microvm-aio")
-            . ./scripts/sandbox/microvm-setup.sh
+            #. ./scripts/sandbox/microvm-setup.sh
             ;;
         "firecracker")
-            . ./scripts/sandbox/firecracker-startup.sh
+            #. ./scripts/sandbox/firecracker-startup.sh
+            mvm_firecracker
             ;;
         "gvisor")
-            . ./scripts/sandbox/gvisor-setup.sh
+            #. ./scripts/sandbox/gvisor-setup.sh
+            echo
             ;;
         "kata")
-            . ./scripts/sandbox/kata-setup.sh
+            #. ./scripts/sandbox/kata-setup.sh
+            echo
             ;;
         *)
             echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"

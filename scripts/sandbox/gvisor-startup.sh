@@ -24,7 +24,9 @@
 UPPER_MOUNTPOINT="./artifacts/qcow2-rootfs"
 KJX="/mnt/kjx"
 ROOTFS_PATH="${UPPER_MOUNTPOINT}/rootfs"
-FETCH_GVISOR_SOURCES_DIR="./artifacts/sources"
+FETCH_GVISOR_SOURCES_DIR="${HOME}/artifacts/sources"
+
+RAND="$(od -An -N2 /dev/urandom | awk '{print $1 % 32768}')"
 
 # manual builds
 build_gvisor() {
@@ -63,7 +65,11 @@ if ! [ -f "${FETCH_GVISOR_SOURCES_DIR}/bin/gvisor-*" ]; then
 fi
 }
 
-runsv_service() {
+runit_service() {
+
+ROOTFS_DIR="/tmp/runscdir_${RAND}"
+# RAND="$(od -An -N2 /dev/urandom | awk '{print $1 % 32768}')"
+
 # gvisor
 mkdir -p "$ROOTFS_PATH/etc/sv/runsc"
 mkdir -p "$ROOTFS_PATH/var/log/runsc"
@@ -72,17 +78,15 @@ mkdir -p "$ROOTFS_PATH/var/log/runsc"
 cat > "$ROOTFS_PATH/etc/sv/runsc/run" <<EOF
 #!/bin/sh
 
-mount -t tmpfs -o size=
+mount -t tmpfs tmpfs /tmp
+#size=790M
 
-RAND=$(od -An -N2 i /dev/urandom | awk '{print $1 % 32768}')
-ROOTFS_DIR="/tmp/runscdir_$RAND"
 
-#HLR= high-level runtime
-HLR=podman
+HLCR=podman
 CMD="/bin/sh"
 CONTAINER_NAME=""
 
-#mkdir --mode=0755 "$ROOTFS_DIR"
+mkdir -p --mode=0755 "${ROOTFS_DIR}"
 
 /bin/ccr; checker && \
     docker export $(docker create hello-world) \
@@ -96,21 +100,80 @@ exec runsc run --rootless --network=host \
 EOF
 
 # finish
-cat > "$ROOTFS_PATH"/etc/sv/runsc/finish << EOF
+(
+cat <<EOF
 #!/bin/sh
 
-echo "runsc service exited with status $1" >> /var/log/runsc.log
+exec chpst -ulog svlogd -tt /bin/runsc
 EOF
-
+) | tee "${ROOTFS_PATH}"/etc/sv/runsc/finish
 
 
 # logging
-cat > "$ROOTFS_PATH"/etc/sv/runsc/log/run <<EOF
+(
+cat <<EOF
 #!/bin/sh
 
 exec svlogd -tt /var/log/runsc | tee -a /var/log/runsc.log
 EOF
+) | tee "${ROOTFS_PATH}/etc/sv/runsc/log/run"
 
-#ln -s "$ROOTFS_PATH/etc/runit/sv/gvisor/runsc-up.sh" "$ROOTFS_PATH/run/runit/service/"
+ln -s "$ROOTFS_PATH/etc/runit/sv/gvisor/runsc-up.sh" "$ROOTFS_PATH/run/runit/service/"
+
 }
+
+
+print_usage() {
+cat <<-END >&2
+USAGE: gvisor [-options]
+                - gvisor-aio
+                - firecracker
+                - gvisor
+                - kata
+                - version
+                - help
+eg,
+MODE="build" . gvisor.sh   # Fetch dependencies for all-in-one gvisor
+MODE="version"      ./gvisor.sh   # shows script version
+MODE="help"         ./gvisor.sh   # shows this help message
+
+See the man page and example file for more info.
+
+END
+
+}
+
+
+# Check the argument passed from the command line
+if [ -z "${MODE}" ]; then
+    case "${MODE}" in
+        "runit_service")
+            runit_service
+            ;;
+        "firecracker")
+            mvm-firecracker
+            ;;
+        "gvisor")
+            mvm-gvisor
+            ;;
+        "kata")
+            mvm-kata
+            ;;
+        *)
+            echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"
+            print_usage
+            ;;
+    esac
+fi
+
+
+if [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
+    print_usage
+elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
+    printf "\n|> Version: gvisor 1.0.0"
+else
+    echo "Invalid function name. Please specify one of the available functions:"
+    print_usage
+fi
+
 
