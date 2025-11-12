@@ -125,14 +125,14 @@ ln -s "$ROOTFS_PATH/etc/runit/sv/gvisor/runsc-up.sh" "$ROOTFS_PATH/run/runit/ser
 
 print_usage() {
 cat <<-END >&2
-USAGE: gvisor [-options]
+USAGE: gvisor-startup [-options]
                 - build
                 - version
                 - help
 eg,
-MODE="build"        . gvisor.sh   # Fetch dependencies for all-in-one gvisor
-MODE="version"      ./gvisor.sh   # shows script version
-MODE="help"         ./gvisor.sh   # shows this help message
+MODE="build"        ./gvisor-startup.sh   # Fetch dependencies for all-in-one gvisor
+MODE="version"      ./gvisor-startup.sh   # shows script version
+MODE="help"         ./gvisor-startup.sh   # shows this help message
 
 See the man page and example file for more info.
 
