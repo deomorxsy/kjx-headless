@@ -13,7 +13,11 @@ mvm_firecracker() {
 
 mvm_gvisor() {
 
-    MODE="microvm" STACK="gvisor" . ./scripts/qonq-qdb.sh
+    # MODE="microvm" STACK="gvisor" . ./scripts/qonq-qdb.sh
+    # MODE="build" . ./scripts/sandbox/gvisor-startup.sh
+    CCR_MODE="-checker" . ./scripts/ccr.sh && \
+        docker compose -f ./compose.yml --progress=plain build gvisor
+
 }
 
 mvm_kata() {
@@ -46,29 +50,31 @@ END
 
 
 # Check the argument passed from the command line
-if ! [ -z "${MODE}" ]; then
+if ! [ -z "${MODE}" ] && \
+    [ "${MODE}" = "microvms-aio" ] || \
+    [ "${MODE}" = "firecracker" ] || \
+    [ "${MODE}" = "gvisor" ] || \
+    [ "${MODE}" = "kata" ]; then
     case "${MODE}" in
         "microvms-aio")
-            mvm-aio
+            mvm_aio
             ;;
         "firecracker")
-            mvm-firecracker
+            mvm_firecracker
             ;;
         "gvisor")
-            mvm-gvisor
+            mvm_gvisor
             ;;
         "kata")
-            mvm-kata
+            mvm_kata
             ;;
         *)
             echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"
             print_usage
             ;;
     esac
-fi
 
-
-if [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
+elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
     print_usage
 elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
     printf "\n|> Version: microvms 1.0.0"

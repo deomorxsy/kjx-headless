@@ -126,14 +126,11 @@ ln -s "$ROOTFS_PATH/etc/runit/sv/gvisor/runsc-up.sh" "$ROOTFS_PATH/run/runit/ser
 print_usage() {
 cat <<-END >&2
 USAGE: gvisor [-options]
-                - gvisor-aio
-                - firecracker
-                - gvisor
-                - kata
+                - build
                 - version
                 - help
 eg,
-MODE="build" . gvisor.sh   # Fetch dependencies for all-in-one gvisor
+MODE="build"        . gvisor.sh   # Fetch dependencies for all-in-one gvisor
 MODE="version"      ./gvisor.sh   # shows script version
 MODE="help"         ./gvisor.sh   # shows this help message
 
@@ -145,29 +142,21 @@ END
 
 
 # Check the argument passed from the command line
-if [ -z "${MODE}" ]; then
-    case "${MODE}" in
-        "runit_service")
-            runit_service
-            ;;
-        "firecracker")
-            mvm-firecracker
-            ;;
-        "gvisor")
-            mvm-gvisor
-            ;;
-        "kata")
-            mvm-kata
-            ;;
-        *)
-            echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"
-            print_usage
-            ;;
-    esac
-fi
+# if ! [ -z "${MODE}" ]; then
+#     case "${MODE}" in
+#         "build")
+#             build_gvisor
+#             ;;
+#         *)
+#             echo "Invalid option. Please specify one of: build, help, version"
+#             print_usage
+#             ;;
+#     esac
 
 
-if [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
+if [ "${MODE}" = "-build" ] || [ "${MODE}" = "--build" ] || [ "${MODE}" = "build" ]; then
+    build_gvisor
+elif [ "${MODE}" = "-help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
     print_usage
 elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
     printf "\n|> Version: gvisor 1.0.0"
@@ -175,5 +164,8 @@ else
     echo "Invalid function name. Please specify one of the available functions:"
     print_usage
 fi
+
+
+
 
 
