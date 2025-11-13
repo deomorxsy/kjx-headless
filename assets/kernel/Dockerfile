@@ -518,6 +518,51 @@ echo "olddefconfig done"
 ./scripts/config --module CONFIG_INET_ESP
 #    - CONFIG_INET_XFRM_MODE_TRANSPORT: missing
 
+# ===========================================
+# conntrack for iptables, k3s and microvms
+#
+./scripts/config --enable CONFIG_NETFILTER_XTABLES
+./scripts/config --enable CONFIG_NETFILTER
+
+# log target support
+./scripts/config --module NETFILTER_XT_TARGET_LOG
+# IP tables support (required for filtering/masq/NAT)
+./scripts/config --module IP_NF_IPTABLES
+
+# some conntrack dependencies (ovs, )
+./scripts/config --module CONFIG_OPENVSWITCH
+
+
+## conntrack enabled
+./scripts/config --enable CONFIG_NF_CONNTRACK_MARK
+./scripts/config --enable CONFIG_NF_CONNTRACK_SECMARK
+./scripts/config --enable CONFIG_NF_CONNTRACK_ZONES
+./scripts/config --enable CONFIG_NF_CONNTRACK_PROCFS
+./scripts/config --enable CONFIG_NF_CONNTRACK_EVENTS
+./scripts/config --enable CONFIG_NF_CONNTRACK_TIMEOUT
+./scripts/config --enable CONFIG_NF_CONNTRACK_TIMESTAMP
+./scripts/config --enable CONFIG_NF_CONNTRACK_LABELS
+./scripts/config --enable CONFIG_NF_CONNTRACK_OVS
+
+
+## conntrack modules
+./scripts/config --module CONFIG_NF_CONNTRACK
+./scripts/config --module CONFIG_NF_CONNTRACK_AMANDA
+./scripts/config --module CONFIG_NF_CONNTRACK_FTP
+./scripts/config --module CONFIG_NF_CONNTRACK_H323
+./scripts/config --module CONFIG_NF_CONNTRACK_IRC
+./scripts/config --module CONFIG_NF_CONNTRACK_BROADCAST
+./scripts/config --module CONFIG_NF_CONNTRACK_NETBIOS_NS
+./scripts/config --module CONFIG_NF_CONNTRACK_SNMP
+./scripts/config --module CONFIG_NF_CONNTRACK_PPTP
+./scripts/config --module CONFIG_NF_CONNTRACK_SANE
+./scripts/config --module CONFIG_NF_CONNTRACK_SIP
+./scripts/config --module CONFIG_NF_CONNTRACK_TFTP
+./scripts/config --module CONFIG_NF_CONNTRACK_BRIDGE
+
+
+# code coverage for fuzzing
+
 ## Defaults the config
 # make olddefconfig
 # echo "olddefconfig done"
