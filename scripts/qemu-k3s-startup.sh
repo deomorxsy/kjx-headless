@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# virtio virtfs interface for
+# file sharing between guest and host
+VIRTIO_PASSTHRU_DIR="/mnt/virtio-test"
+mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"
 
 # Setup kmod early
 # cd /app/
