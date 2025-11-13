@@ -442,17 +442,22 @@ fi
 
 }
 
+# Function to manually test configuration
+# with an airgap k3s build.
+# todo: virtfs
 airgap_k3s() {
 
-    # setup bridge
+    K3S_TARBALL_SQUASHFS_PATH="./utils/storage/k3s-tarball-squashfs.img"
+
+    # Setup bridge
     /bin/sh ./scripts/sandbox/net-qemu_myifup.sh fallin
 
     printf "\n=========\nSetting up the bridge...\n============\n\n"
 
-    # generate a macaddr
+    # Generate a macaddr
     random_mac
 
-    if ! [ -f ./utils/storage/k3s-tarball-squashfs.img ]; then
+    if ! [ -f "${K3S_TARBALL_SQUASHFS_PATH}" ]; then
         squash_k3s
     fi
 
@@ -460,59 +465,55 @@ airgap_k3s() {
         create_rvdsf
     fi
 
-
-    # ANODA is the initramfs.cpio.gz that serves temporarily as a rootfs
+    ######## ANODA ###########
     #
-    # this one enables cgroupsv2 only, without cgroupsv1
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v13.cpio.gz"
-
-    # this one have containerd dynamically linked against musl
-    #ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v14.cpio.gz"
-
-    # this one have fuse-overlayfs
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
+    # PS: ANODA is the initramfs.cpio.gz that serves temporarily as a rootfs
     #
-    # this one have bpftrace
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v16.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v18.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v19.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v20.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v21.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v22.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v23.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v24.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v25.cpio.gz"
+    # v13: This one enables cgroupsv2 only, without cgroupsv1
+    #   rootfs_v13.cpio.gz"
+    #
+    # v14: This one have containerd dynamically linked against musl
+    #   rootfs_v14.cpio.gz"
+    #
+    # v15: This one have fuse-overlayfs
+    #   rootfs_v15.cpio.gz"
+    #
+    # v16-v25: These already one have bpftrace
+    #   rootfs_v16.cpio.gz
+    #   ...
+    #   ...
+    #   rootfs_v25.cpio.gz
 
-    # new kernel modules properly setup
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v26.cpio.gz"
+    # v26: New kernel modules properly setup
+    #   rootfs_v26.cpio.gz"
 
-    # gvisor runsv, kata and crun binaries enabled
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v27.cpio.gz"
+    # v27: gvisor runsv, kata and crun binaries enabled
+    #   rootfs_v27.cpio.gz"
 
-    # full podman dynamic binaries and shared objects
+    # v28: Full podman dynamic binaries and shared objects
     ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
+    if ! [ -f "${ANODA}" ]; then
+        printf "\n|> Error: missing initramfs.cpio.gz (passing as a rootfs) - Not found in given path!"
+        printf "\n|> Exiting now...\n\n"
+        return
+    fi
 
 
-    # PS: this kernel image needs to have squashfs support.
-    #KERNEL_IMAGE="./artifacts/bzImage"
-    #KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/bzImage"
-    #MEMCG_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/2_memcg-kernel/bzImage"
-    #OVERLAYFS_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
-    # OVERLAY_KO="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
-
-    # OVERLAY_CONFIGZ_KO="$HOME/Downloads/kjxh-artifacts/4_bzImage_kos/bzImage"
-    # NETBZ="$HOME/Downloads/kjxh-artifacts/5_last-k3s/bzImage"
-    # MISSING="$HOME/Downloads/kjxh-artifacts/7_missing/bzImage"
-    # ORDERED="$HOME/Downloads/kjxh-artifacts/8_ordered/bzImage"
-    # ORDERED="./assets/module_kernel_build/lfs/lib/modules/6.6.22/build/arch/x86/boot/bzImage"
-    # TIDY="$HOME/Downloads/kjxh-artifacts/9_tidying/bzImage"
-    FUSE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
+    # PS: this kernel image needs to have the
+    # kernel modules *.ko,
+    # then squashfs, memcg, fuse, overlayfs support.
+    MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
+    if ! [ -f "${MANUAL_AIRGAP_BZIMAGE}" ]; then
+        printf "\n|> Error: missing initramfs.cpio.gz (passing as a rootfs) - Not found in given path!"
+        printf "\n|> Exiting now...\n\n"
+        return
+    fi
 
     # Mind that this will need fuse-overlayfs since the -initrd flag
     # runs an initramfs.cpio.gz over ramfs/tmpfs, that is, on RAM, and not
     # in a filesystem storage. For overlayfs only, use the ISO.
     qemu-system-x86_64 \
-        -kernel "$FUSE" \
+        -kernel "$MANUAL_AIRGAP_BZIMAGE" \
         -initrd "$ANODA" \
         -enable-kvm \
         -m 3072 \
