@@ -367,4 +367,44 @@ services:
       - '--web.enable-lifecycle'
     ports:
       - 9090:9090
+  # =============
+  # microvms
+  # =============
+  gvisor:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./deploy/microvm/gvisor/Dockerfile"
+      tags:
+        - "localhost:5000/gvisor:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT
 
+  kata:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./deploy/microvm/kata/Dockerfile"
+      tags:
+        - "localhost:5000/kata:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT
+
+  firecracker:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./deploy/microvm/firecracker/Dockerfile"
+      tags:
+        - "localhost:5000/firecracker:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT

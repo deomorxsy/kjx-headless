@@ -1366,3 +1366,35 @@ fi
 printf "\n=============================="
 printf "\n\n|> ISO Build complete with success! \n\n"
 
+
+print_usage() {
+cat <<-END >&2
+USAGE: fa-gha [-options]
+                - isogen
+                - version
+                - help
+eg,
+MODE="isogen"       . ./fa-gha   # breaks everything but builds the iso.
+MODE="version"      . ./fa-gha   # shows script version
+MODE="help"         . ./fa-gha   # shows this help message
+
+See the man page and example file for more info.
+
+END
+
+}
+
+
+# Check the argument passed from the command line
+if [ "$MODE" = "-isogen" ] || [ "$MODE" = "--isogen" ] || [ "$MODE" = "isogen" ]; then
+    isogen
+elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    print_usage
+elif [ "$1" = "version" ] || [ "$1" = "-v" ] || [ "$1" = "--version" ]; then
+    printf "\n|> Version: 1.0.0"
+else
+    echo "Invalid function name. Please specify one of the available functions:"
+    print_usage
+fi
+
+

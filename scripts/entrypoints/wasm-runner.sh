@@ -1,4 +1,4 @@
 #!/bin/sh
 
-CCR=checker . ./scripts/ccr.sh && \
-    docker compose build zwtd_bpf -f ./compose.yml
+CCR_MODE=checker . ./scripts/ccr.sh && \
+    docker compose -f ./compose.yml --progress=plain build zwtd_bpf

@@ -29,5 +29,20 @@ jobs:
 
     - name: Build OCI image (cross-compile)
       run: |
-        make gvisor
+        docker run -d -p 5000:5000 --name registry registry:3.0
+        make mvm-gvisor
+        docker push localhost:5000/gvisor:latest
+
+    - name: Retrieve artifact from docker image
+      run: |
+          docker run -it --name gvisor -d localhost:5000/gvisor:latest
+          docker cp gvisor:/gvisor-core.tar.gz ${{ github.workspace }}/artifacts/gvisor-core.tar.gz
+
+    # - name: Archive the build artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: gvisor-core.tar.gz
+    #     # image size: 8.48MB
+    #     # artifact size: 829.6K
+    #     path: ${{ github.workspace }}/artifacts/gvisor-core.tar.gz
 

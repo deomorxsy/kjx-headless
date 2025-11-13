@@ -212,3 +212,6 @@ artifacts/bwc_off
 
 # virtfs artifacts
 artifacts/qemu-sink/*
+
+# gitmodules
+assets/bootloaders/

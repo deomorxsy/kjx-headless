@@ -5,20 +5,20 @@
 
 sparseFile() {
     SPARSE="./utils/storage/eulab-hd"
-    dd if=/dev/zero of=$SPARSE bs=1M count=2048
-    mkfs.ext4 $SPARSE
+    dd if=/dev/zero of="${SPARSE}" bs=1M count=2048
+    mkfs.ext4 "${SPARSE}"
 }
 
 virtStoraged() {
     QCOW_FILE="./utils/storage/eulab.qcow2"
 
-    if [ ! -e $QCOW_FILE ]; then
+    if ! [ -f "${QCOW_FILE}" ]; then
         echo "Creating qcow2 image..."
         qemu-img create -f qcow2 $QCOW_FILE 1G
         guestmount -a $QCOW_FILE -i --ro /mnt
-    elif [ -e $QCOW_FILE ]; then
+    elif [ -f "${QCOW_FILE}" ]; then
         echo "Mounting qcow2 image into /mnt..."
-        guestmount -a $QCOW_FILE -i --ro /mnt
+        guestmount -a "${QCOW_FILE}" -i --ro /mnt
     fi
 
 }
@@ -26,15 +26,13 @@ virtStoraged() {
 print_usage() {
 cat <<-END >&2
 USAGE: rvdsf [-options]
-                - sparseFile
-                - virtStoraged
+                - sparsefile
+                - virtstoraged
                 - help
                 - version
 eg,
-rvdsf -thirdver   # runs qemu pointing to a custom initramfs and kernel bzImage
-rvdsf -dropbear  # runs qemu enabled with ssh for quick file copying between target vm and host
-rvdsf -airgap  # runs qemu with files to run k3s air-gapped
-rvdsf -debug # the same of thirdver but with serial and pty flags for kernel debug
+rvdsf -sf       # Create a Virtual Disk Sparse File with dd and mkfs.ext4.
+rvdsf -vs       # Create a qcow2 file with qemu-img and mount it with libguestfs's guestmount.
 rvdsf -help    # shows this help message
 rvdsf -version # shows script version
 

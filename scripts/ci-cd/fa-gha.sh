@@ -168,7 +168,7 @@ docker run -d -p 5000:5000 --name registry registry:3.0
 
 docker compose -f ./compose.yml create beetor
 mkdir -p ./artifacts/runitsv && \
-docker cp beetor:/app/beetor ./artifacts/runitsv/ && \
+docker cp runit:/app/runit.tar.gz ./artifacts/runitsv/ && \
 chmod -c +rX ./artifacts/runitsv/beetor;
 docker stop registry
 
@@ -244,7 +244,9 @@ elif [ "$MODE" = "-iso" ] || [ "$MODE" = "--iso" ] || [ "$MODE" = "iso" ]; then
     # fi
     # main logic
     #fa-gha "${FILE_PATH}"
-    fetch_isogen
+    # fetch_isogen
+    MODE="-record-runiso" . ./scripts/sandbox/run-qemu.sh
+
 elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     print_usage
 elif [ "$1" = "version" ] || [ "$1" = "-v" ] || [ "$1" = "--version" ]; then

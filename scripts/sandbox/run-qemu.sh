@@ -1,5 +1,33 @@
 #!/bin/sh
+
+# ====================
 #
+# Global variables
+#
+# Checks if the current directory is root of the repository
+KJXPATH=$(basename "$PWD")
+# Raw Virtual Disk Sparse file path
+RVDSF_EULAB="./utils/storage/eulab-hd"
+
+# utils directory path for the raw image
+K3S_SQUASHFS_IMAGE_PATH="./utils/storage/k3s-tarball-squashfs.img"
+
+# ===========
+# Virtio utils
+    # virtfs path
+    VIRTFS_ART_PATH="./artifacts/qemu-sink/"
+
+# =====================
+# Recording variables
+    # asciinema recording file path
+    RUNISO_RECORDING_PATH="./artifacts/run-qemu_runiso_$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-").cast"
+
+    # default recording state
+    IS_RECORDING="NO"
+
+
+
+
 random_mac() {
 
 #check_shell=$(ps -p $$ | awk "NR==2" | awk '{ print $4 }')
@@ -149,132 +177,7 @@ echo
 }
 
 
-patch_k3s() {
 
-fakerootdir="/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
-
-(
-cat <<EOF
-version = 2
-
-[plugins."io.containerd.internal.v1.opt"]
-  path = "/var/lib/rancher/k3s/agent/containerd"
-[plugins."io.containerd.grpc.v1.cri"]
-  stream_server_address = "127.0.0.1"
-  stream_server_port = "10010"
-  enable_selinux = false
-  enable_unprivileged_ports = true
-  enable_unprivileged_icmp = true
-  device_ownership_from_security_context = false
-  sandbox_image = "rancher/mirrored-pause:3.6"
-
-[plugins."io.containerd.grpc.v1.cri".containerd]
-  snapshotter = "overlayfs"
-  disable_snapshot_annotations = true
-
-[plugins."io.containerd.grpc.v1.cri".cni]
-  bin_dir = "/var/lib/rancher/k3s/data/cni"
-  conf_dir = "/var/lib/rancher/k3s/agent/etc/cni/net.d"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-  runtime_type = "io.containerd.runc.v2"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-  BinaryName = "/usr/bin/runc"
-  SystemdCgroup = false
-
-[plugins."io.containerd.grpc.v1.cri".registry]
-  config_path = "/var/lib/rancher/k3s/agent/etc/containerd/certs.d"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."crun"]
-  runtime_type = "io.containerd.runc.v2"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."crun".options]
-  BinaryName = "/usr/bin/crun"
-  SystemdCgroup = false
-
-# gVisor: https://gvisor.dev/
-[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.gvisor]
-  runtime_type = "io.containerd.runsc.v1"
-  BinaryName = "/usr/local/bin/runsc"
-# Kata Containers: https://katacontainers.io/
-[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata]
-  runtime_type = "io.containerd.kata.v2"
-  BinaryName = "/usr/local/bin/kata-runtime
-
-
-EOF
-) | tee /var/lib/rancher/k3s/agent/containerd/config.toml.tmpl
-
-
-# "/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
-
-    # setup the k3s toml
-( cat <<EOF
-version = 3
-[plugins."io.containerd.cri.v1.runtime".containerd]
-  default_runtime_name = "crun"
-  [plugins."io.containerd.cri.v1.runtime".containerd.runtimes]
-    # crun: https://github.com/containers/crun
-    [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.crun]
-      runtime_type = "io.containerd.runc.v2"
-      [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.crun.options]
-        BinaryName = "/usr/local/bin/crun"
-    # gVisor: https://gvisor.dev/
-    [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.gvisor]
-      runtime_type = "io.containerd.runsc.v1"
-    # Kata Containers: https://katacontainers.io/
-    [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata]
-      runtime_type = "io.containerd.kata.v2"
-EOF
-) | tee ./artifacts/custom-rc.toml.tmpl
-
-# setup the kind runtimeClass for each
-( cat <<EOF
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: runc
-handler: runc
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: crun
-handler: crun
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: gvisor
-handler: gvisor
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: kata
-handler: kata
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: youki
-handler: youki
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: wasmtime
-handler: wasmtime
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: wasmedge
-handler: wasmedge
-EOF
-) | ./k3s kubectl apply -f -
-
-}
 
 dropbear() {
 
@@ -292,13 +195,6 @@ dropbear() {
     #  /home/asari/Downloads/initramfs/initramfs.cpio.gz
 
     DROBE="./artifacts/ssh-rootfs/ssh-rootfs-revised.cpio_0.3.2.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/ssh-rootfs-revised_0.3.3.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v5.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v6.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v7.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v8.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v9.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v10.cpio.gz"
     ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v13.cpio.gz"
 
     qemu-system-x86_64 \
@@ -328,11 +224,26 @@ dropbear() {
     #echo HMMMMMMMMM
 }
 
-save_registry() {
-# function that saves the registry for
-# containerd
+create_rvdsf() {
+    if ! [ -f "${RVDSF_EULAB}" ]; then
+        printf "|> Raw Virtual Disk Sparse File was not found. Creating..."
+    else
+        printf "|> Raw Virtual Disk Sparse File already exist. Exiting now..."
+        return 1
+    fi
+    MODE="-sf" . ./scripts/isogen/rvdsf.sh
 
-podman pull docker://registry:3.0
+}
+
+save_registry() {
+# Function that saves the registry itself for
+# containerd to be able to serve images in an
+# airgap context inside the ISO. Useful for
+# either DMZ, no WAN or running on a guest without
+# WAN access and without using virtfs.
+
+CCR_MODE="-checker" . ./scripts/ccr.sh && \
+    docker pull docker://registry:3.0
 
 REG_NAME=$(podman images | grep registry | awk '{print $3}')
 TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
@@ -347,7 +258,7 @@ TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
 mkdir -p ./skopeo-test
 ## idempotent
 # skopeo copy containers-storage:localhost:5000/registry:3.0 dir:$PWD/skopeo-test/
-skopeo copy containers-storage:localhost:5000/registry:3.0 oci:$PWD/skopeo-test:3.0
+skopeo copy containers-storage:localhost:5000/registry:3.0 oci:"$PWD"/skopeo-test:3.0
 
 # inspect with umoci
 # umoci unpack --image /tmp/oci-layout:myimage /tmp/umoci-rootfs
@@ -358,7 +269,7 @@ ls -allhtr ./skopeo-test/
 # create tarball
 # tar -C /tmp/oci-registry-tarball -cf /tmp/registry.oci.tar .
 # tar -cf "$TARBALL_ARTIFACT" "$PWD/skopeo-test/"
-tar -C ./skopeo-test -cf "$TARBALL_ARTIFACT" .
+tar -C ./skopeo-test -cf "${TARBALL_ARTIFACT}" .
 
 
 rm -rf ./skopeo-test
@@ -368,57 +279,93 @@ rm -rf ./skopeo-test
 squash_k3s() {
 # here goes both the airgap images and the registry so containerd can
 
+# gunzip,
+
 KJXPATH=$(basename "$PWD")
 
 # REG_FILE_PATH="./artifacts/oci-registry-tarball.tar"
 OCI_SKOPEO_IMG="./skopeo-test"
 #TARBALL_ARTIFACT="./skopeo-convert-registry.oci.tar"
 TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
-REG_BUILD_DIR="/tmp/k3s-unpack/"
+# REG_BUILD_DIR="/tmp/k3s-unpack/"
 
-if ! [ -f "$TARBALL_ARTIFACT" ]; then
+# k3s airgap image path and basenames
+K3S_AIRGAP_PATH="./artifacts/k3s-airgap"
+K3S_AIRGAP_TARBALL_GZ="${K3S_AIRGAP_PATH}/k3s-airgap-images-amd64.tar.gz"
+K3S_AIRGAP_TARBALL_GZ_NAME="k3s-airgap-images-amd64.tar.gz"
+K3S_AIRGAP_TAR_NAME="k3s-airgap-images-amd64.tar"
+
+# /tmp directories to unpack and squashfs
+K3S_UNPACK_TMP="/tmp/k3s-unpack"
+K3S_SQUASHFS_FILE="/tmp/k3s-tarball.squashfs"
+
+#K3S_SQUASHFS_IMAGE_PATH="./utils/storage/k3s-tarball-squashfs.img"
+
+# mount point for the k3s-squashfs
+MOUNTPOINT_K3S_SQUASHFS="/mnt/k3s-squashfs"
+
+if ! [ -f "${TARBALL_ARTIFACT}" ]; then
     save_registry
 fi
 
-if [ "$KJXPATH" = "kjx-headless" ]; then
+if [ "${KJXPATH}" = "kjx-headless" ]; then
 
-    mkdir -p /tmp/k3s-unpack
+    mkdir -p "${K3S_UNPACK_TMP}"
 
-    # copy the save_registry function artifact to the directory
-    cp "$TARBALL_ARTIFACT" "$REG_BUILD_DIR"
+    # Copy the save_registry function artifact to the directory
+    cp "${TARBALL_ARTIFACT}" "${K3S_UNPACK_TMP}"
 
-
-    # copy the airgap tarball gzip-ed and then gunzip it
-    cp ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz /tmp/k3s-unpack/
-    cd /tmp/k3s-unpack/ || return
-    # gzip -c ./k3s-airgap-images-amd64.tar.gz > ./k3s-airgap-images-amd64.tar && \
-    gunzip -c ./k3s-airgap-images-amd64.tar.gz > ./k3s-airgap-images-amd64.tar && \
-        ls -allhtr ./k3s-airgap-images-amd64.tar && \
-        rm ./k3s-airgap-images-amd64.tar.gz
+    # Copy the airgap tarball gzip-ed and then gunzip it
+    cp "${K3S_AIRGAP_TARBALL_GZ}" "${K3S_UNPACK_TMP}"
+    cd "${K3S_UNPACK_TMP}" || return
+    gunzip -c "${K3S_AIRGAP_TARBALL_GZ_NAME}" > "${K3S_AIRGAP_TAR_NAME}" && \
+        ls -allhtr "${K3S_AIRGAP_TAR_NAME}" && \
+        rm "${K3S_AIRGAP_TARBALL_GZ_NAME}"
 
     cd - || return
-    #gzip ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz -c /tmp/k3s-unpack/
 
-    #tar -xzf ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz -C /tmp/k3s-unpack
-    mksquashfs /tmp/k3s-unpack /tmp/k3s-tarball.squashfs -comp zstd
+    # Create a mksquashfs from k3s-unpack tmp directory
+    mksquashfs "${K3S_UNPACK_TMP}" "${K3S_SQUASHFS_FILE}" -comp zstd
 
-    #mksquashfs ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz /tmp/k3s-tarball.squashfs -comp zstd
-    dd if=/dev/zero of=./utils/storage/k3s-tarball-squashfs.img bs=1M count=200
-    mkfs.ext4 ./utils/storage/k3s-tarball-squashfs.img
+    # Create raw image for it to be added as drive input for QEMU
+    # with unconditional branch
+    if ! [ -d "$(dirname "${K3S_SQUASHFS_IMAGE_PATH}")" ]; then
+        printf "\n|> Error: the directory path %s does not exist Creating..." "$(dirname "${K3S_SQUASHFS_IMAGE_PATH}")"
+        mkdir -p "$(dirname "${K3S_SQUASHFS_IMAGE_PATH}")"
+    fi
 
+    if ! dd if=/dev/zero of="${K3S_SQUASHFS_IMAGE_PATH}" bs=1M count=200; then
+        printf "|> Error: dd failed with exit code %s\n" $?
+        return 1
+    fi
+    printf "\n|> Successfully created a raw image with dd.\n\n"
 
-    mkdir -p /mnt/k3s-squashfs
+    if ! mkfs.ext4 "${K3S_SQUASHFS_IMAGE_PATH}"; then
+        printf "|> Error: mkfs.ext4 failed with exit code %s\n" $?
+        return 1
+    fi
+    printf "\n|> Successfully formatted the image with a ext4 filesystem with mkfs.ext4.\n\n"
 
-    sudo mount -o loop ./utils/storage/k3s-tarball-squashfs.img /mnt/k3s-squashfs/
-    #sudo cp /tmp/k3s-tarball.squashfs /mnt/k3s-squashfs/
-    sudo cp /tmp/k3s-tarball.squashfs /mnt/k3s-squashfs
+    # Create mountpoint dir and create a loop mount with the squashfs image path
+    mkdir -p "${MOUNTPOINT_K3S_SQUASHFS}"
+    sudo mount -o loop "${K3S_SQUASHFS_IMAGE_PATH}" "${MOUNTPOINT_K3S_SQUASHFS}"
+
+    # Copy the file itself to the mount point path
+    sudo cp "${K3S_SQUASHFS_FILE}" "${MOUNTPOINT_K3S_SQUASHFS}"
 
     # clean artifacts
-    rm /tmp/k3s-tarball.squashfs
-    rm -rf /tmp/k3s-unpack/
+    if [ -f "${K3S_SQUASHFS_FILE}" ]; then
+        rm "${K3S_SQUASHFS_FILE}"
+        echo "|> Removed ${K3S_SQUASHFS_FILE} with success."
+    fi && \
+
+    if [ -d "${K3S_UNPACK_TMP}" ]; then
+        rm -rf "${K3S_UNPACK_TMP}"
+        echo "|> Removed ${K3S_UNPACK_TMP} with success."
+    fi
 
     # unmount loopback device
-    sudo umount /mnt/k3s-squashfs/
+    sudo umount "${MOUNTPOINT_K3S_SQUASHFS}"
 
 else
     printf "\n|> Error: outside of the path root directory. Exiting now...\n\n"
@@ -427,83 +374,95 @@ fi
 
 }
 
+# Function to manually test configuration
+# with an airgap k3s build.
+# todo: virtfs
 airgap_k3s() {
 
-    # setup bridge
+    #K3S_SQUASHFS_IMAGE_PATH="./utils/storage/k3s-tarball-squashfs.img"
+
+    # Setup bridge
     /bin/sh ./scripts/sandbox/net-qemu_myifup.sh fallin
 
     printf "\n=========\nSetting up the bridge...\n============\n\n"
 
-    # generate a macaddr
+    # Generate a macaddr
     random_mac
 
-    if ! [ -f ./utils/storage/k3s-tarball-squashfs.img ]; then
-        squash_k3s
+    # it will only run if the k3s squashfs image does not exist.
+    if [ "${KJXPATH}" = "kjx-headless" ]; then
+        # Check if raw image exists at utils
+        if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
+            squash_k3s
+        fi
+
+        # Check if raw virtual disk sparse file exists at utils
+        if ! [ -f "${RVDSF_EULAB}" ]; then
+            create_rvdsf
+        fi
     fi
 
-    # ANODA is the initramfs.cpio.gz that serves temporarily as a rootfs
+
+    ######## ANODA ###########
     #
-    # this one enables cgroupsv2 only, without cgroupsv1
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v13.cpio.gz"
-
-    # this one have containerd dynamically linked against musl
-    #ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v14.cpio.gz"
-
-    # this one have fuse-overlayfs
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
+    # PS: ANODA is the initramfs.cpio.gz that serves temporarily as a rootfs
     #
-    # this one have bpftrace
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v16.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v18.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v19.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v20.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v21.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v22.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v23.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v24.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v25.cpio.gz"
+    # v13: This one enables cgroupsv2 only, without cgroupsv1
+    #   rootfs_v13.cpio.gz"
+    #
+    # v14: This one have containerd dynamically linked against musl
+    #   rootfs_v14.cpio.gz"
+    #
+    # v15: This one have fuse-overlayfs
+    #   rootfs_v15.cpio.gz"
+    #
+    # v16-v25: These already one have bpftrace
+    #   rootfs_v16.cpio.gz
+    #   ...
+    #   ...
+    #   rootfs_v25.cpio.gz
 
-    # new kernel modules properly setup
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v26.cpio.gz"
+    # v26: New kernel modules properly setup
+    #   rootfs_v26.cpio.gz"
 
-    # gvisor runsv, kata and crun binaries enabled
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v27.cpio.gz"
+    # v27: gvisor runsv, kata and crun binaries enabled
+    #   rootfs_v27.cpio.gz"
 
-    # full podman dynamic binaries and shared objects
+    # v28: Full podman dynamic binaries and shared objects
     ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
+    if ! [ -f "${ANODA}" ]; then
+        printf "\n|> Error: missing initramfs.cpio.gz (passing as a rootfs) - Not found in given path!"
+        printf "\n|> Exiting now...\n\n"
+        return 1
+    fi
 
 
-    # PS: this kernel image needs to have squashfs support.
-    #KERNEL_IMAGE="./artifacts/bzImage"
-    #KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/bzImage"
-    #MEMCG_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/2_memcg-kernel/bzImage"
-    #OVERLAYFS_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
-    # OVERLAY_KO="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
-
-    # OVERLAY_CONFIGZ_KO="$HOME/Downloads/kjxh-artifacts/4_bzImage_kos/bzImage"
-    # NETBZ="$HOME/Downloads/kjxh-artifacts/5_last-k3s/bzImage"
-    # MISSING="$HOME/Downloads/kjxh-artifacts/7_missing/bzImage"
-    # ORDERED="$HOME/Downloads/kjxh-artifacts/8_ordered/bzImage"
-    # ORDERED="./assets/module_kernel_build/lfs/lib/modules/6.6.22/build/arch/x86/boot/bzImage"
-    # TIDY="$HOME/Downloads/kjxh-artifacts/9_tidying/bzImage"
-    FUSE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
+    # PS: this kernel image needs to have the
+    # kernel modules *.ko,
+    # then squashfs, memcg, fuse, overlayfs support.
+    MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
+    if ! [ -f "${MANUAL_AIRGAP_BZIMAGE}" ]; then
+        printf "\n|> Error: missing initramfs.cpio.gz (passing as a rootfs) - Not found in given path!"
+        printf "\n|> Exiting now...\n\n"
+        return 1
+    fi
 
     # Mind that this will need fuse-overlayfs since the -initrd flag
     # runs an initramfs.cpio.gz over ramfs/tmpfs, that is, on RAM, and not
     # in a filesystem storage. For overlayfs only, use the ISO.
     qemu-system-x86_64 \
-        -kernel "$FUSE" \
+        -kernel "$MANUAL_AIRGAP_BZIMAGE" \
         -initrd "$ANODA" \
         -enable-kvm \
         -m 3072 \
         -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0 cgroup_no_v1=all' \
         -nographic \
         -no-reboot \
-        -drive file="./utils/storage/eulab-hd",format=raw \
-        -drive file="./utils/storage/k3s-tarball-squashfs.img",format=raw \
+        -drive file="${RVDSF_EULAB}",format=raw \
+        -drive file="${K3S_SQUASHFS_IMAGE_PATH}",format=raw \
         -net nic,model=virtio,macaddr="${MACADDRESS}" \
         -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
-        -virtfs local,path=./artifacts/qemu-sink/,mount_tag=hostshare,security_model=mapped-xattr
+        -virtfs local,path="${VIRTFS_ART_PATH}",mount_tag=hostshare,security_model=mapped-xattr
         # -virtfs local,path="./artifacts/qemu-sink/",security_model=mapped-xattr \
         #-serial
         # -s -S
@@ -527,22 +486,64 @@ configure_vm_ssh() {
 # run the final iso artifact
 runiso() {
 
-# CURRENT_ISO="./artifacts/kjx-headless_v2.iso"
 CURRENT_ISO="./artifacts/kjx-headless_v3.iso"
-
 OLD_ISO="./artifacts/kjx-headless.iso"
+
+if [ "${IS_RECORDING}" = "YES" ]; then
+    if ! command -v asciinema; then
+        printf "\n|> Error: asciinema was not found. Nothing to be done.\n|> Exiting now...\n\n" && \
+        return 1
+    fi
+    asciinema rec "${RUNISO_RECORDING_PATH}"
+    printf "\n|> Recording section is in course. Invoking asciinema...\n\n"
+fi
+
+
+if ! [ -d "${VIRTFS_ART_PATH}" ]; then
+    mkdir -p "${VIRTFS_ART_PATH}" && \
+    printf "\n|> Creating virtfs artifact directory...\n\n"
+fi
+
+# it will only run if the k3s squashfs image does not exist.
+if [ "${KJXPATH}" = "kjx-headless" ]; then
+    # Check if raw image exists at utils
+    if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
+        squash_k3s
+    fi
+
+    # Check if raw virtual disk sparse file exists at utils
+    if ! [ -f "${RVDSF_EULAB}" ]; then
+        create_rvdsf
+    fi
+fi
 
 qemu-system-x86_64 \
     -m 1024 \
-    -cdrom "$CURRENT_ISO" \
+    -cdrom "${CURRENT_ISO}" \
     -boot d \
     -enable-kvm \
     -nographic \
     -no-reboot \
     -cpu host \
     -serial mon:stdio \
-    -drive file="./utils/storage/eulab-hd",format=raw \
-    -drive file="./utils/storage/k3s-tarball-squashfs.img",format=raw
+    -drive file="${RVDSF_EULAB}",format=raw \
+    -drive file="${K3S_SQUASHFS_IMAGE_PATH}",format=raw \
+    -virtfs local,path="${VIRTFS_ART_PATH}",mount_tag=hostshare,security_model=mapped-xattr && \
+
+
+if [ "${IS_RECORDING}" = "YES" ]; then
+    # asciinema stop && \
+    exec <&-
+    printf "\n|> Stop recording the asciinema section. Exiting now...\n\n"
+fi
+
+}
+
+record_runiso() {
+# creates a file at "${RUNISO_RECORDING_PATH}"
+IS_RECORDING="YES"
+
+runiso
 
 }
 

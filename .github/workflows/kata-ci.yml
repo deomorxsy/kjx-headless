@@ -18,16 +18,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [gvisor, kata, firecracker]
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: true
 
-    - name: Build OCI image (cross-compile)
+    - name: Build OCI image
       run: |
-        make kata
+        docker run -d -p 5000:5000 --name registry registry:3.0
+        make mvm-kata
+        docker push localhost:5000/kata:latest
+
+    - name: Retrieve artifact from docker image
+      run: |
+        docker run -it --name kata -d localhost:5000/kata:latest
+        docker cp kata:/kata-core.tar.gz ${{ github.workspace }}/artifacts/kata-core.tar.gz
 
