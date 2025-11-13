@@ -1,4 +1,4 @@
-FROM alpine:3.22 as builder
+FROM alpine:3.22 AS builder
 
 ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
@@ -8,7 +8,7 @@ COPY ./scripts/sandbox/gvisor-startup.sh /app/scripts/
 
 RUN MODE="build" . ./scripts/gvisor-startup.sh
 
-FROM alpine:3.22 as empty
+FROM alpine:3.22 AS empty
 
 COPY --from=builder /root/artifacts/sources/gvisor-core.tar.gz .
 
