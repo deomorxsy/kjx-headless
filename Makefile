@@ -401,6 +401,10 @@ itoeltor:
 runiso:
 	. ./scripts/sandbox/run-qemu.sh -runiso
 
+.PHONY: record-runiso
+record-runiso: runiso
+	. ./scripts/sandbox/run-qemu.sh -record-runiso
+
 # zig-wasm-typescript-deno-bpf
 .PHONY: zwtd-bpf
 zwtd-bpf:
