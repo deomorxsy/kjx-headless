@@ -168,7 +168,7 @@ docker run -d -p 5000:5000 --name registry registry:3.0
 
 docker compose -f ./compose.yml create beetor
 mkdir -p ./artifacts/runitsv && \
-docker cp beetor:/app/beetor ./artifacts/runitsv/ && \
+docker cp runit:/app/runit.tar.gz ./artifacts/runitsv/ && \
 chmod -c +rX ./artifacts/runitsv/beetor;
 docker stop registry
 
