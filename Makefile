@@ -399,11 +399,11 @@ itoeltor:
 # GOTO: airgap instead
 .PHONY: runiso
 runiso:
-	. ./scripts/sandbox/run-qemu.sh -runiso
+	MODE="-runiso" . ./scripts/sandbox/run-qemu.sh
 
 .PHONY: record-runiso
 record-runiso: runiso
-	. ./scripts/sandbox/run-qemu.sh -record-runiso
+	MODE="-record-runiso" . ./scripts/sandbox/run-qemu.sh
 
 # zig-wasm-typescript-deno-bpf
 .PHONY: zwtd-bpf
