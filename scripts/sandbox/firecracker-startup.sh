@@ -110,6 +110,96 @@ sudo curl --unix-socket /tmp/firecracker.socket -i \
 }
 
 
+firecracker_containerd() {
+# docs: https://github.com/firecracker-microvm/firecracker-containerd/blob/main/docs/
+# run on a container pipeline
+
+# Previous dependencies goes into Dockerfile logic
+DISTRO_CHECK="$(cat "/etc/os-release" | grep Alpine)"
+
+if ! "${DISTRO_CHECK}"; then
+    printf
+    return 1
+fi
+printf "\n|> Running on an Alpine distro... proceeding...\n\n"
+
+# Set firecracker-containerd directories
+SNAPSHOTTER_BIN_DIR="/etc/firecracker-containerd"
+ALTERNATE_STORAGE_DIR="/var/lib/firecracker-containerd/containerd"
+SHIM_BASE_DIR="/var/lib/firecracker-containerd"
+# Set device mapper thin pool
+DEVMAPPER_DIR="/var/lib/firecracker-containerd/snapshotter/devmapper"
+DEVMAPPER_POOL="fc-dev-thinpool"
+
+# Create paths
+mkdir -p "${SNAPSHOTTER_BIN_DIR}"
+mkdir -p "${ALTERNATE_STORAGE_DIR}"
+mkdir -p "${SHIM_BASE_DIR}"
+mkdir -p "${DEVMAPPER_DIR}"
+
+
+(
+cat <<EOF
+version = 2
+disabled_plugins = ["io.containerd.grpc.v1.cri"]
+root = "/var/lib/firecracker-containerd/containerd"
+state = "/run/firecracker-containerd"
+[grpc]
+  address = "/run/firecracker-containerd/containerd.sock"
+[plugins]
+  [plugins."io.containerd.snapshotter.v1.devmapper"]
+    pool_name = "fc-dev-thinpool"
+    base_image_size = "10GB"
+    root_path = "/var/lib/firecracker-containerd/snapshotter/devmapper"
+
+[debug]
+  level = "debug"
+EOF
+) | tee "${SNAPSHOTTER_BIN_DIR}"/config.toml
+
+
+# Device Mapper Thin provisioning setup
+#
+# See Documentation/device-mapper/thin-provisioning.txt for parameters and usage.
+# Thin pools are to block devices what sparse files are to filesystems.
+
+if ! [ -f "${DEVMAPPER_DIR}/data" ]; then
+    sudo touch "${DEVMAPPER_DIR}/data"
+    sudo truncate -s 100G "${DEVMAPPER_DIR}/data"
+fi
+
+if ! [ -f "${DEVMAPPER_DIR}/metadata" ]; then
+    sudo touch "${DEVMAPPER_DIR}/metadata"
+    sudo truncate -s 2G "${DEVMAPPER_DIR}/metadata"
+fi
+
+DATADEV="$(sudo losetup --output NAME --noheadings --associated ${DEVMAPPER_DIR}/data)"
+if [ -z "${DATADEV}" ]; then
+    DATADEV="$(sudo losetup --find --show ${DEVMAPPER_DIR}/data)"
+fi
+
+METADEV="$(sudo losetup --output NAME --noheadings --associated ${DEVMAPPER_DIR}/metadata)"
+if [ -z "${METADEV}" ]; then
+    METADEV="$(sudo losetup --find --show ${DEVMAPPER_DIR}/metadata)"
+fi
+
+
+SECTORSIZE=512
+DATASIZE="$(sudo blockdev --getsize64 -q "${DATADEV}")"
+LENGTH_SECTORS=$(bc <<< "${DATASIZE}/${SECTORSIZE}")
+DATA_BLOCK_SIZE=128
+LOW_WATER_MARK=32768
+THINP_TABLE="0 ${LENGTH_SECTORS} thin-pool ${METADEV} ${DATADEV} ${DATA_BLOCK_SIZE} ${LOW_WATER_MARK} 1 skip_block_zeroing"
+echo "${THINP_TABLE}"
+DMSETUP_RELOAD="$(sudo dmsetup reload "${POOL}" --table "${THINP_TABLE}")"
+
+if ! "${DMSETUP_RELOAD}" ; then
+    sudo dmsetup create "${POOL}" --table "${THINP_TABLE}"
+fi
+
+
+
+}
 
 print_usage() {
 cat <<-END >&2
