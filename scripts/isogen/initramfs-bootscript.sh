@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# old name (relative path):
+# ./scripts/qemu-k3s-startup.sh
+
 # virtio virtfs interface for
 # file sharing between guest and host
 VIRTIO_PASSTHRU_DIR="/mnt/virtio-test"
@@ -101,16 +104,17 @@ runtime-endpoint: unix:///run/k3s/containerd/containerd.sock
 EOF
 ) | tee /app/crictl.yaml
 
-# now the crictl.yaml
-#
-cat <<EOF > ./var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml
+# ======
+# Setup the crictl configuration file: crictl.yaml
+(
+cat <<EOF
 
 runtime-endpoint: unix:///run/k3s/containerd/containerd.sock
 image-endpoint: unix:///run/k3s/containerd/containerd.sock
 timeout: 10
 debug: false
 EOF
-
+) | tee /var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml
 # k3s crictl --config=/app/crictl.yaml ps --all
 
 # Unsquash the squashfs with the airgap images inside
@@ -281,3 +285,8 @@ kill -SIGINT "$BPFTRACE_PID"
 # Kill k3s
 #
 kill -SIGTERM $(pgrep k3s)
+
+
+# reboot: power down
+# stops recording the asciinema section
+poweroff -f
