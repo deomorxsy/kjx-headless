@@ -4,9 +4,15 @@ UPPER_MOUNTPOINT="./artifacts/qcow2-rootfs"
 KJX="/mnt/kjx"
 ROOTFS_PATH="$UPPER_MOUNTPOINT/rootfs"
 
+
+kata_rc_containerd() {
+# Context: isogen (it sets )
+
 # Create runtime class for Kata Containers
 # future symlink to "$ROOTFS_PATH/etc/runit/runsvdir/kata/kataRC.yaml"
-cat <<EOF | tee "$ROOTFS_PATH/etc/sv/kata/kataRC.yaml"
+
+(
+cat <<EOF
 # RuntimeClass is defined in the node.k8s.io API group
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
@@ -17,8 +23,11 @@ metadata:
 # The name of the corresponding CRI configuration
 handler: kata
 EOF
+) | tee "$ROOTFS_PATH/etc/sv/kata/kataRC.yaml"
 
-cat > nginx-kata.yaml <<EOF
+# Registry has to have
+(
+cat <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
@@ -30,11 +39,11 @@ spec:
     image: nginx
 
 EOF
+) | tee nginx-kata.yaml
 
-
-
-sed -i 's/runtimeClassName: kata/runtimeClassName: youki/' ./deploy/k8s/deployment.yaml
-sed '/spec:/a \  runtimeClassName: kata' ./deploy/k8s/deployment.yaml
+}
+sed -i 's/runtimeClassName: kata/runtimeClassName: youki/' ./deploy/k3s/deployment.yaml
+sed '/spec:/a \  runtimeClassName: kata' ./deploy/k3s/deployment.yaml
 
 #cat << EOF | tee kjx-kata.yaml
 #apiVersion: v1
