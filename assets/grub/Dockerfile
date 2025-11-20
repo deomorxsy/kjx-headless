@@ -1,7 +1,6 @@
 #!/bin/sh
 
-
-FROM alpine:3.18 as builder
+FROM alpine:3.22 as builder
 
 # STEP 1
 
@@ -58,7 +57,7 @@ grub-mkimage \
 
 cp ./eltorito.img /app/
 cd - || return
-printf "\n============\n|> Done! Exiting in 150 seconds...\n\n"
+printf "\n============\n|> Done! Exiting now...\n\n"
 
 }
 # ===============
@@ -76,7 +75,7 @@ fi
 EOF
 
 
-FROM alpine:3.18 as relay
+FROM alpine:3.22 as relay
 
 WORKDIR /app/
 COPY --from=builder /app/eltorito.img /app/eltorito.img
