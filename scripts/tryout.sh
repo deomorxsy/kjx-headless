@@ -45,7 +45,8 @@ UPPER_BASE_IMG=$(losetup  | awk 'NR==2 {print $6}')
 KERNEL_BASENAME=$(basename "$KERNEL_PATH")
 INITRAMFS_BASENAME=$(basename "$RAMDISK_PATH")
 SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
-ELTORITO_PATH="./eltorito.img"
+    # at ./assets/grub/Dockerfile
+    ELTORITO_PATH="./eltorito.img"
 ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
 ISO_FINAL_PATH="$PWD/artifacts"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
@@ -57,6 +58,14 @@ ISO_INITRAMFS="initramfs-ssh.cpio.gz"
 
 #
 BUILDER_ROOTFS_DIR="$HOME"/Downloads/kjxh-artifacts/another/newfrdir
+
+# ==========
+# RULE: at a given time, there will not be
+# two ISO9660 files with the same name.
+# ==========
+ISO_FILENAME_DATE="$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-")"
+ISO_FINAL_NAME="${ISO_FINAL_PATH}/kjx-headless_${ISO_FILENAME_DATE}.iso"
+
 #}
 
 #set_vars
@@ -1328,11 +1337,13 @@ else
 
 fi
 
+
 # 5. Package the final filesystem into an ISO9660 image using xorriso.
 # xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v2.iso \
 #
-    if ! [ -f "$ISO_FINAL_PATH"/kjx-headless_v3.iso ]; then
-    xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v3.iso \
+    #if ! [ -f "$ISO_FINAL_PATH"/kjx-headless_v3.iso ]; then
+if ! [ -f "${ISO_FINAL_NAME}" ]; then
+    xorriso -as mkisofs -o "${ISO_FINAL_NAME}" \
       -J -l \
       -V "KJX_HEADLESS" \
       -b syslinux/isolinux.bin \
@@ -1345,8 +1356,9 @@ fi
         -no-emul-boot \
         -isohybrid-mbr "${ISOHDPFX_PATH}" \
         -isohybrid-gpt-basdat \
-        -r "$ISO_DIR" \
-        -m 'rootfs'
+        -r "{$ISO_DIR}" \
+        -m 'rootfs' && \
+        sleep 15
     else
         printf "\n|> Error: a file was found with the same name. Exiting now...\n"
     fi
