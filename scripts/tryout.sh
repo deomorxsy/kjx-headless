@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set_vars() {
+#set_vars() {
 QCOW_PATH="./artifacts/foo.qcow2"
 IMAGE_PATH="./artifacts/foo.img"
 INITRAMFS_BASE="./artifacts/netpowered.cpio.gz"
@@ -51,16 +51,15 @@ ISO_FINAL_PATH="$PWD/artifacts"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
 
 
-
 SOURCE_ROOTFS_DIR="./artifacts/burn/rootfs"
 SQUASHFS_IMAGE="./artifacts/rootfs.sqfs"
 ISO_INITRAMFS="initramfs-ssh.cpio.gz"
 
 #
 BUILDER_ROOTFS_DIR="$HOME"/Downloads/kjxh-artifacts/another/newfrdir
-}
+#}
 
-set_vars
+#set_vars
 
 #scaffolding() {
 # ==================================================================
@@ -75,13 +74,12 @@ set_vars
 # 1. if there is no file IMAGE_PATH, create one
 # workdir /app
 mkdir -p ./artifacts
-if ! [ -f "$IMAGE_PATH" ]; then
+if ! [ -f "${IMAGE_PATH}" ]; then
 
     printf "\n\n======\nCreating image now\n=========\n\n"
-    # qemu-img create -f raw "$IMAGE_PATH" 3G
-    # qemu-img create -f raw "$IMAGE_PATH" 250M
-    qemu-img create -f raw "$IMAGE_PATH" 512M
-
+    qemu-img create -f raw "${IMAGE_PATH}" 512M
+    # qemu-img create -f raw "${IMAGE_PATH}" 3G
+    # qemu-img create -f raw "${IMAGE_PATH}" 250M
 else
     printf "\n\n======\nImage already exists: skipping....\n=========\n\n"
 fi
@@ -266,7 +264,6 @@ mkdir -p "$UPPER_MOUNTPOINT"/rootfs # mkdir a directory for the rootfs
 # busybox-sh based
 # mountns_sasquatch() {
 
-MBR_BIN_PATH="$KJX/sources/bin/syslinux-6.03/bios/mbr/isohdpfx.bin"
 # sink to the mount namespace
 #mkdir -p /tmp/host_dir
 
@@ -1000,9 +997,9 @@ sudo umount "$EFI_TMPDIR"
 routine=$(uname -m)
 
 
-SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
-ELTORITO_PATH="./eltorito.img"
-ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
+# SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
+# ELTORITO_PATH="./eltorito.img"
+# ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
 ISO_FINAL_PATH="$PWD/artifacts/kjx-headless.iso"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
 
@@ -1346,7 +1343,7 @@ fi
       -eltorito-alt-boot \
         -e boot/grub/efi.img \
         -no-emul-boot \
-        -isohybrid-mbr artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin \
+        -isohybrid-mbr "${ISOHDPFX_PATH}" \
         -isohybrid-gpt-basdat \
         -r "$ISO_DIR" \
         -m 'rootfs'
