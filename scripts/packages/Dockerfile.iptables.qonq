@@ -7,7 +7,6 @@ WORKDIR /app
 # bash for lwrap
 RUN <<EOF
 apk upgrade && apk update && \
-#    apk add shadow
 
 (
 cat <<HMM
@@ -143,6 +142,6 @@ EOF
 FROM alpine:3.22 as relay
 
 WORKDIR /app/
-COPY --from=builder /shadow-pkg.tar.gz /shadow-pkg.tar.gz
+COPY --from=builder /iptables-pkg.tar.gz /iptables-pkg.tar.gz
 
 ENTRYPOINT ["/bin/sh"]
