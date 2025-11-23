@@ -1,0 +1,123 @@
+#!/bin/sh
+FROM alpine:3.22 as builder
+
+WORKDIR /app
+# STEP 1
+
+# bash for lwrap
+RUN <<EOF
+apk upgrade && apk update && \
+#    apk add shadow
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+apk add busybox-binsh libbsd musl linux-pam shadow
+
+apk add doas
+ldd "$(readlink -f "$(which "doas")")"        | awk '{print $3}' >> /foo.txt ;;
+
+# binaries provided by shadow
+for f in /usr/sbin/*; do
+    case $f in
+        /usr/sbin/chage) ldd "$(readlink -f "$(which "$f")")"        | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/chfn) ldd "$(readlink -f "$(which "$f")")"         | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/chgpasswd) ldd "$(readlink -f "$(which "$f")")"    | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/chpasswd) ldd "$(readlink -f "$(which "$f")")"     | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/chsh) ldd "$(readlink -f "$(which "$f")")"         | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/expiry) ldd "$(readlink -f "$(which "$f")")"       | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/gpasswd) ldd "$(readlink -f "$(which "$f")")"      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/groupadd) ldd "$(readlink -f "$(which "$f")")"     | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/groupdel) ldd "$(readlink -f "$(which "$f")")"     | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/groupmems) ldd "$(readlink -f "$(which "$f")")"    | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/groupmod) ldd "$(readlink -f "$(which "$f")")"     | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/grpck) ldd "$(readlink -f "$(which "$f")")"        | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/logoutd) ldd "$(readlink -f "$(which "$f")")"      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/newusers) ldd "$(readlink -f "$(which "$f")")"     | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/passwd) ldd "$(readlink -f "$(which "$f")")"       | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/pwck) ldd "$(readlink -f "$(which "$f")")"         | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/useradd) ldd "$(readlink -f "$(which "$f")")"      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/userdel) ldd "$(readlink -f "$(which "$f")")"      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/usermod) ldd "$(readlink -f "$(which "$f")")"      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/vigr) ldd "$(readlink -f "$(which "$f")")"         | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/vipw) ldd "$(readlink -f "$(which "$f")")"         | awk '{print $3}' >> /foo.txt ;;
+
+    esac
+done
+
+# busybox-binsh
+# libbsd
+# musl
+
+# shared objects
+for f in /usr/lib/*; do
+    case $f in
+    # musl
+    /usr/lib/libc.musl-x86*) ldd "$(readlink -f "$(which "$f")")"       | awk '{print $3}' >> /foo.txt ;;
+    # linux-pam deps
+    /usr/lib/libpam*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+    /usr/lib/libpam_misc*) ldd "$(readlink -f "$(which "$f")")"         | awk '{print $3}' >> /foo.txt ;;
+    /usr/lib/libpamc*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+
+      # utmps-libs shared objects
+      /usr/lib/libutm*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+    # libbsd deps
+    /usr/lib/libbsd*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+    /usr/lib/libmd*) ldd "$(readlink -f "$(which "$f")")"               | awk '{print $3}' >> /foo.txt ;;
+      # skalibs-libs
+      /usr/lib/libskarnet*) ldd "$(readlink -f "$(which "$f")")"          | awk '{print $3}' >> /foo.txt ;;
+
+    esac
+done
+
+
+# linux-pam binaries
+for f in /usr/sbin/*; do
+    case $f in
+        # pam dynamicaly linked user binaries
+        /usr/sbin/chage) ldd "$(readlink -f "$(which "$f")")"                   | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/faillock) ldd "$(readlink -f "$(which "$f")")"                | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/mkhomedir_helper) ldd "$(readlink -f "$(which "$f")")"        | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/pam_namespace_helper) ldd "$(readlink -f "$(which "$f")")"    | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/pam_timestamp_check) ldd "$(readlink -f "$(which "$f")")"     | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/pwhistory_helper) ldd "$(readlink -f "$(which "$f")")"        | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/unix_chkpwd) ldd "$(readlink -f "$(which "$f")")"             | awk '{print $3}' >> /foo.txt ;;
+
+    esac
+done
+
+
+# set IFS: input field separator
+IFS='\n\t'
+
+# read each line defining the input field separator,
+# follow the soft link and append readlink output line to a new file
+while IFS= read -r line; do
+    readlink -f "$line" >> /bar.txt
+done < /foo.txt
+
+# remove new lines on the lists, then create new file
+sed '/^$/d' /foo.txt > /foobar.txt
+sed '/^$/d' /bar.txt >> /foobar.txt
+
+# then remove duplicate shared objects
+sort /foobar.txt | uniq > /quux.txt
+
+# generate a tarball of shared objects from filepaths on a text file
+tar -czf /shadow-pkg.tar.gz -T /quux.txt
+
+
+EOF
+
+
+FROM alpine:3.22 as relay
+
+WORKDIR /app/
+COPY --from=builder /shadow-pkg.tar.gz /shadow-pkg.tar.gz
+
+ENTRYPOINT ["/bin/sh"]

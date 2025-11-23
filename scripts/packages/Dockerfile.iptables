@@ -1,0 +1,109 @@
+#!/bin/sh
+FROM alpine:3.22 as builder
+
+ENV PACKAGES_DIR="/app/artifacts/distro/packages"
+ENV BUILD_DIR="/app/build"
+ENV IPTABLES_TARBALL="https://www.netfilter.org/projects/iptables/files/iptables-1.8.11.tar.xz"
+
+WORKDIR /app
+# STEP 1
+
+# bash for lwrap
+RUN <<EOF
+apk upgrade && apk update && \
+    apk add make clang linux-headers libbpf git
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+apk add autoconf automake libtool
+# autoreconf
+
+NETSEC_USER=netsec
+
+# create user and group
+addgroup -g 1000 -S "${NETSEC_USER}" && \
+adduser -s /bin/sh -u 1000 -G "${NETSEC_USER}" \
+    -h "/home/${NETSEC_USER}" -D "${NETSEC_USER}" && \
+
+# certify it will have the correct user:group permissions
+chown -R ${NETSEC_USER}:${NETSEC_USER} /home/${NETSEC_USER}  && \
+cd /home/${NETSEC_USER}/app || return && \
+
+su "${NETSEC_USER}" -c ""
+
+PACKAGES_DIR="/app/artifacts/distro/packages"
+BUILD_DIR="/app/build"
+IPTABLES_TARBALL="https://www.netfilter.org/projects/iptables/files/iptables-1.8.11.tar.xz"
+
+mkdir -p "$BUILD_DIR"
+mkdir -p "$PACKAGES_DIR"
+
+
+libpcap
+bpf-utils
+libnfnetlink
+connlabel
+libnetfilter_conntrack
+nftables
+# ========= Other Functions
+# required for BPF compiler or nfsynproxy support),
+# libpcap-1.10.5
+
+# required for Berkeley Packet Filter support
+# bpf-utils
+
+# (required for connlabel support)
+# libnfnetlink
+#./autogen.sh && \
+#    ./configure
+# connlabel suport
+# libnetfilter_conntrack (required for connlabel support)
+# nftables
+
+
+# ============ Function
+conf_gen() {
+export CFLAGS="-g -O2 -pipe -D_LINUX_IF_ETHER_H"
+
+cd "${PACKAGES_DIR}/iptables-1.8.11/" || return
+./configure --prefix=/usr \
+            --disable-nftables \
+            --enable-libipq &&
+make
+
+# as root
+make install
+
+cp ./eltorito.img /app/
+cd - || return
+printf "\n============\n|> Done! Exiting now...\n\n"
+
+}
+# ===============
+
+if ! [ -d "$PACKAGES_DIR/iptables-1.8.11/" ]; then
+    wget -P "$PACKAGES_DIR" "$IPTABLES_TARBALL"
+    wget -P . "$IPTABLES_TARBALL"
+    cd "$PACKAGES_DIR" || return
+    tar -xvf ./iptables-1.8.11.tar.xz
+    cd - || return
+    #
+    conf_gen
+else
+    conf_gen
+fi
+EOF
+
+
+FROM alpine:3.22 as relay
+
+WORKDIR /app/
+COPY --from=builder /app/eltorito.img /app/eltorito.img
+
+ENTRYPOINT ["/bin/sh"]

@@ -1,0 +1,148 @@
+#!/bin/sh
+FROM alpine:3.22 as builder
+
+WORKDIR /app
+# STEP 1
+
+# bash for lwrap
+RUN <<EOF
+apk upgrade && apk update && \
+#    apk add shadow
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+
+# libmnl:Library for minimalistic netlink
+# libnftnl: Netfilter library providing interface to the nf_tables subsystem
+# libxtables: Linux kernel firewall, NAT and packet mangling tools (xtables library)
+# iptables: Linux kernel firewall, NAT and packet mangling tools
+# conntrack-tools: Connection tracking userspace tools
+
+# iptables
+apk add libmnl libnftnl libxtables iptables conntrack-tools
+
+
+# libnetfilter_cthelper: A Netfilter netlink library for connection tracking helpers
+# libnetfilter_cttimeoutconntrack: Library for the connection tracking timeout infrastructure
+# libnetfilter_queue: API to packets that have been queued by the kernel packet filter
+# libnfnetlink: low-level library for netfilter related kernel/userspace communication
+
+# conntrack
+apk add \
+    libnetfilter_conntrack \
+    libnetfilter_cthelper \
+    libnetfilter_cttimeout \
+    libnetfilter_queue \
+
+#
+#
+
+# conntrack shared objects
+for f in /usr/lib/*; do
+    case $f in
+        /usr/lib/libc.musl-x86*) ldd "$(readlink -f "$(which "$f")")"               | awk '{print $3}' >> /foo.txt ;;
+        /usr/lib/libmnl*) ldd "$(readlink -f "$(which "$f")")"                      | awk '{print $3}' >> /foo.txt ;;
+        /usr/lib/libnetfilter_conntrack*) ldd "$(readlink -f "$(which "$f")")"      | awk '{print $3}' >> /foo.txt ;;
+        /usr/lib/libnetfilter_cthelper*) ldd "$(readlink -f "$(which "$f")")"       | awk '{print $3}' >> /foo.txt ;;
+        /usr/lib/libnetfilter_cttimeout*) ldd "$(readlink -f "$(which "$f")")"      | awk '{print $3}' >> /foo.txt ;;
+        /usr/lib/libnetfilter_queue*) ldd "$(readlink -f "$(which "$f")")"          | awk '{print $3}' >> /foo.txt ;;
+        /usr/lib/libnfnetlink*) ldd "$(readlink -f "$(which "$f")")"                | awk '{print $3}' >> /foo.txt ;;
+    esac
+done
+
+
+# binaries provided by netfilter
+for f in /usr/sbin/*; do
+    case $f in
+        /usr/sbin/chage) ldd "$(readlink -f "$(which "$f")")"                           | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables*) ldd "$(readlink -f "$(which "$f")")"                      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables*) ldd "$(readlink -f "$(which "$f")")"                       | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/arptables-nft-restore*) ldd "$(readlink -f "$(which "$f")")"          | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/arptables-nft-save*) ldd "$(readlink -f "$(which "$f")")"             | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/arptables-nft*) ldd "$(readlink -f "$(which "$f")")"                  | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/arptables-restore*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/arptables-save*) ldd "$(readlink -f "$(which "$f")")"                 | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/arptables-translate*) ldd "$(readlink -f "$(which "$f")")"            | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/arptables*) ldd "$(readlink -f "$(which "$f")")"                      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables-nft-restore*) ldd "$(readlink -f "$(which "$f")")"           | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables-nft-save*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables-nft*) ldd "$(readlink -f "$(which "$f")")"                   | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables-restore*) ldd "$(readlink -f "$(which "$f")")"               | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables-save*) ldd "$(readlink -f "$(which "$f")")"                  | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables-translate*) ldd "$(readlink -f "$(which "$f")")"             | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ebtables*) ldd "$(readlink -f "$(which "$f")")"                       | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-apply*) ldd "$(readlink -f "$(which "$f")")"                | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-nft-restore*) ldd "$(readlink -f "$(which "$f")")"          | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-nft-save*) ldd "$(readlink -f "$(which "$f")")"             | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-nft*) ldd "$(readlink -f "$(which "$f")")"                  | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-restore-translate*) ldd "$(readlink -f "$(which "$f")")"    | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-restore*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-save*) ldd "$(readlink -f "$(which "$f")")"                 | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables-translate*) ldd "$(readlink -f "$(which "$f")")"            | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/ip6tables*) ldd "$(readlink -f "$(which "$f")")"                      | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-apply*) ldd "$(readlink -f "$(which "$f")")"                 | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-nft-restore*) ldd "$(readlink -f "$(which "$f")")"           | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-nft-save*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-nft*) ldd "$(readlink -f "$(which "$f")")"                   | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-restore-translate*) ldd "$(readlink -f "$(which "$f")")"     | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-restore*) ldd "$(readlink -f "$(which "$f")")"               | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-save*) ldd "$(readlink -f "$(which "$f")")"                  | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables-translate*) ldd "$(readlink -f "$(which "$f")")"             | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/iptables*) ldd "$(readlink -f "$(which "$f")")"                       | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/xtables-monitor*) ldd "$(readlink -f "$(which "$f")")"                | awk '{print $3}' >> /foo.txt ;;
+        /usr/sbin/xtables-nft-multi*) ldd "$(readlink -f "$(which "$f")")"              | awk '{print $3}' >> /foo.txt ;;
+
+    esac
+done
+
+
+# so:libmnl.so.0
+# # Netfilter library providing interface to the nf_tables subsystem
+# libnftnl-libs
+# so:libnftnl.so.11
+# so:libxtables.so.12
+
+# shared objects
+for f in /usr/lib/*; do
+    case $f in
+    # musl
+    /usr/lib/libc.musl-x86*) ldd "$(readlink -f "$(which "$f")")"       | awk '{print $3}' >> /foo.txt ;;
+
+    esac
+done
+
+# set IFS: input field separator
+IFS='\n\t'
+
+# read each line defining the input field separator,
+# follow the soft link and append readlink output line to a new file
+while IFS= read -r line; do
+    readlink -f "$line" >> /bar.txt
+done < /foo.txt
+
+# remove new lines on the lists, then create new file
+sed '/^$/d' /foo.txt > /foobar.txt
+sed '/^$/d' /bar.txt >> /foobar.txt
+
+# then remove duplicate shared objects
+sort /foobar.txt | uniq > /quux.txt
+
+# generate a tarball of shared objects from filepaths on a text file
+tar -czf /shadow-pkg.tar.gz -T /quux.txt
+
+
+EOF
+
+
+FROM alpine:3.22 as relay
+
+WORKDIR /app/
+COPY --from=builder /shadow-pkg.tar.gz /shadow-pkg.tar.gz
+
+ENTRYPOINT ["/bin/sh"]
