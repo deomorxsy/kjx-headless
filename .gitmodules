@@ -1,14 +1,14 @@
 [submodule "assets/ebpf_exporter"]
-	path = assets/ebpf_exporter
+	path = assets/tracers/ebpf_exporter
 	url = git@github.com:cloudflare/ebpf_exporter.git
 [submodule "assets/apk-tools"]
 	path = assets/apk-tools
 	url = https://git.alpinelinux.org/apk-tools
 [submodule "assets/FlameGraph"]
-	path = assets/FlameGraph
+	path = assets/visualization/FlameGraph
 	url = git@github.com:brendangregg/FlameGraph.git
 [submodule "assets/HeatMap"]
-	path = assets/HeatMap
+	path = assets/visualization/HeatMap
 	url = git@github.com:brendangregg/HeatMap.git
 [submodule "assets/libbpf-bootstrap"]
 	path = assets/libbpf-bootstrap
@@ -24,13 +24,13 @@
 	path = assets/libbpf
 	url = git@github.com:libbpf/libbpf.git
 [submodule "assets/bcc"]
-	path = assets/bcc
+	path = assets/tracers/bcc
 	url = git@github.com:iovisor/bcc.git
 [submodule "assets/async-profiler"]
-	path = assets/async-profiler
+	path = assets/tracers/async-profiler
 	url = git@github.com:async-profiler/async-profiler.git
 [submodule "assets/ap-loader"]
-	path = assets/ap-loader
+	path = assets/tracers/ap-loader
 	url = git@github.com:jvm-profiling-tools/ap-loader.git
 
 [submodule "assets/bootloaders/edk2"]

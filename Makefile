@@ -86,10 +86,12 @@ dropbear:
 	#docker compose -f ./compose.yml --progress=plain build dropbear
 	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
 
-
-builda_qemu:
-	CCR_MODE="-checker" . ./scripts/ccr.sh; \
-	docker compose -f ./compose.yml --progress=plain build builda_qemu
+# =============================
+# isogen/iso9660
+# =============================
+.PHONY: qemu_kjx
+qemu_kjx:
+	MODE="-b" . ./scripts/qemu-kjx.sh
 
 # builds the project and fetch binaries for qemu-storage-daemon on qemu automation for the builder
 .PHONY: qonq
@@ -356,18 +358,18 @@ hpota_runner:
 
 .PHONY: qemu_builder
 qemu_builder:
-	. ./scripts/sandbox/run-qemu.sh -d
+	MODE="-d" . ./scripts/sandbox/run-qemu.sh
 
 # airgap k3s inside QEMU
 .PHONY: airgap
 airgap:
-	. ./scripts/sandbox/run-qemu.sh -airgap
+	MODE="-airgap" . ./scripts/sandbox/run-qemu.sh
 
 
 # generate k3s dependencies
 .PHONY: squash
 squash:
-	. ./scripts/sandbox/run-qemu.sh -squash
+	MODE="-squash" . ./scripts/sandbox/run-qemu.sh
 
 
 # ======== boot related
@@ -402,7 +404,7 @@ runiso:
 	MODE="-runiso" . ./scripts/sandbox/run-qemu.sh
 
 .PHONY: record-runiso
-record-runiso: runiso
+record-runiso:
 	MODE="-record-runiso" . ./scripts/sandbox/run-qemu.sh
 
 # zig-wasm-typescript-deno-bpf
@@ -523,3 +525,14 @@ fa-runit:
 iso9660:
 	MODE="isogen" . ./scripts/tryout.sh
 
+
+# ===============
+# Packaging
+#
+.PHONY: qonq-shadow
+qonq-shadow:
+	MODE="shadow" . ./scripts/packages/usgp-man.sh
+
+.PHONY: qonq-iptables
+qonq-iptables:
+	MODE="iptables" . ./scripts/packages/usgp-man.sh
