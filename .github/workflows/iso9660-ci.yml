@@ -72,7 +72,7 @@ jobs:
         run: |
           make fa-ssh-rootfs
 
-      - name: Retrieve qonq-qdb virtualization software artifact
+      - name: Retrieve qonq-qdb packaging
         run: |
           make fa-qonq-qdb
 
