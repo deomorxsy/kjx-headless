@@ -222,6 +222,8 @@ ldd "$(readlink -f "$(which expect)" )"     | awk '{print $3}' >> /foo.txt
 # peripherals support
 ldd "$(readlink -f "$(which setxkbmap)" )"  | awk '{print $3}' >> /foo.txt
 
+#############################
+# HLCR
 # podman support
 ldd "$(readlink -f "$(which conmon)" )"  | awk '{print $3}' >> /foo.txt
 ldd "$(readlink -f "$(which podman)" )"  | awk '{print $3}' >> /foo.txt
