@@ -1,4 +1,3 @@
-#!/bin/sh
 FROM alpine:3.22 as builder
 
 COPY ./scripts/packages/shadow.sh /app/scripts/shadow-setup.sh
