@@ -70,7 +70,7 @@ services:
       printf "\n|> List of environment variables:\n\n"
       env
     stop_signal: SIGINT
-  builda_qemu:
+  qemu_kjx:
       container_name: qemu_kjx
       build:
         context: "."
@@ -134,7 +134,7 @@ services:
       - git_hash
     build:
       context: "."
-      dockerfile: "./assets/busybox/Dockerfile"
+      dockerfile: "./deploy/isogen/busybox/Dockerfile"
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
@@ -145,7 +145,7 @@ services:
       - git_hash
     build:
       context: "."
-      dockerfile: "./assets/dropbear/Dockerfile"
+      dockerfile: "./deploy/isogen/dropbear/Dockerfile"
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
@@ -156,7 +156,7 @@ services:
       - git_hash
     build:
       context: "."
-      dockerfile: "./assets/grub/Dockerfile"
+      dockerfile: "./deploy/isogen/grub/Dockerfile"
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
@@ -164,7 +164,7 @@ services:
     stop_signal: SIGINT
   kernel:
     build:
-      context: "./assets/kernel/"
+      context: "./deploy/isogen/kernel/"
       tags:
         - "localhost:5000/linux_build:latest"
     stop_signal: SIGINT
@@ -404,6 +404,33 @@ services:
       dockerfile: "./deploy/microvm/firecracker/Dockerfile"
       tags:
         - "localhost:5000/firecracker:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT
+  # ============
+  # Packaging
+  # ============
+  qonq-shadow:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.shadow.qonq"
+      tags:
+        - "localhost:5000/shadow-qonq:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+        echo hmm
+    stop_signal: SIGINT
+  qonq-iptables:
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.iptables.qonq"
+      tags:
+        - "localhost:5000/shadow-qonq:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
         echo hmm

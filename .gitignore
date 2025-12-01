@@ -149,6 +149,7 @@ assets/libbpf-bootstrap/
 
 # Kernel assets
 assets/kernel/app/
+deploy/isogen/kernel/app/
 assets/module_kernel_build
 
 # More artifacts
