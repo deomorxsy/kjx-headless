@@ -94,7 +94,7 @@ trace/hpota/lib/hpota/src/
 trace/hpota/lib/hpota/obj/
 
 # other assets
-assets/makefile2graph
+#assets/makefile2graph
 Dockerfile.stripped
 outfull.svg
 
@@ -140,7 +140,7 @@ trace/Ftrace/ftrace.sample.out
 assets/curl/
 #assets/runit/
 newart/
-assets/blazesym/
+#assets/blazesym/
 assets/libbpf-bootstrap/
 
 # Workflows
@@ -210,3 +210,6 @@ artifacts/qemu-sink/*
 
 # gitmodules
 assets/bootloaders/
+
+# asciinema casts
+artifacts/*.cast

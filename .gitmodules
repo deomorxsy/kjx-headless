@@ -15,10 +15,10 @@
 	url = git@github.com:libbpf/libbpf-bootstrap.git
 
 [submodule "assets/blazesym"]
-	path = assets/blazesym
+	path = assets/tracers/blazesym
 	url = git@github.com:libbpf/blazesym.git
 [submodule "assets/bpftool"]
-	path = assets/bpftool
+	path = assets/tracers/bpftool
 	url = git@github.com:libbpf/bpftool.git
 [submodule "assets/libbpf"]
 	path = assets/libbpf
