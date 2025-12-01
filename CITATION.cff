@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 title: "kjx-headless"
 abstract: "deploy, trace and monitor a busybox/LFS based distro."
 authors:
-- nickname: deomorxsy
+- name: deomorxsy
   orcid: https://orcid.org/0009-0002-8685-3460
 version: 2.0.4
 doi: none
