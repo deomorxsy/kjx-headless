@@ -4,27 +4,42 @@
 
 SHADOW_PKG_URI="https://github.com/shadow-maint/shadow/releases/download/4.18.0/shadow-4.18.0.tar.xz"
 
+set_network() {
+
+    CCR_MODE="-checker" . ./scripts/ccr.sh && \
+        docker compose -f ./compose.yml --progress=plain build --no-cache qonq-iptables
+
+}
 
 set_shadow() {
+
+    CCR_MODE="-checker" . ./scripts/ccr.sh && \
+        docker compose -f ./compose.yml --progress=plain build --no-cache qonq-shadow
+
 echo
 }
+
 main_usgp_man() {
-echo
+
+if ! set_shadow; then
+    return 1
+fi
+echo "|> shadow setup with success."
 }
 
 print_usage() {
 cat <<-END >&2
 USAGE: usgp-man [-options]
-                - usgp-man
+                - shadow
                 - firecracker
                 - gvisor
                 - kata
                 - version
                 - help
 eg,
-MODE="usgp-man" ./usgp-man.sh   # Fetch dependencies for all-in-one usgp-man
-MODE="firecracker"  ./usgp-man.sh   # Setup firecracker as main microvm
-MODE="gvisor"       ./usgp-man.sh   # Setup gvisor as main microvm
+MODE="all"          ./usgp-man.sh   # Fetch all default dependencies
+MODE="shadow"       ./usgp-man.sh   # Setup firecracker as main microvm
+MODE="network"      ./usgp-man.sh   # Setup gvisor as main microvm
 MODE="kata"         ./usgp-man.sh   # Setup kata-containers as main microvm
 MODE="version"      ./usgp-man.sh   # shows script version
 MODE="help"         ./usgp-man.sh   # shows this help message
@@ -38,22 +53,18 @@ END
 
 # Check the argument passed from the command line
 if ! [ -z "${MODE}" ] && \
-    [ "${MODE}" = "usgp-man-aio" ] || \
-    [ "${MODE}" = "nftables" ] || \
-    [ "${MODE}" = "conntrack" ] || \
-    [ "${MODE}" = "kata" ]; then
+    [ "${MODE}" = "shadow" ] || \
+    [ "${MODE}" = "network" ] || \
+    [ "${MODE}" = "all" ]; then
     case "${MODE}" in
-        "usgp-man")
-            mvm_aio
+        "all")
+            main_usgp_man
             ;;
-        "firecracker")
-            mvm_firecracker
+        "shadow")
+            set_shadow
             ;;
-        "gvisor")
-            mvm_gvisor
-            ;;
-        "kata")
-            mvm_kata
+        "network")
+            set_iptables # iptables, conntrack, etc
             ;;
         *)
             echo "Invalid microvm. Please specify one of: firecracker, gvisor, kata"
