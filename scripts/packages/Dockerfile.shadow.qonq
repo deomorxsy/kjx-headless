@@ -1,6 +1,6 @@
 FROM alpine:3.22 as builder
 
-COPY ./scripts/packages/shadow.sh /app/scripts/shadow-setup.sh
+COPY ./scripts/packages/shadow-setup.sh /app/scripts/shadow-setup.sh
 
 WORKDIR /app
 # STEP 1
