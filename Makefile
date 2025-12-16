@@ -358,18 +358,18 @@ hpota_runner:
 
 .PHONY: qemu_builder
 qemu_builder:
-	MODE="-d" . ./scripts/sandbox/run-qemu.sh
+	MODE="-d" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 # airgap k3s inside QEMU
 .PHONY: airgap
 airgap:
-	MODE="-airgap" . ./scripts/sandbox/run-qemu.sh
+	MODE="-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 
 # generate k3s dependencies
 .PHONY: squash
 squash:
-	MODE="-squash" . ./scripts/sandbox/run-qemu.sh
+	MODE="-squash" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 
 # ======== boot related
@@ -401,11 +401,12 @@ itoeltor:
 # GOTO: airgap instead
 .PHONY: runiso
 runiso:
-	MODE="-runiso" . ./scripts/sandbox/run-qemu.sh
+	MODE="-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 .PHONY: record-runiso
 record-runiso:
 	MODE="-record-runiso" . ./scripts/sandbox/run-qemu.sh
+	# MODE="-record-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 # zig-wasm-typescript-deno-bpf
 .PHONY: zwtd-bpf
