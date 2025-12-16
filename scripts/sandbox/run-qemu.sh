@@ -521,7 +521,10 @@ squash_k3s() {
     # mount point for the k3s-squashfs
     MOUNTPOINT_K3S_SQUASHFS="/mnt/k3s-squashfs"
 
-    # moved to caller scope
+    # moved to caller scope, on airgap
+    # now, the squas_k3s function is called only
+    # after the conditional branch for save_registry.
+    #
     # if ! [ -f "${SKOPEO_TARBALL_ARTIFACT}" ]; then
     #     printf "\n|> skopeo tarball artifact was not found. Running the [ save_registry ] function now...\n\n"
     #     save_registry
@@ -579,7 +582,7 @@ squash_k3s() {
             gunzip -c "${K3S_AIRGAP_TARBALL_GZ_NAME}" >"${K3S_AIRGAP_TAR_NAME}" &&
             ls -allhtr "${K3S_AIRGAP_TAR_NAME}" &&
             rm "${K3S_AIRGAP_TARBALL_GZ_NAME}" &&
-            cd -
+            cd - || return
     ); then
         printf "\n|> Error: it was not possible to handle the airgap tarball gzip-ed, gunzip it and finish cleaning. Exiting now..."
         return 1
@@ -950,29 +953,114 @@ configure_vm_ssh() {
 
 }
 
-# run the final iso artifact
+# run the final iso artifact (POC)
+## the ISO artifact will not include every option,
+## just the default distro, relying into virtfs instead.
 runiso() {
 
     CURRENT_ISO="./artifacts/kjx-headless_v3.iso"
     OLD_ISO="./artifacts/kjx-headless.iso"
 
+    # check if PWD is the root of the repository
+    if ! [ "${KJXPATH}" = "kjx-headless" ]; then
+        printf "|> Error: not on the root of the kjx-headless repository. Change dir and try again.\nExiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: runiso"
+        printf "\n|> CHECK 01:"
+        printf "\n|> Is PWD the root of the repository?... [PASSED]\n"
+        ;;
+    esac
+    printf "\n|> success: the PWD DOES correspond to the root of the repository.\n\n"
+
+    # independent call to save_registry
+    if ! [ -f "${SKOPEO_TARBALL_ARTIFACT}" ]; then
+        printf "\n|> skopeo tarball artifact was not found. Calling the [ save_registry ] function now...\n\n"
+        if ! save_registry; then
+            printf "\n|> Error: it was not possible to call [save_registry] and create the SKOPEO_TARBALL_ARTIFACT."
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: runiso"
+        printf "\n|> CHECK 02:"
+        printf "\n|> Does the SKOPEO_TARBALL_ARTIFACT filepath exists?...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> success: the SKOPEO_TARBALL_ARTIFACT filepath exists.\n\n"
+
+    if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
+        printf "\n|> Error: the filepath %s does not exist. Attempting to create it..." "${K3S_SQUASHFS_IMAGE_PATH:-[EMPTY_VARIABLE]}"
+
+        if ! squash_k3s; then
+            printf "|> Error: it was not possible to create the K3S_SQUASHFS_IMAGE_PATH filepath. Exiting now..."
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: runiso"
+        printf "\n|> CHECK 03:"
+        printf "\n|> check if raw image exists at utils. ... [PASSED]\n"
+        ;;
+    esac
+    printf "\n|> success: the raw image DOES exists at utils.\n\n"
+
+    # Check if raw virtual disk sparse file exists at utils
+    if ! create_rvdsf; then
+        printf "\n|> Error: the Raw Virtual Disk Sparse File (RVDSF) path was not found. Attempting to create it...\n\n"
+        return 1
+    fi
+    #fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: runiso"
+        printf "\n|> CHECK 04:"
+        printf "\n|> Does RVDSF filepath exists?...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> checked if the RVDSF filepath exists.\n\n"
+
+    # create the virtfs directory path to be shared between host and guest
     if ! [ -d "${VIRTFS_ART_PATH}" ]; then
         mkdir -p "${VIRTFS_ART_PATH}" &&
             printf "\n|> Creating virtfs artifact directory...\n\n"
     fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: runiso"
+        printf "\n|> CHECK 05:"
+        printf "\n|> Create the virtfs directory path to be shared between host and guest. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> created the virtfs directory to be shared between host and guest. \n\n"
 
-    # it will only run if the k3s squashfs image does not exist.
-    if [ "${KJXPATH}" = "kjx-headless" ]; then
-        # Check if raw image exists at utils
-        if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
-            squash_k3s
-        fi
-
-        # Check if raw virtual disk sparse file exists at utils
-        if ! [ -f "${RVDSF_EULAB}" ]; then
-            create_rvdsf
-        fi
+    # Copy the registry to serve the images locally to the single-node k3s cluster
+    if ! cp "${SKOPEO_TARBALL_ARTIFACT}" "${VIRTFS_ART_PATH}"; then
+        printf "\n|> Error: could not copy the SKOPEO_TARBALL_ARTIFACT into the VIRTFS_ART_PATH. Exiting now... \n\n"
+        return 1
     fi
+
+    ### # it will only run if the k3s squashfs image does not exist.
+    ### if [ "${KJXPATH}" = "kjx-headless" ]; then
+    ###     # Check if raw image exists at utils
+    ###     if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
+    ###         squash_k3s
+    ###     fi
+
+    ###     # Check if raw virtual disk sparse file exists at utils
+    ###     if ! [ -f "${RVDSF_EULAB}" ]; then
+    ###         create_rvdsf
+    ###     fi
+    ### fi
 
     qemu-system-x86_64 \
         -m 1024 \
