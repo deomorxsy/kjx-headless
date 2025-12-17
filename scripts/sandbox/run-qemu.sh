@@ -237,14 +237,15 @@ save_registry() {
 
     CCR_MODE="-checker"
     export CCR_MODE
-    #. ./scripts/ccr.sh || printf "\n|> Error: CCR cript has failed! \n" && echo
+    #. ./scripts/ccr.sh || printf "\n|> Error: CCR script has failed! \n" && echo
     #return 1
 
     # if ! docker pull registry:3.0; then printf "ERRADO"; fi
 
     if ! . ./scripts/ccr.sh ||
-        printf "\n|> Error: CCR cript has failed! \n" &&
-        docker pull registry:3.0; then
+        printf "\n|> Error: CCR script has failed! \n" &&
+        podman pull registry:3.0; then
+        #docker
         #if ! docker pull registry:3.0; then
         # will raise an "invalid reference format" if using vanilla docker.
         # podman, skopeo and buildah does not have this problem.
@@ -372,42 +373,38 @@ save_registry() {
     printf "\n|> created a tarball from the docker-archive format tarball bundle with success.\n\n"
 
     # cleanup: remove the umoci-rootfs runtime bundle artifact dir at tmp
-    if (
-        if [ -d /tmp/umoci-rootfs ]; then
-            rm -rf /tmp/umoci-rootfs
+    if [ -d /tmp/umoci-rootfs ]; then
+        if ! rm -rf /tmp/umoci-rootfs; then
+            printf "\n|> Error: could not remove the umoci-rootfs runtime bundle artifact dir at tmp. Exiting now...\n\n"
+            return 1
         fi
-    ); then
-        printf "\n|> Error: could not remove the umoci-rootfs runtime bundle artifact dir at tmp. Exiting now...\n\n"
-        return 1
+        case "${LOG_VERBOSE}" in
+        "yes")
+            printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+            printf "\n|> SCOPE: save_registry"
+            printf "\n|> CHECK 06:"
+            printf "\n|> remove the umoci-rootfs runtime bundle artifact dir at tmp. ...[PASSED]\n"
+            ;;
+        esac
+        printf "\n|> removed the umoci-rootfs runtime bundle artifact dir at tmp with success.\n\n"
     fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: save_registry"
-        printf "\n|> CHECK 06:"
-        printf "\n|> remove the umoci-rootfs runtime bundle artifact dir at tmp. ...[PASSED]\n"
-        ;;
-    esac
-    printf "\n|> removed the umoci-rootfs runtime bundle artifact dir at tmp with success.\n\n"
 
     # cleanup: remove the docker-archive format tarball bundle directory
-    if ! (
-        if [ -d /tmp/skopeo-test-registry ]; then
-            rm -rf /tmp/skopeo-test-registry
+    if [ -d /tmp/skopeo-test-registry ]; then
+        if ! rm -rf /tmp/skopeo-test-registry; then
+            printf "\n|> Error: could not removed the docker-archive format tarball bundle directory. Exiting now...\n\n"
+            return 1
         fi
-    ); then
-        printf "\n|> Error: could not removed the docker-archive format tarball bundle directory. Exiting now...\n\n"
-        return 1
+        case "${LOG_VERBOSE}" in
+        "yes")
+            printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+            printf "\n|> SCOPE: save_registry"
+            printf "\n|> CHECK 07:"
+            printf "\n|> remove the docker-archive format tarball bundle directory. ...[PASSED]\n"
+            ;;
+        esac
+        printf "\n|> removed the docker-archive format tarball bundle directory with success.\n\n"
     fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: save_registry"
-        printf "\n|> CHECK 07:"
-        printf "\n|> remove the docker-archive format tarball bundle directory. ...[PASSED]\n"
-        ;;
-    esac
-    printf "\n|> removed the docker-archive format tarball bundle directory with success.\n\n"
 
 }
 
@@ -856,6 +853,10 @@ airgap_k3s() {
     # v27: gvisor runsv, kata and crun binaries enabled
     #   rootfs_v27.cpio.gz"
 
+    CALL_TO_QONQ_QDB() {
+        echo "Dependencies for the initramfs and rootfs"
+    }
+
     # v28: Full podman dynamic binaries and shared objects
     ANODA_INITRAMFS="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
     if ! [ -f "${ANODA_INITRAMFS}" ]; then
@@ -873,10 +874,9 @@ airgap_k3s() {
     esac
     printf "\n|> the initramfs.cio.gz do in fact exist.\n\n"
 
-    # PS: this kernel image needs to have the
-    # kernel modules *.ko,
+    # PS: this kernel image needs to have the kernel modules *.ko,
     # then squashfs, memcg, fuse, overlayfs support.
-    # also user namagement (shadow-setup) and iptables related (iptales-setup) configuration
+    # Also user namagement (shadow-setup) and iptables related (iptales-setup) configuration
     MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
     if ! [ -f "${MANUAL_AIRGAP_BZIMAGE}" ]; then
         printf "\n|> Error: missing bzImage kernel - Not found in given path!\n\n"
@@ -892,6 +892,41 @@ airgap_k3s() {
         ;;
     esac
     printf "\n|> checked for kernel modules and other k3s dependencies on the kernel bzImage..\n\n"
+
+    # create the virtfs directory path to be shared between host and guest
+    # if ! [ -d "${VIRTFS_ART_PATH}" ]; then
+    #     mkdir -p "${VIRTFS_ART_PATH}" &&
+    #         printf "\n|> Creating virtfs artifact directory...\n\n"
+    # f
+    # idempotent
+    if ! mkdir -p "${VIRTFS_ART_PATH}"; then
+        printf "\n|> Creating virtfs artifact directory...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK 07:"
+        printf "\n|> Create the virtfs directory path to be shared between host and guest. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> created the virtfs directory to be shared between host and guest. \n\n"
+
+    # Copy the registry to serve the images locally to the single-node k3s cluster
+    if ! cp "${SKOPEO_TARBALL_ARTIFACT}" "${VIRTFS_ART_PATH}"; then
+        printf "\n|> Error: could not copy the SKOPEO_TARBALL_ARTIFACT into the VIRTFS_ART_PATH. Exiting now... \n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK 08:"
+        printf "\n|> copy the registry to serve the images locally to the single-node k3s cluster. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> copied the registry tarball into the virtfs directory successfully. \n\n"
 
     # Mind that this will need fuse-overlayfs since the -initrd flag
     # runs an initramfs.cpio.gz over ramfs/tmpfs, that is, on RAM, and not
@@ -1048,6 +1083,15 @@ runiso() {
         printf "\n|> Error: could not copy the SKOPEO_TARBALL_ARTIFACT into the VIRTFS_ART_PATH. Exiting now... \n\n"
         return 1
     fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: runiso"
+        printf "\n|> CHECK 06:"
+        printf "\n|> copy the registry to serve the images locally to the single-node k3s cluster. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> copied the registry tarball into the virtfs directory successfully. \n\n"
 
     ### # it will only run if the k3s squashfs image does not exist.
     ### if [ "${KJXPATH}" = "kjx-headless" ]; then
