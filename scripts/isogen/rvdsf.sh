@@ -11,7 +11,7 @@ sparseFile() {
         printf "\n|> FUNCTION CALL: ./scripts/isogen/rvdsf.sh"
         printf "\n|> SCOPE: sparseFile"
         printf "\n|> CHECK 01:"
-        printf "\n|> return if the sparse filepath already exists. ...[FAILED]\n"
+        printf "\n|> return if the sparse filepath already exists. ...[PASSED]\n"
 
         printf "\n|> Warning: sparse filepath exists! Exiting now...\n\n"
         return
@@ -21,7 +21,7 @@ sparseFile() {
         printf "\n|> FUNCTION CALL: ./scripts/isogen/rvdsf.sh"
         printf "\n|> SCOPE: sparseFile"
         printf "\n|> CHECK 01:"
-        printf "\n|> return if the sparse filepath already exists. ...[PASSED]\n\n"
+        printf "\n|> return if the sparse filepath already exists. ...[FAILED]\n\n"
         ;;
     esac
     printf "\n|> sparse filepath do not exist. Attempting to create...\n\n"
