@@ -8,8 +8,13 @@ sparseFile() {
 
     # return if the sparse filepath already exists.
     if [ -f "${SPARSE_PATH}" ]; then
+        printf "\n|> FUNCTION CALL: ./scripts/isogen/rvdsf.sh"
+        printf "\n|> SCOPE: sparseFile"
+        printf "\n|> CHECK 01:"
+        printf "\n|> return if the sparse filepath already exists. ...[FAILED]\n"
+
         printf "\n|> Warning: sparse filepath exists! Exiting now...\n\n"
-        return 1
+        return
     fi
     case "${LOG_VERBOSE}" in
     "yes")
