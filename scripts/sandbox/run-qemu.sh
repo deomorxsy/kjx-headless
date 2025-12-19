@@ -50,6 +50,10 @@ MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
 MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
 MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
 
+prepare_tracers() {
+    echo
+}
+
 packaging() {
 
     # Packaging
@@ -145,6 +149,15 @@ microvm_poc_gvisor() {
     fi
     echo "|> Copied gvisor tarball into the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
 
+    # Stop container registry
+    if ! (podman stop registry); then
+        echo "|> Error: could not stop the OCI registry server! Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully stopped the OCI registry server."
+    echo && echo
+
 }
 
 microvm_poc_firecracker() {
@@ -214,6 +227,16 @@ microvm_poc_firecracker() {
         return 1
     fi
     echo "|> Copied firecracker tarball into the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+
+    # Stop container registry
+    if ! (podman stop registry); then
+        echo "|> Error: could not stop the OCI registry server! Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully stopped the OCI registry server."
+    echo && echo
+
 }
 
 microvm_poc_kata() {
@@ -283,6 +306,15 @@ microvm_poc_kata() {
         return 1
     fi
     echo "|> Copied kata tarball into the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+
+    # Stop container registry
+    if ! (podman stop registry); then
+        echo "|> Error: could not stop the OCI registry server! Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully stopped the OCI registry server."
+    echo && echo
 }
 
 artifacts_builder() {
