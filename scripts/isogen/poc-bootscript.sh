@@ -76,13 +76,14 @@ unsquash_squashfs_sdb() {
     fi
     echo "|> Successfully unsquashed the ${SQUASH_FS_FILE:-[EMPTY_VARIABLE]} into the ${UNSQUASHED_DIR:-[EMPTY_VARIABLE]} directory. Proceeding..."
 
-    if ! [ -f "${UNSQUASHED_DIR:-[EMPTY_VARIABLE]/k3s-airgap-images-amd64.tar}"]; then
+    if ! [ -f "${UNSQUASHED_DIR:-[EMPTY_VARIABLE]/k3s-airgap-images-amd64.tar}" ]; then
         echo "|> It was not possible to find the k3s-airgap-images-amd64.tar unsquashed. Possible error on the previous step. Exiting now..."
         echo && echo
         return 1
     fi
     echo "|> Successfully found the k3s-airgap-images-amd64.tar unsquashed. Proceeding..."
     echo && echo
+
     #cd - || return
 
 }
@@ -375,13 +376,10 @@ EOF
 
     # /etc/rancher/k3s/registries.yaml
 
-    #k3s server --default-runtime=runc --disable=traefik --config=/etc/rancher/k3s/agent-config.yaml & > /dev/null 2>&1
-
+    # k3s server --default-runtime=runc --disable=traefik --config=/etc/rancher/k3s/agent-config.yaml & > /dev/null 2>&1
     # k3s server --disable-agent --default-runtime=runc --disable=traefik --snapshotter=fuse-overlayfs > /dev/null 2>&1 &
-
-    k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=fuse-overlayfs >/dev/null 2>&1 &
-
     # k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=overlayfs > /dev/null 2>&1 &
+    k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=fuse-overlayfs >/dev/null 2>&1 &
 
     # FUNCTION CALL
     bpftrace_function
@@ -391,12 +389,42 @@ EOF
 
     # create namespace and import the airgap tarball
     # k3s kubectl create namespace "k8s.io"
-
+    # ================================================================
     # !!!!!!! IMPORTANT !!!!!!
     # these airgap images should be previously converted to oci
     # in order to push to the registry. umoci can help with that.
-    k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/k3s-airgap-images-amd64.tar
-    k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/skopeo-convert-registry.oci.tar
+    # ================================================================
+
+    # import the k3s airgap images with k3s ctr
+    if ! (k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/k3s-airgap-images-amd64.tar); then
+        echo "|> Error: could not import the k3s airgap images with k3s ctr. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully imported the k3s airgap images with k3s ctr. Proceeding..."
+    echo && echo
+
+    # Make sure to unmount the /dev/sdb that had the squashfs now
+    # that it isn't needed anymore (previous test).
+    if (mount | grep /dev/sdb); then
+        echo "|> Found a /dev/sdb mounted. Attempting to unmount..."
+        echo && echo
+        if ! (umount /dev/sdb); then
+            echo "|> Error: could not unmount /dev/sdb. Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    echo "|> Successfully unmounted /dev/sdb. Proceeding..."
+    echo && echo
+
+    # import the OCI registry:3.0 server image
+    if ! (k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/skopeo-convert-registry.oci.tar); then
+        echo && echo
+        echo "|> Error: could not import the OCI registry:3.0 server image. Exiting now..."
+        return 1
+    fi
+    echo "|> Successfully imported the OCI registry:3.0 server image. Proceeding..."
 
     # Get name of the image at the time of import
     #OR_IMG_NAME=$(k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/skopeo-convert-registry.oci.tar | grep "unpacking" | awk '{ print $2 }')
