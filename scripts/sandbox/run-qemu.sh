@@ -69,28 +69,36 @@ microvm_poc_gvisor() {
     fi
     echo "|> OCI registry server started with success"
 
-    # Build the gvisor container with ccr.sh to use  Podman Service as the compose tool
-    if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache gvisor); then
-        echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
+    # check if the image already exists
+    if ! (podman images | grep "localhost:5000/gvisor" | awk '{print $1}'); then
+        echo "|> Error: could not find the localhost:5000/gvisor image at the OCI registry:3.0 server. Attempting to build now..."
         echo && echo
-        return 1
+        # return 1
+        # Build the gvisor container with ccr.sh to use  Podman Service as the compose tool
+        if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache gvisor; then
+            echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
+            echo && echo
+            return 1
 
-    fi
-    echo "|> Build the gvisor container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
-    echo && echo
-
-    # push built image into the registry:3.0 localhost:5000 server container.
-    if ! podman push localhost:5000/gvisor:latest; then
-        echo "|> Error: could not push the built gvisor image into the registry:3.0 localhost:5000 server container. Exiting now..."
+        fi
+        echo "|> Build the gvisor container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
         echo && echo
-        return 1
+
+        # push built image into the registry:3.0 localhost:5000 server container.
+        if ! podman push localhost:5000/gvisor:latest; then
+            echo "|> Error: could not push the built gvisor image into the registry:3.0 localhost:5000 server container. Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
+        echo && echo
     fi
-    echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
-    echo && echo
+    echo "|> gvisor image found at the localhost:5000/gvisor OCI registry:3.0 server. Proceeding..."
+
 
     # Create the built gvisor container
     # podman run -it --name gvisor -d localhost:5000/gvisor:latest
-    if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create gvisor; then
+    if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create gvisor); then
         echo "|> Error: could not create the built gvisor container using the ccr.sh script to use Podman Service as the compose tool"
         echo && echo
         return 1
@@ -98,13 +106,19 @@ microvm_poc_gvisor() {
     echo "|> Created the built gvisor container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
     echo && echo
 
+    # check created containers
+    CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
+
+    # check for the gvisor image at localhost:5000/gvisor
+    podman images | grep "localhost:5000/gvisor" | awk '{print $1}'
+
     # copy gvisor tarball into the ./artifacts/microvms directory.
     mkdir -p ./artifacts/microvms/
     if ! podman cp gvisor:/gvisor-core.tar.gz ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}; then
-        echo "|> Error: could not copy the gvisor tarball into the ./artifacts/microvms directory. Exiting now..."
+        echo "|> Error: could not copy the gvisor tarball to the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         return 1
     fi
-    echo "|> Copied gvisor tarball into the ./artifacts/microvms directory with success. Proceeding... "
+    echo "|> Copied gvisor tarball into the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
 
 }
 
