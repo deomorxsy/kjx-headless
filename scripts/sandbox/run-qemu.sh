@@ -51,7 +51,28 @@ MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
 MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
 
 packaging() {
-    echo
+
+    # Packaging
+
+    # setup user and groups management with shadow, doas and others
+    if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
+        echo "|> Error: it was not possible to setup user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Exiting now..."
+        echo "|> SCOPE: ./scripts/sandbox/run-qemu; packaging() function"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully ran the setup for user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Proceeding..."
+    echo && echo
+
+    # setup iptables, conntrack, netfilter, bpf and other network things for k3s and OCI-CRI.
+    if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
+        echo "|> Error: it was not possible to run the usgp-man shellscript to build iptables dependencies. Exiting now..."
+        echo "|> SCOPE: ./scripts/sandbox/run-qemu; packaging() function"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully ran the usgp-man shellscript to build iptables dependencies. Proceeding..."
+    echo && echo
 
 }
 
