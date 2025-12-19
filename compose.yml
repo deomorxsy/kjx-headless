@@ -1,8 +1,8 @@
 #version: "3.8"
 #
 volumes:
-    prometheus_data: {}
-    grafana_data: {}
+  prometheus_data: {}
+  grafana_data: {}
 
 services:
   # zig-wasm-typescript-deno-bpf
@@ -71,14 +71,14 @@ services:
       env
     stop_signal: SIGINT
   qemu_kjx:
-      container_name: qemu_kjx
-      build:
-        context: "."
-        dockerfile: "./Dockerfile"
-        tags:
-          - "localhost:5000/qemu_kjx:latest"
-      entrypoint: ["/bin/sh", "-c"]
-      command: /scripts/bq-entrypoint.sh
+    container_name: qemu_kjx
+    build:
+      context: "."
+      dockerfile: "./Dockerfile"
+      tags:
+        - "localhost:5000/qemu_kjx:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: /scripts/bq-entrypoint.sh
   isogen_new:
     build:
       context: "."
@@ -195,7 +195,6 @@ services:
         - "localhost:5000/hpota:latest"
     stop_signal: SIGINT
 
-
   # =======================
   # AWS provider emulation
   # =======================
@@ -214,8 +213,8 @@ services:
     container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
     image: localstack/localstack
     ports:
-      - "127.0.0.1:4566:4566"            # LocalStack Gateway
-      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+      - "127.0.0.1:4566:4566" # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559" # external services port range
     environment:
       #- DEBUG=${DEBUG:-0}
       - DEBUG=$${1:-0}
@@ -290,7 +289,7 @@ services:
       apk upgrade && apk update && \
       apk add dune ocaml musl-dev && \
       eval $(opam env --switch=utop)
- #
+  #
   # ========================
   # android cross-compilation
   # build with xmake
@@ -305,7 +304,7 @@ services:
         - "localhost:5000/android:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
   final_core:
     environment:
@@ -317,7 +316,7 @@ services:
         - "localhost:5000/android:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
 
   # ========================
@@ -337,7 +336,7 @@ services:
     stop_signal: SIGINT
 
   # standalone prometheus
-  node-exporter:  # prometheus node-exporter
+  node-exporter: # prometheus node-exporter
     image: prom/node-exporter:latest
     container_name: node-exporter
     restart: unless-stopped
@@ -346,10 +345,10 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     ports:
       - 9100:9100
   prometheus:
@@ -360,17 +359,18 @@ services:
       - ./prom-metrics.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
     ports:
       - 9090:9090
   # =============
   # microvms
   # =============
   gvisor:
+    container_name: gvisor
     environment:
       - git_hash
     build:
@@ -380,10 +380,11 @@ services:
         - "localhost:5000/gvisor:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
 
   kata:
+    container_name: kata
     environment:
       - git_hash
     build:
@@ -393,10 +394,11 @@ services:
         - "localhost:5000/kata:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
 
   firecracker:
+    container_name: firecracker
     environment:
       - git_hash
     build:
@@ -406,7 +408,7 @@ services:
         - "localhost:5000/firecracker:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
   # ============
   # Packaging
@@ -421,7 +423,7 @@ services:
         - "localhost:5000/shadow-qonq:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
   qonq-iptables:
     environment:
@@ -433,5 +435,5 @@ services:
         - "localhost:5000/shadow-qonq:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
