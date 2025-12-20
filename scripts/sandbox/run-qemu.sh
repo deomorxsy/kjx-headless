@@ -29,7 +29,7 @@ SKOPEO_TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
 # ===========
 # Virtio utils
 # virtfs path
-VIRTFS_ART_PATH="./artifacts/qemu-sink/"
+VIRTFS_ART_PATH="./artifacts/qemu-sink"
 
 # =====================
 # Recording variables
@@ -49,6 +49,9 @@ MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
 MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
 MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
 MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
+
+# poc-bootscript filepath
+POC_BOOTSCRIPT="./scripts/isogen/poc-bootscript.sh"
 
 prepare_tracers() {
     echo
@@ -1458,6 +1461,23 @@ airgap_k3s() {
         ;;
     esac
     echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo && echo
+
+    # Copy the POC_BOOTSCRIPT to the VIRTFS_ART_PATH so it becomes available on the guest vm
+    if ! cp "${POC_BOOTSCRIPT}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-EMPTY_VARIABLE}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 12\n"
+        echo "|> copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]} ."
     echo && echo
 
     # Either copy the k3s-squashfs tarball OR the k3s-squashfs image into the VIRTFS_ART_PATH
