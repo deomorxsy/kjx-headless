@@ -53,6 +53,38 @@ MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
 # poc-bootscript filepath
 POC_BOOTSCRIPT="./scripts/isogen/poc-bootscript.sh"
 
+airgap_clean() {
+
+    K3S_TARBALL_SQUASHFS_ARTIFACT="/tmp/k3s-tarball.squashfs"
+    K3S_TARBALL_IMAGE="./utils/storage/k3s-tarball-squashfs.img"
+    GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
+
+    if ! (rm "${K3S_TARBALL_ARTIFACT:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: could not remove [${K3S_TARBALL_ARTIFACT:-[EMPTY_VARIABLE]}]. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully removed the [${K3S_TARBALL_ARTIFACT:-[EMPTY_VARIABLE]}]. Proceeding..."
+    echo && echo
+
+    if ! (rm "${K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: could not remove [${K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully removed [${K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Proceeding..."
+    echo && echo
+
+    if ! (rm "${GVISOR_TARBALL:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: could not remove [${GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully removed [${GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
+    echo && echo
+
+}
+
 prepare_tracers() {
     echo
 }
