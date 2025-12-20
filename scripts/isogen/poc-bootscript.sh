@@ -660,25 +660,25 @@ unpack_microvms() {
     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
     echo && echo
 
-    if ! unpack_firecracker; then
-        echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
-        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully unpacked firecracker-containerd with the [unpack_firecracker] function. Proceeding..."
-    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    echo && echo
+    ### if ! unpack_firecracker; then
+    ###     echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
+    ###     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    ###     echo && echo
+    ###     return 1
+    ### fi
+    ### echo "|> Sucessfully unpacked firecracker-containerd with the [unpack_firecracker] function. Proceeding..."
+    ### echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    ### echo && echo
 
-    if ! unpack_kata; then
-        echo "|> Error: could not unpack kata. Exiting now..."
-        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully unpacked kata. Proceeding..."
-    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
-    echo && echo
+    ### if ! unpack_kata; then
+    ###     echo "|> Error: could not unpack kata. Exiting now..."
+    ###     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+    ###     echo && echo
+    ###     return 1
+    ### fi
+    ### echo "|> Sucessfully unpacked kata. Proceeding..."
+    ### echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+    ### echo && echo
 
 }
 
