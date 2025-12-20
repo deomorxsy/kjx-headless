@@ -497,10 +497,70 @@ load_modules() {
 unpack_microvms() {
     if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" ]; then
         echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
+        echo && echo
         return 1
     fi
-    tar -C "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}" -xvf ./gvisor-core.tar.gz
+    echo "|> Sucessfully found the gvisor tarball. Proceeding..."
+    echo && echo
 
+    # decompress the gvisor-core.tar.gz
+    if ! (tar -C "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}" -xvf ./gvisor-core.tar.gz); then
+        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path "
+        echo && echo
+        return 1
+    fi
+
+}
+
+tracer_type_caller() {
+
+    if ! [ "${WHICH_TRACER_FUNCTION:-[EMPTY_VARIABLE]}" = "" ]; then
+
+        # if the WHICH_TRACER_FUNCTION isn't empty, pattern matching the case
+        case "${WHICH_TRACER_FUNCTION}" in
+        # call bpftrace
+        "-bpftrace")
+            BPFTRACE_VIS="flamegraph, histogram"
+            export BPFTRACE_VIS
+            if ! bpftrace_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [bpftrace_function]. Exiting now..."
+                echo && echo
+                return 1
+            fi
+            echo "|> Sucessfully called the [bpftrace_function] with [tracer_type_caller]. Proceeding..."
+            ;;
+        # call ftrace
+        "-ftrace")
+            FTRACE_ARGS="HMM..."
+            export FTRACE_ARGS
+            if ! ftrace_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [ftrace_function]. Exiting now..."
+                echo && echo
+                return 1
+            fi
+            echo "|> Sucessfully called the [ftrace_function] with [tracer_type_caller]. Proceeding..."
+            echo && echo
+            ;;
+        # call libbpftrace
+        "-libbpftrace")
+            BEETOR_ARGS="HMM"
+            export BEETOR_ARGS
+            if ! beetor_function; then
+                return 1
+            fi
+            ;;
+        "*")
+            echo "|> Error: WHICH_TRACER_FUNCTION=${WHICH_TRACER_FUNCTION:-[EMPTY_VARIABLE]} is not a valid [TRACER] option. Options are:"
+            # print TRACER TYPE CALLER usage
+            print_TTC_usage
+            echo "|> Exiting now..."
+            echo && echo
+            return 1
+            ;;
+        esac
+    fi
+    echo "|> Sucessfully ran the tracer_type_caller. Proceeding..."
+    return
 }
 
 bpftrace_function() {
@@ -1000,13 +1060,31 @@ EOF
     # k3s server --default-runtime=runc --disable=traefik --config=/etc/rancher/k3s/agent-config.yaml & > /dev/null 2>&1
     # k3s server --disable-agent --default-runtime=runc --disable=traefik --snapshotter=fuse-overlayfs > /dev/null 2>&1 &
     # k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=overlayfs > /dev/null 2>&1 &
-    k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=fuse-overlayfs >/dev/null 2>&1 &
+
+    if ! (k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=fuse-overlayfs >/dev/null 2>&1 &) then
+        echo "|> Error: could not start the k3s server. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully started the k3s server. Proceeding..."
+    echo && echo
 
     # FUNCTION CALL
-    bpftrace_function
+    if ! bpftrace_function; then
+        echo "|> Error: could not run the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully ran the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Proceeding..."
+    echo && echo
 
-    # works now
-    k3s ctr namespace list
+    # list namespaces of k3s with ctr
+    if ! (k3s ctr namespace list); then
+        echo "|> Error: could not list namespaces of k3s with ctr. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Error: could not list namespaces of k3s with ctr. Exiting now..."
+    echo && echo
 
     # create namespace and import the airgap tarball
     # k3s kubectl create namespace "k8s.io"
@@ -1152,6 +1230,12 @@ EOF
 
     # reboot: power down
     # stops recording the asciinema section
-    poweroff -f
+    if ! (poweroff -f); then
+        echo "|> Error: could not reboot/power-down the QEMU guest virtual machine. Exiting now (anyway! haha)..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully reboot/power-down the QEMU guest virtual machine. Will this even be reached?"
+    echo && echo
 
 }
