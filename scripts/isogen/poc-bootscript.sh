@@ -11,6 +11,10 @@ export VIRTIO_PASSTHRU_DIR
 # module diagnostics file
 MDPB_DIAG_FILE="/modprobe-diagnostics.txt"
 
+# setup k3s crictl configuration file
+K3S_CRICTL_CONF_FILE="/var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml"
+K3S_AGENT_CONF_FILE="/etc/rancher/k3s/agent-config.yaml"
+
 load_modules() {
 
     if ! (
@@ -569,7 +573,7 @@ unsquash_squashfs_sdb() {
 
 }
 
-runtimeClass_job() {
+runtimeclass_job() {
     mkdir -p /app/piest.yaml
     (
         cat <<PIEST
@@ -629,12 +633,11 @@ _main_scope() {
     fi
     echo "|> Successfully ran the [load_modules] function to get diagnostics while loading with modprobe. Proceeding..."
 
-    lsmod
-
     # echo tun >>/etc/modules
     # echo <USER>:100000:65536 >/etc/subuid
     # echo <USER>:100000:65536 >/etc/subgid
 
+    lsmod
     lsmod | grep overlay
 
     #cd /app/shared-deps/
@@ -788,11 +791,11 @@ krun = [
 EOF
         ) | tee "${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not create ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} . Exiting now..."
+        echo "|> Error: could not create ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Exiting now..."
         echo && echo
         return 1
     fi
-    echo "|> Sucessfully created ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} . Proceeding..."
+    echo "|> Sucessfully created ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Proceeding..."
     echo && echo
 
     # Setup storage info for containers
@@ -812,7 +815,7 @@ runroot = "/run/containers/storage"
 graphroot = "/var/lib/containers/storage"
 
 # Storage path for rootless users
-rootless_storage_path = "$HOME/.local/share/containers/storage"
+rootless_storage_path = "${HOME:-[EMPTY_VARIABLE]}/.local/share/containers/storage"
 
 [storage.options]
 pull_options = {enable_partial_images = "false", use_hard_links = "false", ostree_repos=""}
@@ -834,64 +837,166 @@ EOF
             # /etc/containers/storage.conf
         ) | tee "${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not create the ${ETC_CONTAINERS_STORAGE_CONF}"
+        echo "|> Error: could not create the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Exiting now..."
+        echo && echo
         return 1
     fi
+    echo "|> Sucessfully created the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Proceeding..."
+    echo && echo
 
-    # ======
-    # Setup the crictl configuration file: crictl.yaml
-    (
-        cat <<EOF
+    # setup the k3s crictl configuration file: crictl.yaml
+    if ! (
+        (
+            cat <<EOF
 
 runtime-endpoint: unix:///run/k3s/containerd/containerd.sock
 image-endpoint: unix:///run/k3s/containerd/containerd.sock
 timeout: 10
 debug: false
 EOF
-    ) | tee /var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml
+        ) | tee "${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]}"
+    ); then
+        echo "|> Error: could not setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Proceeding..."
+    echo && echo
+
     # k3s crictl --config=/app/crictl.yaml ps --all
 
     # FUNCTION CALL
-    unsquash_squashfs_sdb
+    if ! unsquash_squashfs_sdb; then
+        echo "|> Error: cannot call the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully called the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Proceeding..."
+    echo && echo
 
     # Setup bpftrace
     # bpftrace dependencies, libclang from llvm17
     #cp /app/archive.tar.gz /app/shared-deps/
-    cp /app/archive.tar.gz /app/shared-deps/
 
-    cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz" /app/shared-deps/
+    # copy the tarball of the shared dependencies
+    ### if ! (cp /app/archive.tar.gz /app/shared-deps/); then
+    ###     echo "|> Error: could not copy the [/app/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
+    ###     echo && echo
+    ###     return 1
+    ### fi
+    ### echo "|> Sucessfully copied the [/app/archive.tar.gz] file to [/app/shared-deps]. Proceeding..."
+    ### echo && echo
+
+    # copy the tarball of the shared dependencies
+    if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz" /app/shared-deps/); then
+        echo "|> Error: could not copy the [${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully copied the [/app/archive.tar.gz] file to [/app/shared-deps]. Proceeding..."
+    echo && echo
+
     cd /app/shared-deps/ || return
-    tar -xvf ./archive.tar.gz
-    cp -r ./lib/* /lib/
-    cp -r ./usr/* /usr/
+
+    if ! (
+        (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep lib -m 1)
+        (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep usr -m 1)
+        (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep musl -m 1)
+    ); then
+        echo "|> Error: either lib or usr or musl were not found on the contents of this archive.tar.gz "
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully: found the [lib] and [usr] directories alongside with musl on the contents of this [archive.tar.gz]. Proceeding..."
+    echo && echo
+
+    if ! (tar -xvf ./archive.tar.gz); then
+        echo "|> Error: could not decompress the [./archive.tar.gz] filepath. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully decompressed the [./archive.tar.gz] filepath. Proceeding..."
+    echo && echo
+
+    # copy archive tarball local lib directory to the global at the rootfs of the guest virtual machine.
+    if ! (cp -r ./lib/* /lib/); then
+        echo "|> Error: could not copy the local directory [./lib/*] to the global [/lib] at the rootfs of the guest virtual machine. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully copied the local directory [./lib/*] to the global [/lib] at the rootfs of the guest virtual machine. Proceeding..."
+
+    # copy archive tarball local usr directory to the global at the rootfs of the guest virtual machine.
+    if ! (cp -r ./usr/* /usr/); then
+        echo "|> Error: could not copy the local directory [./usr/*] to the global [/usr] at the rootfs of the guest virtual machine. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully copied the local directory [./usr/*] to the global [/usr] at the rootfs of the guest virtual machine. Proceeding..."
 
     # cleanup the current if it exists
-    rm /usr/lib/libclang.so.17
+    if ! (rm /usr/lib/libclang.so.17); then
+        echo "|> Error: could not remove the /usr/lib/libclang.so.17 filepath. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully removed the /usr/lib/libclang.so.17 filepath. Proceeding..."
+    echo && echo
 
     # Create a symlink
-    ln -s /usr/lib/llvm17/lib/libclang.so.17.0.6 /usr/lib/libclang.so.17
+    if ! (ln -s /usr/lib/llvm17/lib/libclang.so.17.0.6 /usr/lib/libclang.so.17); then
+        echo "|> Error: could not create a symlink (symbolic link) of libclang. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully created a symlink (symbolic link) of libclang. Proceeding..."
     # =============
     cd - || return
 
     # Bring network up
-    ip link set lo up
+    if ! (ip link set lo up); then
+        echo "|> Error: could not bring the network up with iproute2 ip (busybox). Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully bring the network up with iproute2 ip (busybox). Proceeding..."
 
-    # Create soft link for the container socket be found by k3s
-    containerd &
-    ln -s /run/containerd/containerd.sock /run/k3s/containerd/
+    # run containerd in background.
+    if ! (containerd &) then
+        echo "|> Error: could not run containerd in background. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully ran containerd in background. Exiting now..."
 
-    #k3s server --disable-agent --default-runtime=runc & > /dev/null 2>&1
-    #k3s server --default-runtime=runc --disable=traefik & > /dev/null 2>&1
+    # create soft link (symlink) for the container socket to be found by k3s
+    if ! (ln -s /run/containerd/containerd.sock /run/k3s/containerd/); then
+        echo "|> Error: could not create soft link (symlink) for the containerd socket to be found by k3s. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully created soft link (symlink) for the containerd socket to be found by k3s. Proceeding..."
+    echo && echo
 
-    (
-        cat <<EOF
+    if ! (
+        (
+            cat <<EOF
 containerd:
   snapshotter: fuse-overlayfs
 EOF
-    ) | tee /etc/rancher/k3s/agent-config.yaml
+        ) | tee "${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}"
+    ); then
+        echo "|> Error: could not create declarative yaml config  at [K3S_AGENT_CONF_FILE=${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}] telling the agent config to use fuse-overlayfs as containerd's default snapshotter. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Error: could not create declarative yaml config  at [K3S_AGENT_CONF_FILE=${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}] telling the agent config to use fuse-overlayfs as containerd's default snapshotter. Exiting now..."
+    echo && echo
 
     # /etc/rancher/k3s/registries.yaml
 
+    #k3s server --disable-agent --default-runtime=runc & > /dev/null 2>&1
+    #k3s server --default-runtime=runc --disable=traefik & > /dev/null 2>&1
     # k3s server --default-runtime=runc --disable=traefik --config=/etc/rancher/k3s/agent-config.yaml & > /dev/null 2>&1
     # k3s server --disable-agent --default-runtime=runc --disable=traefik --snapshotter=fuse-overlayfs > /dev/null 2>&1 &
     # k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=overlayfs > /dev/null 2>&1 &
@@ -1018,13 +1123,32 @@ EOF
     # )
 
     # FUNCTION CALL
-    runtimeClass_job
+    if ! runtimeclass_job; then
+        echo "|> Error: could not create the runtimeClass(rc) job to be performed to each of the microvms and other (rc) classes in k3s. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Created the runtimeClass(rc) job to be performed to each of the microvms and other (rc) classes in k3s. Proceeding..."
+    echo && echo
 
-    # Gracefully exit bpftrace and return plot graph
-    kill -SIGINT "$BPFTRACE_PID"
+    # Gracefully exit (with SIGTERM) bpftrace and return plot graph
+    if ! [ "${BPFTRACE_PID:-[EMPTY_VARIABLE]}" = "" ]; then
+        #(kill -SIGINT "$BPFTRACE_PID")
+        if ! (kill -SIGTERM "$BPFTRACE_PID"); then
+            echo "|> Error: could not gracefully exit BPFTRACE_PID=${BPFTRACE_PID:-[EMPTY_VARIABLE]}. Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully performed a gracefully exit over the BPFTRACE_PID=${BPFTRACE_PID:-[EMPTY_VARIABLE]}. Proceeding..."
+        echo && echo
+    fi
 
     # Kill k3s
-    kill -SIGTERM $(pgrep k3s)
+    if ! (kill -SIGTERM $(pgrep k3s)); then
+        echo "|> Error: could not kill k3s. Exiting now..."
+        echo && echo
+        return 1
+    fi
 
     # reboot: power down
     # stops recording the asciinema section
