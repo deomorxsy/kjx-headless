@@ -494,21 +494,33 @@ load_modules() {
 
 }
 
-unpack_microvms() {
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" ]; then
-        echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully found the gvisor tarball. Proceeding..."
-    echo && echo
+bpftrace_function() {
+    GETK3S_PID=$(pgrep k3s)
+    (
+        cat <<EOF
+#!/bin/sh
 
-    # decompress the gvisor-core.tar.gz
-    if ! (tar -C "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}" -xvf ./gvisor-core.tar.gz); then
-        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path "
-        echo && echo
-        return 1
-    fi
+bpftrace -e 'profile:hz:49 /pid == ${GETK3S_PID}/ { @[ustack] = count(); }' \
+    > /app/trace.data &
+
+echo \$! > /app/bpftrace.pid
+
+
+EOF
+    ) | tee /app/getk3s_pid_tracer.sh
+
+    chmod +x /app/getk3s_pid_tracer.sh
+    /app/getk3s_pid_tracer.sh
+
+    BPFTRACE_PID=$(cat /app/bpftrace.pid)
+    printf "\n|> bpftrace PID is: %s\n" "$BPFTRACE_PID"
+}
+
+ftrace_function() {
+    TARGET_PID="${FTRACE_PID:-[EMPTY_VARIABLE]}" \
+        USR_TRACE_FUNCTION="function_graph" \
+        USR_TRACE_FILTER="dsadas" \
+        . "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/trace/Ftrace/kerfuncs.sh"
 
 }
 
@@ -531,6 +543,8 @@ tracer_type_caller() {
             ;;
         # call ftrace
         "-ftrace")
+            FTRACE_PID="${FTRACE_PID:-[EMPTY_VARIABLE]}"
+            export FTRACE_PID
             FTRACE_ARGS="HMM..."
             export FTRACE_ARGS
             if ! ftrace_function; then
@@ -563,28 +577,112 @@ tracer_type_caller() {
     return
 }
 
-bpftrace_function() {
-    GETK3S_PID=$(pgrep k3s)
-    (
-        cat <<EOF
-#!/bin/sh
+unpack_gvisor() {
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" ]; then
+        echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the gvisor tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
 
-bpftrace -e 'profile:hz:49 /pid == ${GETK3S_PID}/ { @[ustack] = count(); }' \
-    > /app/trace.data &
-
-echo \$! > /app/bpftrace.pid
-
-
-EOF
-    ) | tee /app/getk3s_pid_tracer.sh
-
-    chmod +x /app/getk3s_pid_tracer.sh
-    /app/getk3s_pid_tracer.sh
-
-    BPFTRACE_PID=$(cat /app/bpftrace.pid)
-    printf "\n|> bpftrace PID is: %s\n" "$BPFTRACE_PID"
+    # decompress the gvisor-core.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" -C /app/microvms/); then
+        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
 }
 
+unpack_firecracker() {
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-core.tar.gz" ]; then
+        echo "|> Error: it was not possible to find the firecracker tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the firecracker tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    # decompress the firecracker-core.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-core.tar.gz" -C /app/microvms/); then
+        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-core.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-core.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+}
+
+unpack_kata() {
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-core.tar.gz" ]; then
+        echo "|> Error: it was not possible to find the kata tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the kata tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    # decompress the kata-core.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-core.tar.gz" -C /app/microvms/); then
+        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-core.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-core.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+}
+
+unpack_microvms() {
+
+    mkdir -p /app/microvms
+
+    if ! unpack_gvisor; then
+        echo "|> Error: could not unpack gvisor. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked gvisor. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    if ! unpack_firecracker; then
+        echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked firecracker-containerd with the [unpack_firecracker] function. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+
+    if ! unpack_kata; then
+        echo "|> Error: could not unpack kata. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked kata. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+    echo && echo
+
+}
+
+# here lies the k3s airgap images
 unsquash_squashfs_sdb() {
 
     MOUNT_SQUASHFS_DIR="/mnt/airgap-registry-image"
@@ -597,10 +695,12 @@ unsquash_squashfs_sdb() {
 
     if ! (mount /dev/sdb "${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}"); then
         echo "|> Error: could not mount /dev/sdb into the ${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+        echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 01"
         echo && echo
         return 1
     fi
     echo "|> Successfully mount /dev/sdb into /mnt/airgap-registry-image filepath. Proceeding..."
+    echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 01"
     echo && echo
 
     #cd "${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}" || return
@@ -609,24 +709,32 @@ unsquash_squashfs_sdb() {
 
     if ! [ -f "${SQUASH_FS_FILE:-[EMPTY_VARIABLE]}" ]; then
         echo "|> Error: it was not possible to find the ${SQUASH_FS_FILE:-[EMPTY_VARIABLE]} at ${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}. Exiting now..."
+        echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 02"
         echo && echo
         return 1
     fi
     echo "|> Successfully found the ${SQUASH_FS_FILE:-[EMPTY_VARIABLE]} at ${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}. Proceeding..."
+    echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+    echo && echo
 
     # unsquash the squashfs with the airgap images inside
     if ! (unsquashfs -d "${UNSQUASHED_DIR:-[EMPTY_VARIABLE]}" "${SQUASH_FS_FILE:-[EMPTY_VARIABLE]}"); then
         echo "|> Error: could not unsquash the /mnt/airgap-registry-image/k3s-tarball.squashfs into the /mnt/k3s-squashfs directory."
+        echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 03"
         return 1
     fi
     echo "|> Successfully unsquashed the ${SQUASH_FS_FILE:-[EMPTY_VARIABLE]} into the ${UNSQUASHED_DIR:-[EMPTY_VARIABLE]} directory. Proceeding..."
+    echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 03"
+    echo && echo
 
     if ! [ -f "${UNSQUASHED_DIR:-[EMPTY_VARIABLE]/k3s-airgap-images-amd64.tar}" ]; then
         echo "|> It was not possible to find the k3s-airgap-images-amd64.tar unsquashed. Possible error on the previous step. Exiting now..."
+        echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 04"
         echo && echo
         return 1
     fi
     echo "|> Successfully found the k3s-airgap-images-amd64.tar unsquashed. Proceeding..."
+    echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 04"
     echo && echo
 
     #cd - || return
@@ -660,27 +768,35 @@ PIEST
 
 _main_scope() {
 
-    mkdir -p "${VIRTIO_PASSTHRU_DIR}"
-    if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
-        echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully mounted 9P using virtio as transport option. Proceeding..."
-    echo && echo
-
-    # if user is on the root of repository, define containers.conf
-    # using the ISO_DIR environment variables.
-    #
     if ! (cat /proc/cpuinfo | grep QEMU); then
         echo "|> Error: not running inside QEMU, outside of POC scope. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
         echo && echo
         # ETC_CONTAINERS_CONF="${ISO_DIR:-[EMPTY_VARIABLE]}/rootfs/etc/containers/containers.conf"
         # ETC_CONTAINERS_STORAGE_CONF="${ISO_DIR:-[EMPTY_VARIABLE]}/rootfs/etc/containers/storage.conf"
         return 1
     fi
+    echo "|> Sucessfully running inside QEMU, inside of the POC scope. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
+    echo && echo
+
     ETC_CONTAINERS_CONF="/etc/containers/containers.conf"
     ETC_CONTAINERS_STORAGE_CONF="/etc/containers/storage.conf"
+
+    mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+    if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
+        echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully mounted 9P using virtio as transport option. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+    echo && echo
+
+    # if user is on the root of repository, define containers.conf
+    # using the ISO_DIR environment variables.
+    #
 
     # rootless containers
     # podman
@@ -688,10 +804,13 @@ _main_scope() {
     # Load modules and get diagnostic over any malfunction
     if ! load_modules; then
         echo "|> Error: could not run the [load_modules] function to get diagnostics while loading with modprobe. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 03"
         echo && echo
         return 1
     fi
     echo "|> Successfully ran the [load_modules] function to get diagnostics while loading with modprobe. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 03"
+    echo && echo
 
     # echo tun >>/etc/modules
     # echo <USER>:100000:65536 >/etc/subuid
@@ -722,41 +841,49 @@ _main_scope() {
         ln -s "/bin/depmod" "/sbin/depmod"
     ); then
         echo "|> Error: could not create symlinks from [/bin/kmod] to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 04"
         echo && echo
         return 1
     fi
     echo "|> Successfully created symlinks from kmod to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 04"
     echo && echo
 
     # Prepare run directory for containerd and k3s
     mkdir -p /run /var/run
     if ! (mount -t tmpfs tmpfs /run); then
         echo "|> Error: could not mount type tmpfs at [/run]. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully mounted type tmpfs at [/run]. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
     echo && echo
 
     if ! (ln -s /run /var/ 2>/dev/null); then
         echo "|> could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created symlink (soft link) of [/run] at [/var]. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
     echo && echo
 
-    # creaate k3s directories
+    # create k3s directories
     if ! (
         mkdir -p /run/k3s/containerd
         mkdir -p /var/lib/rancher/k3s
         mkdir -p /etc/rancher/k3s
     ); then
         echo "|> Error: could not create k3s directories. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created k3s directories. Proceding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07"
     echo && echo
 
     # Generate a sample crictl.yaml, any path will suffice.
@@ -770,10 +897,12 @@ EOF
         ) | tee /app/crictl.yaml
     ); then
         echo "|> Error: could not generate a simple crictl.yaml at [/app/crictl.yaml]. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 08"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully generated a simple crictl.yaml at [/app/crictl.yaml]. Proceding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 08"
 
     # ===============================================
     #
@@ -852,10 +981,12 @@ EOF
         ) | tee "${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]}"
     ); then
         echo "|> Error: could not create ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 09"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 09"
     echo && echo
 
     # Setup storage info for containers
@@ -898,10 +1029,12 @@ EOF
         ) | tee "${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}"
     ); then
         echo "|> Error: could not create the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 10"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 10"
     echo && echo
 
     # setup the k3s crictl configuration file: crictl.yaml
@@ -917,10 +1050,12 @@ EOF
         ) | tee "${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]}"
     ); then
         echo "|> Error: could not setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 11"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 11"
     echo && echo
 
     # k3s crictl --config=/app/crictl.yaml ps --all
@@ -928,10 +1063,12 @@ EOF
     # FUNCTION CALL
     if ! unsquash_squashfs_sdb; then
         echo "|> Error: cannot call the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully called the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
     echo && echo
 
     # Setup bpftrace
@@ -950,10 +1087,12 @@ EOF
     # copy the tarball of the shared dependencies
     if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz" /app/shared-deps/); then
         echo "|> Error: could not copy the [${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully copied the [/app/archive.tar.gz] file to [/app/shared-deps]. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
     echo && echo
 
     cd /app/shared-deps/ || return
@@ -964,78 +1103,117 @@ EOF
         (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep musl -m 1)
     ); then
         echo "|> Error: either lib or usr or musl were not found on the contents of this archive.tar.gz "
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 14"
         echo && echo
         return 1
     fi
     echo "|> Successfully: found the [lib] and [usr] directories alongside with musl on the contents of this [archive.tar.gz]. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 14"
     echo && echo
 
     if ! (tar -xvf ./archive.tar.gz); then
         echo "|> Error: could not decompress the [./archive.tar.gz] filepath. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 15"
         echo && echo
         return 1
     fi
     echo "|> Successfully decompressed the [./archive.tar.gz] filepath. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 15"
     echo && echo
 
     # copy archive tarball local lib directory to the global at the rootfs of the guest virtual machine.
     if ! (cp -r ./lib/* /lib/); then
         echo "|> Error: could not copy the local directory [./lib/*] to the global [/lib] at the rootfs of the guest virtual machine. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 16"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully copied the local directory [./lib/*] to the global [/lib] at the rootfs of the guest virtual machine. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 16"
+    echo && echo
 
     # copy archive tarball local usr directory to the global at the rootfs of the guest virtual machine.
     if ! (cp -r ./usr/* /usr/); then
         echo "|> Error: could not copy the local directory [./usr/*] to the global [/usr] at the rootfs of the guest virtual machine. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 17"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully copied the local directory [./usr/*] to the global [/usr] at the rootfs of the guest virtual machine. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 17"
+    echo && echo
 
-    # cleanup the current if it exists
+    # cleanup the current clang shared object if it exists
     if ! (rm /usr/lib/libclang.so.17); then
         echo "|> Error: could not remove the /usr/lib/libclang.so.17 filepath. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 18"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully removed the /usr/lib/libclang.so.17 filepath. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 18"
     echo && echo
 
-    # Create a symlink
+    # Create a clang symlink
     if ! (ln -s /usr/lib/llvm17/lib/libclang.so.17.0.6 /usr/lib/libclang.so.17); then
         echo "|> Error: could not create a symlink (symbolic link) of libclang. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 19"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created a symlink (symbolic link) of libclang. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 19"
+    echo && echo
+
     # =============
     cd - || return
+
+    # ===============================
+    # Microvms setup
+    # FUNCTION CALL
+    if ! unpack_microvms; then
+        echo "|> Error: cannot run the [unpack_microvms] function. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 20"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully ran the [unpack_microvms] function. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 20"
+    echo && echo
+
+    #============================================
 
     # Bring network up
     if ! (ip link set lo up); then
         echo "|> Error: could not bring the network up with iproute2 ip (busybox). Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 21"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully bring the network up with iproute2 ip (busybox). Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 21"
+    echo && echo
 
     # run containerd in background.
     if ! (containerd &) then
         echo "|> Error: could not run containerd in background. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 22"
         echo && echo
         return 1
     fi
-    echo "|> Sucessfully ran containerd in background. Exiting now..."
+    echo "|> Sucessfully ran containerd in background. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 22"
+    echo && echo
 
     # create soft link (symlink) for the container socket to be found by k3s
     if ! (ln -s /run/containerd/containerd.sock /run/k3s/containerd/); then
         echo "|> Error: could not create soft link (symlink) for the containerd socket to be found by k3s. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 23"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created soft link (symlink) for the containerd socket to be found by k3s. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 23"
     echo && echo
 
     if ! (
@@ -1047,10 +1225,12 @@ EOF
         ) | tee "${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}"
     ); then
         echo "|> Error: could not create declarative yaml config  at [K3S_AGENT_CONF_FILE=${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}] telling the agent config to use fuse-overlayfs as containerd's default snapshotter. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 24"
         echo && echo
         return 1
     fi
-    echo "|> Error: could not create declarative yaml config  at [K3S_AGENT_CONF_FILE=${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}] telling the agent config to use fuse-overlayfs as containerd's default snapshotter. Exiting now..."
+    echo "|> Sucessfully created declarative yaml config  at [K3S_AGENT_CONF_FILE=${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}] telling the agent config to use fuse-overlayfs as containerd's default snapshotter. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 24"
     echo && echo
 
     # /etc/rancher/k3s/registries.yaml
@@ -1063,27 +1243,33 @@ EOF
 
     if ! (k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=fuse-overlayfs >/dev/null 2>&1 &) then
         echo "|> Error: could not start the k3s server. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 25"
         return 1
     fi
     echo "|> Sucessfully started the k3s server. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 25"
     echo && echo
 
     # FUNCTION CALL
     if ! bpftrace_function; then
         echo "|> Error: could not run the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 26"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully ran the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 26"
     echo && echo
 
     # list namespaces of k3s with ctr
     if ! (k3s ctr namespace list); then
         echo "|> Error: could not list namespaces of k3s with ctr. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 27"
         echo && echo
         return 1
     fi
-    echo "|> Error: could not list namespaces of k3s with ctr. Exiting now..."
+    echo "|> Sucessfully listed namespaces of k3s with ctr. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 27"
     echo && echo
 
     # create namespace and import the airgap tarball
@@ -1097,58 +1283,79 @@ EOF
     # import the k3s airgap images with k3s ctr
     if ! (k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/k3s-airgap-images-amd64.tar); then
         echo "|> Error: could not import the k3s airgap images with k3s ctr. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 28"
         echo && echo
         return 1
     fi
     echo "|> Successfully imported the k3s airgap images with k3s ctr. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 28"
     echo && echo
 
     # Make sure to unmount the /dev/sdb that had the squashfs now
     # that it isn't needed anymore (previous test).
-    if (mount | grep /dev/sdb); then
-        echo "|> Found a /dev/sdb mounted. Attempting to unmount..."
+    if ! (mount | grep /dev/sdb); then
+        echo "|> Error: DID NOT found the /dev/sdb mounted. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 29"
         echo && echo
-        if ! (umount /dev/sdb); then
-            echo "|> Error: could not unmount /dev/sdb. Exiting now..."
-            echo && echo
-            return 1
-        fi
+        return 1
+    fi
+    echo "|> Sucessfully found a /dev/sdb mounted. Attempting to unmount..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 29"
+    echo && echo
+
+    if ! (umount /dev/sdb); then
+        echo "|> Error: could not unmount /dev/sdb. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 30"
+        echo && echo
+        return 1
     fi
     echo "|> Successfully unmounted /dev/sdb. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 30"
     echo && echo
 
     # import the OCI registry:3.0 server image
     if ! (k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/skopeo-convert-registry.oci.tar); then
-        echo && echo
         echo "|> Error: could not import the OCI registry:3.0 server image. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 31"
+        echo && echo
         return 1
     fi
     echo "|> Successfully imported the OCI registry:3.0 server image. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 31"
     echo && echo
 
     # get name of the image at the time of import
     # OR_IMG_NAME=$(k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/skopeo-convert-registry.oci.tar | grep "unpacking" | awk '{ print $2 }')
     if ! UNPACK_NAME=$(k3s ctr images list | grep import | awk '{print $1}'); then
         echo "|> Error: could not get the name of the image at the time of import (with the UNPACK_NAME variable). Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 32"
         echo && echo
         return 1
     fi
-    echo "|> Successfully got the name of the image at the time of import (with the UNPACK_NAME variable). Exiting now..."
+    echo "|> Successfully got the name of the image at the time of import (with the UNPACK_NAME variable). Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 32"
+    echo && echo
 
     # tag image with the default name for localhost registry deploys
     if ! (k3s ctr -n="k8s.io" images tag "$UNPACK_NAME" "localhost:5000/registry:3.0"); then
         echo "|> Error: could not tag image with the default name for localhost registry deploys. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 33"
         echo && echo
         return 1
     fi
+    echo "|> Sucessfully tagged image with the default name for localhost registry deploys. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 32"
+    echo && echo
 
     # check the tagged image on the list
     if ! (k3s ctr images ls); then
         echo "|> Error: could not check the tagged image on the list. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 33"
         echo && echo
         return 1
     fi
-    echo "|> Successfully checked the tagged image on the list. Exiting now..."
+    echo "|> Successfully checked the tagged image on the list. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 33"
     echo && echo
 
     # verify if image is imported
@@ -1163,26 +1370,36 @@ EOF
         registry-test \
         /entrypoint.sh); then
         echo "|> Error: could not create the container with k3s ctr, which would be run by k3s containerd. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 34"
         echo && echo
         return 1
     fi
     echo "|> Successfully created the container with k3s ctr, which would be run by k3s containerd. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 34"
+    echo && echo
 
     # define variable to check the metrics-server state
     # (beware sub-shell scopes)
     if ! CHECK_METRICS_SERVER="$(k3s kubectl get pods -n=kube-system | grep "metrics-server" | awk '{ print $1 }')"; then
         echo "|> Error: could not check metrics-server state. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 35"
         echo && echo
         return 1
     fi
+    echo "|> Sucessfully checked metrics-server state. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 35"
+    echo && echo
 
     # describe Pod of the metrics-server state
     if ! (k3s kubectl describe pod "${CHECK_METRICS_SERVER:-[EMPTY_VARIABLE]}" -n=kube-system); then
         echo "|> Error: could not describe Pod of the metrics-server state. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 36"
         echo && echo
         return 1
     fi
     echo "|> Successfully described the Pod of the metrics-server state. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 36"
+    echo && echo
 
     # (
     # cat <<EOF
@@ -1203,10 +1420,12 @@ EOF
     # FUNCTION CALL
     if ! runtimeclass_job; then
         echo "|> Error: could not create the runtimeClass(rc) job to be performed to each of the microvms and other (rc) classes in k3s. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 37"
         echo && echo
         return 1
     fi
     echo "|> Created the runtimeClass(rc) job to be performed to each of the microvms and other (rc) classes in k3s. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 37"
     echo && echo
 
     # Gracefully exit (with SIGTERM) bpftrace and return plot graph
@@ -1214,28 +1433,36 @@ EOF
         #(kill -SIGINT "$BPFTRACE_PID")
         if ! (kill -SIGTERM "$BPFTRACE_PID"); then
             echo "|> Error: could not gracefully exit BPFTRACE_PID=${BPFTRACE_PID:-[EMPTY_VARIABLE]}. Exiting now..."
+            echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 38"
             echo && echo
             return 1
         fi
         echo "|> Sucessfully performed a gracefully exit over the BPFTRACE_PID=${BPFTRACE_PID:-[EMPTY_VARIABLE]}. Proceeding..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 38"
         echo && echo
     fi
 
     # Kill k3s
     if ! (kill -SIGTERM $(pgrep k3s)); then
         echo "|> Error: could not kill k3s. Exiting now..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 39"
         echo && echo
         return 1
     fi
+    echo "|> Sucessfully killed k3s. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 39"
+    echo && echo
 
     # reboot: power down
     # stops recording the asciinema section
     if ! (poweroff -f); then
         echo "|> Error: could not reboot/power-down the QEMU guest virtual machine. Exiting now (anyway! haha)..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 40"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully reboot/power-down the QEMU guest virtual machine. Will this even be reached?"
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 40"
     echo && echo
 
 }
