@@ -8,7 +8,7 @@ VIRTIO_PASSTHRU_DIR="/mnt/virtio-test"
 export VIRTIO_PASSTHRU_DIR
 
 # check if inside guest vm
-if ! (cat /proc/cpuinfo | grep QEMU); then
+if ! (cat /proc/cpuinfo | grep QEMU >/dev/null 2>&1); then
     echo && echo "|> Error: not running inside QEMU, outside of POC scope. Exiting now..."
     echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
     echo && echo
@@ -19,8 +19,32 @@ fi
 echo "|> Sucessfully running inside QEMU, inside of the POC scope. Proceeding..."
 echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
 echo && echo
+###
+### mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+### mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"
+###
+mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+mkdir -p /app
 
-# attempt to mount the hostpath 9P with virtio as transport option.
+if [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh" ]; then
+
+    if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh" /app); then
+        echo "|> Error: could not copy the bootscript"
+        echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+        return 1
+    fi
+    echo "|> Sucessfully copied the bootscript"
+    echo
+fi
+
+if (mount | grep hostshare); then
+    if ! umount "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}"; then
+        echo "|> Error: could not unmount the hostshare 9P virtio for the virtfs option of QEMU. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully unmounted the hostshare 9P virtio for the virtfs option of QEMU. Proceeding..."
+fi
+
 if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
     echo && echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
     echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
@@ -31,13 +55,30 @@ echo "|> Successfully mounted 9P using virtio as transport option. Proceeding...
 echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
 echo && echo
 
-mkdir -p /app
-if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh" /app/); then
-    echo "|> Error: could not copy the poc-bootscript to /app. Exiting now..."
-    return 1
-fi
-echo "|> Sucessfully copied the poc-bootscript to /app. Exiting now..."
-echo && echo
+#MODE="-main" . /app/poc-bootscript.sh
+
+### first_setup() {
+###
+###     mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+###     # attempt to mount the hostpath 9P with virtio as transport option.
+###     if ! mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"; then
+###         echo && echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
+###         echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+###         echo && echo
+###         return 1
+###     fi
+###     echo "|> Successfully mounted 9P using virtio as transport option. Proceeding..."
+###     echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+###     echo && echo
+###
+###     mkdir -p /app
+###     if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh" /app/); then
+###         echo "|> Error: could not copy the [${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh] to /app. Exiting now..."
+###         return 1
+###     fi
+###     echo "|> Sucessfully copied the poc-bootscript to /app. Exiting now..."
+###     echo && echo
+### }
 
 # mkdir -p "${VIRTIO_PASSTHRU_DIR}"
 # mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"
@@ -46,7 +87,10 @@ MDPB_DIAG_FILE="/modprobe-diagnostics.txt"
 
 # setup k3s crictl configuration file
 K3S_CRICTL_CONF_FILE="/var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml"
+export K3S_CRICTL_CONF_FILE
+
 K3S_AGENT_CONF_FILE="/etc/rancher/k3s/agent-config.yaml"
+export K3S_AGENT_CONF_FILE
 
 load_modules() {
 
@@ -58,7 +102,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [bridge]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe br_netfilter 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -68,7 +111,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [br_netfilter]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe veth 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -78,7 +120,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [veth]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe tun 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -88,7 +129,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [tun]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe overlay 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -98,7 +138,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [overlay]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe iptable_nat 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -108,7 +147,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [iptable_nat]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe iptable_security 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -118,7 +156,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [iptable_security]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe ip6table_security 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -128,7 +165,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [ip6table_security]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_nat 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -138,7 +174,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_nat]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_MASQUERADE 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -148,7 +183,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_MASQUERADE]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_addrtype 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -158,7 +192,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_addrtype]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_multiport 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -168,7 +201,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_multiport]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_mark 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -178,7 +210,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_mark]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_ipvs 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -188,7 +219,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_ipvs]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_comment 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -198,7 +228,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_comment]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_cgroup 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -208,7 +237,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_cgroup]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_bpf 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -218,7 +246,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_bpf]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_SECMARK 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -228,7 +255,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_SECMARK]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_REDIRECT 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -238,7 +264,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_REDIRECT]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_LOG 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -248,7 +273,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_LOG]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe xt_CONNSECMARK 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -258,7 +282,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [xt_CONNSECMARK]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe nf_log_syslog 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -268,7 +291,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [nf_log_syslog]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe ip_set 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -278,7 +300,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [ip_set]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe ip_vs 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -288,7 +309,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [ip_vs]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe ip_vs_rr 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -298,7 +318,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [ip_vs_rr]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe cls_bpf 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -308,7 +327,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [cls_bpf]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe cls_cgroup 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -318,7 +336,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [cls_cgroup]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe act_bpf 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -328,7 +345,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [act_bpf]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe vxlan 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -338,7 +354,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [vxlan]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe udp_tunnel 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -348,7 +363,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [udp_tunnel]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe ip6_udp_tunnel 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -358,7 +372,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [ip6_udp_tunnel]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe esp4 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -368,7 +381,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [esp4]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe macsec 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -378,7 +390,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [macsec]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe stp 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -388,7 +399,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [stp]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe p8022 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -398,7 +408,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [p8022]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe psnap 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -408,7 +417,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [psnap]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe llc 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -418,7 +426,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [llc]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe ebtables 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -428,7 +435,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [ebtables]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe rpcsec_gss_krb5 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -438,7 +444,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [rpcsec_gss_krb5]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe auth_rpcgss 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -448,7 +453,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [auth_rpcgss]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe intel_vsec 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -458,7 +462,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [intel_vsec]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe x86_pkg_temp_thermal 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -468,7 +471,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [x86_pkg_temp_thermal]. Proceeding..."
-    echo && echo
 
     if ! (
         (modprobe efivarfs 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
@@ -478,7 +480,6 @@ load_modules() {
         return
     fi
     echo "|> Sucessfully loaded the module [efivarfs]. Proceeding..."
-    echo && echo
 
     ### modprobe bridge
     ### modprobe br_netfilter
@@ -524,6 +525,153 @@ load_modules() {
     ### # Error: x86_pkg_temp_thermal not loading
     ### #modprobe x86_pkg_temp_thermal
     ### modprobe efivarfs
+
+}
+
+kmod_lkm_setup() {
+    # Load modules and get diagnostic over any malfunction
+    if ! load_modules; then
+        echo && echo "|> Error: could not run the [load_modules] function to get diagnostics while loading with modprobe. Exiting now..."
+        echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully ran the [load_modules] function to get diagnostics while loading with modprobe. Proceeding..."
+    echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
+    echo && echo
+
+    # echo tun >>/etc/modules
+    # echo <USER>:100000:65536 >/etc/subuid
+    # echo <USER>:100000:65536 >/etc/subgid
+
+    lsmod
+    lsmod | grep overlay
+
+    #cd /app/shared-deps/
+
+    # Setup kmod early
+    cp /app/kmod /bin/kmod
+
+    # todo: remove hard-coded symlinks
+    if ! (
+
+        if ! [ -f "/bin/lsmod" ]; then
+            echo "|> WARNING: [/bin/lsmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/kmod" "/bin/lsmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/kmod] at [/bin/lsmod], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Sucessfully created symlink (soft link) of [/bin/kmod] at [/bin/lsmod], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/bin/rmmod" ]; then
+            echo "|> WARNING: [/bin/rmmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/kmod" "/bin/rmmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/kmod] at [/bin/rmmod], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Sucessfully created symlink (soft link) of [/bin/kmod] at [/bin/rmmod], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/bin/insmod" ]; then
+            echo "|> WARNING: [/bin/insmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/kmod" "/bin/insmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/kmod] at [/bin/insmod], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Sucessfully created symlink (soft link) of [/bin/kmod] at [/bin/insmod], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/bin/modinfo" ]; then
+            echo "|> WARNING: [/bin/modinfo] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/kmod" "/bin/modinfo"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/kmod] at [/bin/modinfo], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Error: Sucessfully created(soft link) of [/bin/kmod] at [/bin/modinfo], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/bin/modprobe" ]; then
+            echo "|> WARNING: [/bin/modprobe] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/kmod" "/bin/modprobe"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/kmod] at [/bin/modprobe], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Error: Sucessfully created(soft link) of [/bin/kmod] at [/bin/modprobe], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/bin/depmod" ]; then
+            echo "|> WARNING: [/bin/depmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/kmod" "/bin/depmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/kmod] at [/bin/depmod], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Sucessfully created symlink (soft link) of [/bin/kmod] at [/bin/depmod], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/sbin/lsmod" ]; then
+            echo "|> WARNING: [/sbin/lsmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/lsmod" "/sbin/lsmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/lsmod] at [/sbin/lsmod], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Error: Sucessfully created(soft link) of [/bin/lsmod] at [/sbin/lsmod], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/sbin/rmmod" ]; then
+            echo "|> WARNING: [/sbin/rmmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/rmmod" "/sbin/rmmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/rmmod] at [/sbin/rmmod], which is part of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Error: Sucessfully created(soft link) of [/bin/rmmod] at [/sbin/rmmod], which is part of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/sbin/insmod" ]; then
+            echo "|> WARNING: [/sbin/insmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/insmod" "/sbin/insmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/insmod] at [/sbin/insmodt], which is  of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Sucessfully created symlink (soft link) of [/bin/insmod] at [/sbin/insmodt], which is  of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/sbin/modinfo" ]; then
+            echo "|> WARNING: [/sbin/modinfo] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/modinfo" "/sbin/modinfo"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/modinfo] at [/sbin/modinfot], which is  of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Error: Sucessfully created(soft link) of [/bin/modinfo] at [/sbin/modinfot], which is  of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/sbin/modprobe" ]; then
+            echo "|> WARNING: [/sbin/modprobe] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/modprobe" "/sbin/modprobe"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/modprobe] at [/sbin/modprobet], which is  of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Error: Sucessfully created(soft link) of [/bin/modprobe] at [/sbin/modprobet], which is  of the kmod tooling. Proceeding..."
+        fi
+
+        if ! [ -f "/sbin/depmod" ]; then
+            echo "|> WARNING: [/sbin/depmod] was not found on this filepath. Attempting to create..."
+            if ! (ln -s "/bin/depmod" "/sbin/depmod"); then
+                echo "|> Error: could not create symlink (soft link) of [/bin/depmod] at [/sbin/depmodt], which is  of the kmod tooling. Exiting now..."
+                echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            fi
+            echo "|> Sucessfully created symlink (soft link) of [/bin/depmod] at [/sbin/depmodt], which is  of the kmod tooling. Proceeding..."
+        fi
+
+    ); then
+        echo && echo "|> Error: could not create symlinks from [/bin/kmod] to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Exiting now..."
+        echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully created symlinks from kmod to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Proceeding..."
+    echo "|> SCOPE: kmod_lkm_setup, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+    echo && echo
 
 }
 
@@ -946,23 +1094,27 @@ _main_scope() {
     ETC_CONTAINERS_STORAGE_CONF="/etc/containers/storage.conf"
 
     mkdir -p "${VIRTIO_PASSTHRU_DIR}"
-    if (mount | grep hostshare); then
-        if ! umount "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}"; then
-            echo "|> Error: could not unmount the hostshare 9P virtio for the virtfs option of QEMU. Exiting now..."
-            return 1
-        fi
-        echo "|> Sucessfully unmounted the hostshare 9P virtio for the virtfs option of QEMU. Proceeding..."
-    fi
 
-    if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
-        echo && echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully mounted 9P using virtio as transport option. Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
-    echo && echo
+    # FUNCTION CALL
+    first_setup
+
+    ### if (mount | grep hostshare); then
+    ###     if ! umount "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}"; then
+    ###         echo "|> Error: could not unmount the hostshare 9P virtio for the virtfs option of QEMU. Exiting now..."
+    ###         return 1
+    ###     fi
+    ###     echo "|> Sucessfully unmounted the hostshare 9P virtio for the virtfs option of QEMU. Proceeding..."
+    ### fi
+
+    ### if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
+    ###     echo && echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
+    ###     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+    ###     echo && echo
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully mounted 9P using virtio as transport option. Proceeding..."
+    ### echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+    ### echo && echo
 
     # if user is on the root of repository, define containers.conf
     # using the ISO_DIR environment variables.
@@ -971,56 +1123,17 @@ _main_scope() {
     # rootless containers
     # podman
 
-    # Load modules and get diagnostic over any malfunction
-    if ! load_modules; then
-        echo && echo "|> Error: could not run the [load_modules] function to get diagnostics while loading with modprobe. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 03"
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully ran the [load_modules] function to get diagnostics while loading with modprobe. Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 03"
-    echo && echo
-
-    # echo tun >>/etc/modules
-    # echo <USER>:100000:65536 >/etc/subuid
-    # echo <USER>:100000:65536 >/etc/subgid
-
-    lsmod
-    lsmod | grep overlay
-
-    #cd /app/shared-deps/
-
-    # Setup kmod early
-    cp /app/kmod /bin/kmod
-
-    # todo: remove hard-coded symlinks
-    if ! (
-        ln -s "/bin/kmod" "/bin/lsmod"
-        ln -s "/bin/kmod" "/bin/rmmod"
-        ln -s "/bin/kmod" "/bin/insmod"
-        ln -s "/bin/kmod" "/bin/modinfo"
-        ln -s "/bin/kmod" "/bin/modprobe"
-        ln -s "/bin/kmod" "/bin/depmod"
-
-        ln -s "/bin/lsmod" "/sbin/lsmod"
-        ln -s "/bin/rmmod" "/sbin/rmmod"
-        ln -s "/bin/insmod" "/sbin/insmod"
-        ln -s "/bin/modinfo" "/sbin/modinfo"
-        ln -s "/bin/modprobe" "/sbin/modprobe"
-        ln -s "/bin/depmod" "/sbin/depmod"
-    ); then
-        echo && echo "|> Error: could not create symlinks from [/bin/kmod] to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Exiting now..."
+    # KMOD / LKM Linux Kernel Modules base setup
+    if ! kmod_lkm_setup; then
+        echo "|> Error: could not run the [kmod_lkm_setup] function, which handles kmod/LKM Linux Kernel Modules base setup. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 04"
-        echo && echo
-        return 1
     fi
-    echo "|> Successfully created symlinks from kmod to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Proceeding..."
+    echo "|> Sucessfully ran the [kmod_lkm_setup] function. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 04"
-    echo && echo
 
     # Prepare run directory for containerd and k3s
-    mkdir -p /run /var/run
+    # mkdir -p /run /var/run
+    mkdir -p /run /var
     if ! (mount -t tmpfs tmpfs /run); then
         echo && echo "|> Error: could not mount type tmpfs at [/run]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
@@ -1031,11 +1144,12 @@ _main_scope() {
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
     echo && echo
 
+    # soft link of the previous mounted tmpfs filesystem at /run
     if ! (ln -s /run /var/ 2>/dev/null); then
         echo "|> could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
         echo && echo
-        return 1
+        #return 1
     fi
     echo "|> Sucessfully created symlink (soft link) of [/run] at [/var]. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
@@ -1655,7 +1769,9 @@ USAGE: poc-bootscript [-options]
                 - help
                 - version
 eg,
-MODE="main" . /app/poc-bootscript.sh
+MODE="-main" . /app/poc-bootscript.sh
+MODE="-main" . /mnt/virtio-test/poc-bootscript.sh
+
 poc-bootscript -main    # runs the [_main_scope] function of this program.
 poc-bootscript -help    # shows this help message
 poc-bootscript -version # shows script version
