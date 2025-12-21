@@ -496,24 +496,65 @@ load_modules() {
 
 bpftrace_function() {
     GETK3S_PID=$(pgrep k3s)
-    (
+
+    BPFTRACE_SCRIPT="/app/getk3s_pid_tracer.sh"
+
+    mkdir -p /app
+
+    if ! ( (
         cat <<EOF
 #!/bin/sh
 
-bpftrace -e 'profile:hz:49 /pid == ${GETK3S_PID}/ { @[ustack] = count(); }' \
+bpftrace -e 'profile:hz:49 /pid == ${GETK3S_PID:-[EMPTY_VARIABLE]}/ { @[ustack] = count(); }' \
     > /app/trace.data &
 
 echo \$! > /app/bpftrace.pid
 
 
 EOF
-    ) | tee /app/getk3s_pid_tracer.sh
+    ) | tee "${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: could not create the ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+        echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully created the ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]} filepath. Proceeding..."
+    echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
 
-    chmod +x /app/getk3s_pid_tracer.sh
-    /app/getk3s_pid_tracer.sh
+    if ! (chmod +x "${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to change file bits to run of ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}. Exiting now..."
+        echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> was not possible to change file bits to run of ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}. Exiting now..."
+    echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+    echo && echo
 
-    BPFTRACE_PID=$(cat /app/bpftrace.pid)
-    printf "\n|> bpftrace PID is: %s\n" "$BPFTRACE_PID"
+    # Execute the bpftrace script. If previous step passes, it will already be an executable.
+    if ! (/bin/sh -c "${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to run the bpftrace script. Exiting now..."
+        echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+        echo && echo
+    fi
+    echo "|> Sucessfully ran the bpftrace script. Proceeding..."
+    echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+    echo && echo
+
+    if ! BPFTRACE_PID=$(cat /app/bpftrace.pid); then
+        echo "|> Error: could not find the /app/bpftrace.pid filepath. Exiting now..."
+        echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 04"
+        echo && echo
+    fi
+    echo "|> Sucessfully found the /app/bpftrace.pid filepath. Proceeding..."
+    echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 04"
+    echo && echo
+
+    echo "|> HINT: the PID for the running BPFTRACE is: ${BPFTRACE_PID}. kill it to finish tracing with bpftrace."
+    echo && echo
+
 }
 
 ftrace_function() {
