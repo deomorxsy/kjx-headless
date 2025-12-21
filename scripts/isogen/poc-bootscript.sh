@@ -6,6 +6,39 @@
 # file sharing between guest and host
 VIRTIO_PASSTHRU_DIR="/mnt/virtio-test"
 export VIRTIO_PASSTHRU_DIR
+
+# check if inside guest vm
+if ! (cat /proc/cpuinfo | grep QEMU); then
+    echo && echo "|> Error: not running inside QEMU, outside of POC scope. Exiting now..."
+    echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
+    echo && echo
+    # ETC_CONTAINERS_CONF="${ISO_DIR:-[EMPTY_VARIABLE]}/rootfs/etc/containers/containers.conf"
+    # ETC_CONTAINERS_STORAGE_CONF="${ISO_DIR:-[EMPTY_VARIABLE]}/rootfs/etc/containers/storage.conf"
+    return 1
+fi
+echo "|> Sucessfully running inside QEMU, inside of the POC scope. Proceeding..."
+echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
+echo && echo
+
+# attempt to mount the hostpath 9P with virtio as transport option.
+if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
+    echo && echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
+    echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+    echo && echo
+    return 1
+fi
+echo "|> Successfully mounted 9P using virtio as transport option. Proceeding..."
+echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+echo && echo
+
+mkdir -p /app
+if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh" /app/); then
+    echo "|> Error: could not copy the poc-bootscript to /app. Exiting now..."
+    return 1
+fi
+echo "|> Sucessfully copied the poc-bootscript to /app. Exiting now..."
+echo && echo
+
 # mkdir -p "${VIRTIO_PASSTHRU_DIR}"
 # mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"
 # module diagnostics file
@@ -20,7 +53,7 @@ load_modules() {
     if ! (
         (modprobe bridge 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [bridge]. Exiting now..."
+        echo && echo "|> Error: could not load module [bridge]. Exiting now..."
         echo && echo
         return
     fi
@@ -30,7 +63,7 @@ load_modules() {
     if ! (
         (modprobe br_netfilter 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [br_netfilter]. Exiting now..."
+        echo && echo "|> Error: could not load module [br_netfilter]. Exiting now..."
         echo && echo
         return
     fi
@@ -40,7 +73,7 @@ load_modules() {
     if ! (
         (modprobe veth 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [veth]. Exiting now..."
+        echo && echo "|> Error: could not load module [veth]. Exiting now..."
         echo && echo
         return
     fi
@@ -50,7 +83,7 @@ load_modules() {
     if ! (
         (modprobe tun 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [tun]. Exiting now..."
+        echo && echo "|> Error: could not load module [tun]. Exiting now..."
         echo && echo
         return
     fi
@@ -60,7 +93,7 @@ load_modules() {
     if ! (
         (modprobe overlay 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [overlay]. Exiting now..."
+        echo && echo "|> Error: could not load module [overlay]. Exiting now..."
         echo && echo
         return
     fi
@@ -70,7 +103,7 @@ load_modules() {
     if ! (
         (modprobe iptable_nat 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [iptable_nat]. Exiting now..."
+        echo && echo "|> Error: could not load module [iptable_nat]. Exiting now..."
         echo && echo
         return
     fi
@@ -80,7 +113,7 @@ load_modules() {
     if ! (
         (modprobe iptable_security 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [iptable_security]. Exiting now..."
+        echo && echo "|> Error: could not load module [iptable_security]. Exiting now..."
         echo && echo
         return
     fi
@@ -90,7 +123,7 @@ load_modules() {
     if ! (
         (modprobe ip6table_security 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [ip6table_security]. Exiting now..."
+        echo && echo "|> Error: could not load module [ip6table_security]. Exiting now..."
         echo && echo
         return
     fi
@@ -100,7 +133,7 @@ load_modules() {
     if ! (
         (modprobe xt_nat 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_nat]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_nat]. Exiting now..."
         echo && echo
         return
     fi
@@ -110,7 +143,7 @@ load_modules() {
     if ! (
         (modprobe xt_MASQUERADE 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_MASQUERADE]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_MASQUERADE]. Exiting now..."
         echo && echo
         return
     fi
@@ -120,7 +153,7 @@ load_modules() {
     if ! (
         (modprobe xt_addrtype 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_addrtype]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_addrtype]. Exiting now..."
         echo && echo
         return
     fi
@@ -130,7 +163,7 @@ load_modules() {
     if ! (
         (modprobe xt_multiport 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_multiport]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_multiport]. Exiting now..."
         echo && echo
         return
     fi
@@ -140,7 +173,7 @@ load_modules() {
     if ! (
         (modprobe xt_mark 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_mark]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_mark]. Exiting now..."
         echo && echo
         return
     fi
@@ -150,7 +183,7 @@ load_modules() {
     if ! (
         (modprobe xt_ipvs 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_ipvs]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_ipvs]. Exiting now..."
         echo && echo
         return
     fi
@@ -160,7 +193,7 @@ load_modules() {
     if ! (
         (modprobe xt_comment 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_comment]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_comment]. Exiting now..."
         echo && echo
         return
     fi
@@ -170,7 +203,7 @@ load_modules() {
     if ! (
         (modprobe xt_cgroup 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_cgroup]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_cgroup]. Exiting now..."
         echo && echo
         return
     fi
@@ -180,7 +213,7 @@ load_modules() {
     if ! (
         (modprobe xt_bpf 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_bpf]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_bpf]. Exiting now..."
         echo && echo
         return
     fi
@@ -190,7 +223,7 @@ load_modules() {
     if ! (
         (modprobe xt_SECMARK 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_SECMARK]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_SECMARK]. Exiting now..."
         echo && echo
         return
     fi
@@ -200,7 +233,7 @@ load_modules() {
     if ! (
         (modprobe xt_REDIRECT 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_REDIRECT]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_REDIRECT]. Exiting now..."
         echo && echo
         return
     fi
@@ -210,7 +243,7 @@ load_modules() {
     if ! (
         (modprobe xt_LOG 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_LOG]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_LOG]. Exiting now..."
         echo && echo
         return
     fi
@@ -220,7 +253,7 @@ load_modules() {
     if ! (
         (modprobe xt_CONNSECMARK 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [xt_CONNSECMARK]. Exiting now..."
+        echo && echo "|> Error: could not load module [xt_CONNSECMARK]. Exiting now..."
         echo && echo
         return
     fi
@@ -230,7 +263,7 @@ load_modules() {
     if ! (
         (modprobe nf_log_syslog 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [nf_log_syslog]. Exiting now..."
+        echo && echo "|> Error: could not load module [nf_log_syslog]. Exiting now..."
         echo && echo
         return
     fi
@@ -240,7 +273,7 @@ load_modules() {
     if ! (
         (modprobe ip_set 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [ip_set]. Exiting now..."
+        echo && echo "|> Error: could not load module [ip_set]. Exiting now..."
         echo && echo
         return
     fi
@@ -250,7 +283,7 @@ load_modules() {
     if ! (
         (modprobe ip_vs 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [ip_vs]. Exiting now..."
+        echo && echo "|> Error: could not load module [ip_vs]. Exiting now..."
         echo && echo
         return
     fi
@@ -260,7 +293,7 @@ load_modules() {
     if ! (
         (modprobe ip_vs_rr 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [ip_vs_rr]. Exiting now..."
+        echo && echo "|> Error: could not load module [ip_vs_rr]. Exiting now..."
         echo && echo
         return
     fi
@@ -270,7 +303,7 @@ load_modules() {
     if ! (
         (modprobe cls_bpf 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [cls_bpf]. Exiting now..."
+        echo && echo "|> Error: could not load module [cls_bpf]. Exiting now..."
         echo && echo
         return
     fi
@@ -280,7 +313,7 @@ load_modules() {
     if ! (
         (modprobe cls_cgroup 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [cls_cgroup]. Exiting now..."
+        echo && echo "|> Error: could not load module [cls_cgroup]. Exiting now..."
         echo && echo
         return
     fi
@@ -290,7 +323,7 @@ load_modules() {
     if ! (
         (modprobe act_bpf 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [act_bpf]. Exiting now..."
+        echo && echo "|> Error: could not load module [act_bpf]. Exiting now..."
         echo && echo
         return
     fi
@@ -300,7 +333,7 @@ load_modules() {
     if ! (
         (modprobe vxlan 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [vxlan]. Exiting now..."
+        echo && echo "|> Error: could not load module [vxlan]. Exiting now..."
         echo && echo
         return
     fi
@@ -310,7 +343,7 @@ load_modules() {
     if ! (
         (modprobe udp_tunnel 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [udp_tunnel]. Exiting now..."
+        echo && echo "|> Error: could not load module [udp_tunnel]. Exiting now..."
         echo && echo
         return
     fi
@@ -320,7 +353,7 @@ load_modules() {
     if ! (
         (modprobe ip6_udp_tunnel 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [ip6_udp_tunnel]. Exiting now..."
+        echo && echo "|> Error: could not load module [ip6_udp_tunnel]. Exiting now..."
         echo && echo
         return
     fi
@@ -330,7 +363,7 @@ load_modules() {
     if ! (
         (modprobe esp4 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [esp4]. Exiting now..."
+        echo && echo "|> Error: could not load module [esp4]. Exiting now..."
         echo && echo
         return
     fi
@@ -340,7 +373,7 @@ load_modules() {
     if ! (
         (modprobe macsec 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [macsec]. Exiting now..."
+        echo && echo "|> Error: could not load module [macsec]. Exiting now..."
         echo && echo
         return
     fi
@@ -350,7 +383,7 @@ load_modules() {
     if ! (
         (modprobe stp 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [stp]. Exiting now..."
+        echo && echo "|> Error: could not load module [stp]. Exiting now..."
         echo && echo
         return
     fi
@@ -360,7 +393,7 @@ load_modules() {
     if ! (
         (modprobe p8022 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [p8022]. Exiting now..."
+        echo && echo "|> Error: could not load module [p8022]. Exiting now..."
         echo && echo
         return
     fi
@@ -370,7 +403,7 @@ load_modules() {
     if ! (
         (modprobe psnap 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [psnap]. Exiting now..."
+        echo && echo "|> Error: could not load module [psnap]. Exiting now..."
         echo && echo
         return
     fi
@@ -380,7 +413,7 @@ load_modules() {
     if ! (
         (modprobe llc 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [llc]. Exiting now..."
+        echo && echo "|> Error: could not load module [llc]. Exiting now..."
         echo && echo
         return
     fi
@@ -390,7 +423,7 @@ load_modules() {
     if ! (
         (modprobe ebtables 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [ebtables]. Exiting now..."
+        echo && echo "|> Error: could not load module [ebtables]. Exiting now..."
         echo && echo
         return
     fi
@@ -400,7 +433,7 @@ load_modules() {
     if ! (
         (modprobe rpcsec_gss_krb5 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [rpcsec_gss_krb5]. Exiting now..."
+        echo && echo "|> Error: could not load module [rpcsec_gss_krb5]. Exiting now..."
         echo && echo
         return
     fi
@@ -410,7 +443,7 @@ load_modules() {
     if ! (
         (modprobe auth_rpcgss 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [auth_rpcgss]. Exiting now..."
+        echo && echo "|> Error: could not load module [auth_rpcgss]. Exiting now..."
         echo && echo
         return
     fi
@@ -420,7 +453,7 @@ load_modules() {
     if ! (
         (modprobe intel_vsec 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [intel_vsec]. Exiting now..."
+        echo && echo "|> Error: could not load module [intel_vsec]. Exiting now..."
         echo && echo
         return
     fi
@@ -430,7 +463,7 @@ load_modules() {
     if ! (
         (modprobe x86_pkg_temp_thermal 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [x86_pkg_temp_thermal]. Exiting now..."
+        echo && echo "|> Error: could not load module [x86_pkg_temp_thermal]. Exiting now..."
         echo && echo
         return
     fi
@@ -440,7 +473,7 @@ load_modules() {
     if ! (
         (modprobe efivarfs 2>&1) >>"${MDPB_DIAG_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not load module [efivarfs]. Exiting now..."
+        echo && echo "|> Error: could not load module [efivarfs]. Exiting now..."
         echo && echo
         return
     fi
@@ -513,7 +546,7 @@ echo \$! > /app/bpftrace.pid
 
 EOF
     ) | tee "${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: could not create the ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+        echo && echo "|> Error: could not create the ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
         return 1
@@ -523,7 +556,7 @@ EOF
     echo && echo
 
     if ! (chmod +x "${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: it was not possible to change file bits to run of ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}. Exiting now..."
+        echo && echo "|> Error: it was not possible to change file bits to run of ${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}. Exiting now..."
         echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 02"
         echo && echo
         return 1
@@ -535,7 +568,7 @@ EOF
 
     # Execute the bpftrace script. If previous step passes, it will already be an executable.
     if ! (/bin/sh -c "${BPFTRACE_SCRIPT:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: it was not possible to run the bpftrace script. Exiting now..."
+        echo && echo "|> Error: it was not possible to run the bpftrace script. Exiting now..."
         echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 03"
         echo && echo
     fi
@@ -544,7 +577,7 @@ EOF
     echo && echo
 
     if ! BPFTRACE_PID=$(cat /app/bpftrace.pid); then
-        echo "|> Error: could not find the /app/bpftrace.pid filepath. Exiting now..."
+        echo && echo "|> Error: could not find the /app/bpftrace.pid filepath. Exiting now..."
         echo "|> SCOPE: [bpftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 04"
         echo && echo
     fi
@@ -562,7 +595,7 @@ ftrace_function() {
         USR_TRACE_FUNCTION="function_graph" \
         USR_TRACE_FILTER="dsadas" \
         . "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/trace/Ftrace/kerfuncs.sh"); then
-        echo "|> Error: could not run the kerfuncs scripts for Ftrace. Exiting now..."
+        echo && echo "|> Error: could not run the kerfuncs scripts for Ftrace. Exiting now..."
         echo "|> SCOPE: [ftrace], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
     fi
@@ -574,11 +607,11 @@ ftrace_function() {
 
 beetor_function() {
     if ! /app/beetor; then
-        echo "|> Error: could not run [/app/beetor]. Exiting now..."
+        echo && echo "|> Error: could not run [/app/beetor]. Exiting now..."
         echo "|> SCOPE: [beetor_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
     fi
-    echo "|> Error: could not run [/app/beetor]. Exiting now..."
+    echo && echo "|> Error: could not run [/app/beetor]. Exiting now..."
     echo "|> SCOPE: [beetor_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
     echo && echo
 
@@ -595,7 +628,7 @@ tracer_type_caller() {
             BPFTRACE_VIS="flamegraph, histogram"
             export BPFTRACE_VIS
             if ! bpftrace_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [bpftrace_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [bpftrace_function]. Exiting now..."
                 echo && echo
                 return 1
             fi
@@ -608,7 +641,7 @@ tracer_type_caller() {
             FTRACE_ARGS="HMM..."
             export FTRACE_ARGS
             if ! ftrace_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [ftrace_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [ftrace_function]. Exiting now..."
                 echo && echo
                 return 1
             fi
@@ -620,7 +653,7 @@ tracer_type_caller() {
             BEETOR_ARGS="HMM"
             export BEETOR_ARGS
             if ! beetor_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [beetor_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [beetor_function]. Exiting now..."
                 return 1
             fi
             echo "|> Sucessfully used [tracer_type_caller] function to call [beetor_function]. Proceeding..."
@@ -631,7 +664,7 @@ tracer_type_caller() {
             ZWTD_BPF_ARGS="HMM"
             export ZWTD_BPF_ARGS
             if ! zwtd_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [zwtd_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [zwtd_function]. Exiting now..."
                 return 1
             fi
             echo "|> Sucessfully used [tracer_type_caller] function to call [zwtd_function]. Proceeding..."
@@ -642,7 +675,7 @@ tracer_type_caller() {
             AYA_BPF_ARGS="HMM"
             export AYA_BPF_ARGS
             if ! ayaya_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [ayaya_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [ayaya_function]. Exiting now..."
                 return 1
             fi
             echo "|> Sucessfully used [tracer_type_caller] function to call [ayaya_function]. Proceeding..."
@@ -653,7 +686,7 @@ tracer_type_caller() {
             HPOTA_BPF_ARGS="HMM"
             export HPOTA_BPF_ARGS
             if ! hpota_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [hpota_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [hpota_function]. Exiting now..."
                 return 1
             fi
             echo "|> Sucessfully used [tracer_type_caller] function to call [hpota_function]. Proceeding..."
@@ -664,7 +697,7 @@ tracer_type_caller() {
             JVM_BPF_ARGS="HMM"
             export JVM_BPF_ARGS
             if ! jvm_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [jvm_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [jvm_function]. Exiting now..."
                 return 1
             fi
             echo "|> Sucessfully used [tracer_type_caller] function to call [jvm_function]. Proceeding..."
@@ -675,7 +708,7 @@ tracer_type_caller() {
             OCAML_BPF_ARGS="HMM"
             export OCAML_BPF_ARGS
             if ! ocaml_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [ocaml_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [ocaml_function]. Exiting now..."
                 return 1
             fi
             echo "|> Sucessfully used [tracer_type_caller] function to call [ocaml_function]. Proceeding..."
@@ -686,14 +719,14 @@ tracer_type_caller() {
             LUA_BPF_ARGS="HMM"
             export LUA_BPF_ARGS
             if ! lua_function; then
-                echo "|> Error: the [tracer_type_caller] function could not call [lua_function]. Exiting now..."
+                echo && echo "|> Error: the [tracer_type_caller] function could not call [lua_function]. Exiting now..."
                 return 1
             fi
             echo "|> Sucessfully used [tracer_type_caller] function to call [lua_function]. Proceeding..."
             echo && echo
             ;;
         "*")
-            echo "|> Error: WHICH_TRACER_FUNCTION=${WHICH_TRACER_FUNCTION:-[EMPTY_VARIABLE]} is not a valid [TRACER] option. Options are:"
+            echo && echo "|> Error: WHICH_TRACER_FUNCTION=${WHICH_TRACER_FUNCTION:-[EMPTY_VARIABLE]} is not a valid [TRACER] option. Options are:"
             # print TRACER TYPE CALLER usage
             print_TTC_usage
             echo "|> Exiting now..."
@@ -708,7 +741,7 @@ tracer_type_caller() {
 
 unpack_gvisor() {
     if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" ]; then
-        echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
+        echo && echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
         echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
         return 1
@@ -719,7 +752,7 @@ unpack_gvisor() {
 
     # decompress the gvisor-core.tar.gz
     if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" -C /app/microvms/); then
-        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path /app/microvms/ . Exiting now..."
         echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
         echo && echo
         return 1
@@ -731,7 +764,7 @@ unpack_gvisor() {
 
 unpack_firecracker() {
     if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-core.tar.gz" ]; then
-        echo "|> Error: it was not possible to find the firecracker tarball. Exiting now..."
+        echo && echo "|> Error: it was not possible to find the firecracker tarball. Exiting now..."
         echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
         return 1
@@ -742,7 +775,7 @@ unpack_firecracker() {
 
     # decompress the firecracker-core.tar.gz
     if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-core.tar.gz" -C /app/microvms/); then
-        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-core.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-core.tar.gz into the path /app/microvms/ . Exiting now..."
         echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
         echo && echo
         return 1
@@ -754,7 +787,7 @@ unpack_firecracker() {
 
 unpack_kata() {
     if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-core.tar.gz" ]; then
-        echo "|> Error: it was not possible to find the kata tarball. Exiting now..."
+        echo && echo "|> Error: it was not possible to find the kata tarball. Exiting now..."
         echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
         return 1
@@ -765,7 +798,7 @@ unpack_kata() {
 
     # decompress the kata-core.tar.gz
     if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-core.tar.gz" -C /app/microvms/); then
-        echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-core.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-core.tar.gz into the path /app/microvms/ . Exiting now..."
         echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
         echo && echo
         return 1
@@ -780,7 +813,7 @@ unpack_microvms() {
     mkdir -p /app/microvms
 
     if ! unpack_gvisor; then
-        echo "|> Error: could not unpack gvisor. Exiting now..."
+        echo && echo "|> Error: could not unpack gvisor. Exiting now..."
         echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
         return 1
@@ -790,7 +823,7 @@ unpack_microvms() {
     echo && echo
 
     ### if ! unpack_firecracker; then
-    ###     echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
+    ###     echo && echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
     ###     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
     ###     echo && echo
     ###     return 1
@@ -800,7 +833,7 @@ unpack_microvms() {
     ### echo && echo
 
     ### if ! unpack_kata; then
-    ###     echo "|> Error: could not unpack kata. Exiting now..."
+    ###     echo && echo "|> Error: could not unpack kata. Exiting now..."
     ###     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
     ###     echo && echo
     ###     return 1
@@ -823,7 +856,7 @@ unsquash_squashfs_sdb() {
     mkdir -p "${UNSQUASHED_DIR:-[EMPTY_VARIABLE]}"
 
     if ! (mount /dev/sdb "${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: could not mount /dev/sdb into the ${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+        echo && echo "|> Error: could not mount /dev/sdb into the ${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 01"
         echo && echo
         return 1
@@ -837,7 +870,7 @@ unsquash_squashfs_sdb() {
     ls -allhtr "${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}"
 
     if ! [ -f "${SQUASH_FS_FILE:-[EMPTY_VARIABLE]}" ]; then
-        echo "|> Error: it was not possible to find the ${SQUASH_FS_FILE:-[EMPTY_VARIABLE]} at ${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}. Exiting now..."
+        echo && echo "|> Error: it was not possible to find the ${SQUASH_FS_FILE:-[EMPTY_VARIABLE]} at ${MOUNT_SQUASHFS_DIR:-[EMPTY_VARIABLE]}. Exiting now..."
         echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 02"
         echo && echo
         return 1
@@ -848,7 +881,7 @@ unsquash_squashfs_sdb() {
 
     # unsquash the squashfs with the airgap images inside
     if ! (unsquashfs -d "${UNSQUASHED_DIR:-[EMPTY_VARIABLE]}" "${SQUASH_FS_FILE:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: could not unsquash the /mnt/airgap-registry-image/k3s-tarball.squashfs into the /mnt/k3s-squashfs directory."
+        echo && echo "|> Error: could not unsquash the /mnt/airgap-registry-image/k3s-tarball.squashfs into the /mnt/k3s-squashfs directory."
         echo "|> SCOPE: [unsquash_squashfs_sdb], file: [./scripts/isogen/poc-bootscript.sh], check: 03"
         return 1
     fi
@@ -898,7 +931,7 @@ PIEST
 _main_scope() {
 
     if ! (cat /proc/cpuinfo | grep QEMU); then
-        echo "|> Error: not running inside QEMU, outside of POC scope. Exiting now..."
+        echo && echo "|> Error: not running inside QEMU, outside of POC scope. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
         echo && echo
         # ETC_CONTAINERS_CONF="${ISO_DIR:-[EMPTY_VARIABLE]}/rootfs/etc/containers/containers.conf"
@@ -913,8 +946,16 @@ _main_scope() {
     ETC_CONTAINERS_STORAGE_CONF="/etc/containers/storage.conf"
 
     mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+    if (mount | grep hostshare); then
+        if ! umount "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}"; then
+            echo "|> Error: could not unmount the hostshare 9P virtio for the virtfs option of QEMU. Exiting now..."
+            return 1
+        fi
+        echo "|> Sucessfully unmounted the hostshare 9P virtio for the virtfs option of QEMU. Proceeding..."
+    fi
+
     if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
-        echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
+        echo && echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
         echo && echo
         return 1
@@ -932,7 +973,7 @@ _main_scope() {
 
     # Load modules and get diagnostic over any malfunction
     if ! load_modules; then
-        echo "|> Error: could not run the [load_modules] function to get diagnostics while loading with modprobe. Exiting now..."
+        echo && echo "|> Error: could not run the [load_modules] function to get diagnostics while loading with modprobe. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 03"
         echo && echo
         return 1
@@ -969,7 +1010,7 @@ _main_scope() {
         ln -s "/bin/modprobe" "/sbin/modprobe"
         ln -s "/bin/depmod" "/sbin/depmod"
     ); then
-        echo "|> Error: could not create symlinks from [/bin/kmod] to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Exiting now..."
+        echo && echo "|> Error: could not create symlinks from [/bin/kmod] to [/bin/kmod-based] and from each [/bin/kmod-based] command to [/sbin]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 04"
         echo && echo
         return 1
@@ -981,7 +1022,7 @@ _main_scope() {
     # Prepare run directory for containerd and k3s
     mkdir -p /run /var/run
     if ! (mount -t tmpfs tmpfs /run); then
-        echo "|> Error: could not mount type tmpfs at [/run]. Exiting now..."
+        echo && echo "|> Error: could not mount type tmpfs at [/run]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
         echo && echo
         return 1
@@ -1006,7 +1047,7 @@ _main_scope() {
         mkdir -p /var/lib/rancher/k3s
         mkdir -p /etc/rancher/k3s
     ); then
-        echo "|> Error: could not create k3s directories. Exiting now..."
+        echo && echo "|> Error: could not create k3s directories. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07"
         echo && echo
         return 1
@@ -1025,7 +1066,7 @@ runtime-endpoint: unix:///run/k3s/containerd/containerd.sock
 EOF
         ) | tee /app/crictl.yaml
     ); then
-        echo "|> Error: could not generate a simple crictl.yaml at [/app/crictl.yaml]. Exiting now..."
+        echo && echo "|> Error: could not generate a simple crictl.yaml at [/app/crictl.yaml]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 08"
         echo && echo
         return 1
@@ -1109,7 +1150,7 @@ krun = [
 EOF
         ) | tee "${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not create ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Exiting now..."
+        echo && echo "|> Error: could not create ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 09"
         echo && echo
         return 1
@@ -1157,7 +1198,7 @@ EOF
             # /etc/containers/storage.conf
         ) | tee "${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not create the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Exiting now..."
+        echo && echo "|> Error: could not create the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 10"
         echo && echo
         return 1
@@ -1178,7 +1219,7 @@ debug: false
 EOF
         ) | tee "${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Exiting now..."
+        echo && echo "|> Error: could not setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 11"
         echo && echo
         return 1
@@ -1191,7 +1232,7 @@ EOF
 
     # FUNCTION CALL
     if ! unsquash_squashfs_sdb; then
-        echo "|> Error: cannot call the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Exiting now..."
+        echo && echo "|> Error: cannot call the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
         echo && echo
         return 1
@@ -1200,13 +1241,12 @@ EOF
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
     echo && echo
 
-    # Setup bpftrace
-    # bpftrace dependencies, libclang from llvm17
+    # bpftrace dependencies, libclang from llvm17, podman dependencies
     #cp /app/archive.tar.gz /app/shared-deps/
 
     # copy the tarball of the shared dependencies
     ### if ! (cp /app/archive.tar.gz /app/shared-deps/); then
-    ###     echo "|> Error: could not copy the [/app/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
+    ###     echo && echo "|> Error: could not copy the [/app/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
     ###     echo && echo
     ###     return 1
     ### fi
@@ -1215,7 +1255,7 @@ EOF
 
     # copy the tarball of the shared dependencies
     if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz" /app/shared-deps/); then
-        echo "|> Error: could not copy the [${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
+        echo && echo "|> Error: could not copy the [${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
         echo && echo
         return 1
@@ -1231,7 +1271,7 @@ EOF
         (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep usr -m 1)
         (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep musl -m 1)
     ); then
-        echo "|> Error: either lib or usr or musl were not found on the contents of this archive.tar.gz "
+        echo && echo "|> Error: either lib or usr or musl were not found on the contents of this archive.tar.gz "
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 14"
         echo && echo
         return 1
@@ -1241,7 +1281,7 @@ EOF
     echo && echo
 
     if ! (tar -xvf ./archive.tar.gz); then
-        echo "|> Error: could not decompress the [./archive.tar.gz] filepath. Exiting now..."
+        echo && echo "|> Error: could not decompress the [./archive.tar.gz] filepath. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 15"
         echo && echo
         return 1
@@ -1252,7 +1292,7 @@ EOF
 
     # copy archive tarball local lib directory to the global at the rootfs of the guest virtual machine.
     if ! (cp -r ./lib/* /lib/); then
-        echo "|> Error: could not copy the local directory [./lib/*] to the global [/lib] at the rootfs of the guest virtual machine. Exiting now..."
+        echo && echo "|> Error: could not copy the local directory [./lib/*] to the global [/lib] at the rootfs of the guest virtual machine. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 16"
         echo && echo
         return 1
@@ -1263,7 +1303,7 @@ EOF
 
     # copy archive tarball local usr directory to the global at the rootfs of the guest virtual machine.
     if ! (cp -r ./usr/* /usr/); then
-        echo "|> Error: could not copy the local directory [./usr/*] to the global [/usr] at the rootfs of the guest virtual machine. Exiting now..."
+        echo && echo "|> Error: could not copy the local directory [./usr/*] to the global [/usr] at the rootfs of the guest virtual machine. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 17"
         echo && echo
         return 1
@@ -1274,7 +1314,7 @@ EOF
 
     # cleanup the current clang shared object if it exists
     if ! (rm /usr/lib/libclang.so.17); then
-        echo "|> Error: could not remove the /usr/lib/libclang.so.17 filepath. Exiting now..."
+        echo && echo "|> Error: could not remove the /usr/lib/libclang.so.17 filepath. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 18"
         echo && echo
         return 1
@@ -1285,7 +1325,7 @@ EOF
 
     # Create a clang symlink
     if ! (ln -s /usr/lib/llvm17/lib/libclang.so.17.0.6 /usr/lib/libclang.so.17); then
-        echo "|> Error: could not create a symlink (symbolic link) of libclang. Exiting now..."
+        echo && echo "|> Error: could not create a symlink (symbolic link) of libclang. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 19"
         echo && echo
         return 1
@@ -1301,7 +1341,7 @@ EOF
     # Microvms setup
     # FUNCTION CALL
     if ! unpack_microvms; then
-        echo "|> Error: cannot run the [unpack_microvms] function. Exiting now..."
+        echo && echo "|> Error: cannot run the [unpack_microvms] function. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 20"
         echo && echo
         return 1
@@ -1314,7 +1354,7 @@ EOF
 
     # Bring network up
     if ! (ip link set lo up); then
-        echo "|> Error: could not bring the network up with iproute2 ip (busybox). Exiting now..."
+        echo && echo "|> Error: could not bring the network up with iproute2 ip (busybox). Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 21"
         echo && echo
         return 1
@@ -1325,7 +1365,7 @@ EOF
 
     # run containerd in background.
     if ! (containerd &) then
-        echo "|> Error: could not run containerd in background. Exiting now..."
+        echo && echo "|> Error: could not run containerd in background. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 22"
         echo && echo
         return 1
@@ -1336,7 +1376,7 @@ EOF
 
     # create soft link (symlink) for the container socket to be found by k3s
     if ! (ln -s /run/containerd/containerd.sock /run/k3s/containerd/); then
-        echo "|> Error: could not create soft link (symlink) for the containerd socket to be found by k3s. Exiting now..."
+        echo && echo "|> Error: could not create soft link (symlink) for the containerd socket to be found by k3s. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 23"
         echo && echo
         return 1
@@ -1353,7 +1393,7 @@ containerd:
 EOF
         ) | tee "${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}"
     ); then
-        echo "|> Error: could not create declarative yaml config  at [K3S_AGENT_CONF_FILE=${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}] telling the agent config to use fuse-overlayfs as containerd's default snapshotter. Exiting now..."
+        echo && echo "|> Error: could not create declarative yaml config  at [K3S_AGENT_CONF_FILE=${K3S_AGENT_CONF_FILE:-[EMPTY_VARIABLE]}] telling the agent config to use fuse-overlayfs as containerd's default snapshotter. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 24"
         echo && echo
         return 1
@@ -1371,7 +1411,7 @@ EOF
     # k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=overlayfs > /dev/null 2>&1 &
 
     if ! (k3s server --disable-agent --default-runtime="crun" --disable=traefik --snapshotter=fuse-overlayfs >/dev/null 2>&1 &) then
-        echo "|> Error: could not start the k3s server. Exiting now..."
+        echo && echo "|> Error: could not start the k3s server. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 25"
         return 1
     fi
@@ -1379,20 +1419,32 @@ EOF
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 25"
     echo && echo
 
-    # FUNCTION CALL
-    if ! bpftrace_function; then
-        echo "|> Error: could not run the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Exiting now..."
+    # Setup bpftrace
+    WHICH_TRACER_FUNCTION="-bpftrace"
+    if ! tracer_type_caller; then
+        echo && echo "|> Error: could not run [tracer_type_caller]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 26"
         echo && echo
         return 1
     fi
-    echo "|> Sucessfully ran the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Proceeding..."
+    echo && echo "|> Error: could not run [tracer_type_caller]. Exiting now..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 26"
     echo && echo
 
+    ### # FUNCTION CALL
+    ### if ! bpftrace_function; then
+    ###     echo && echo "|> Error: could not run the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Exiting now..."
+    ###     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 26"
+    ###     echo && echo
+    ###     return 1
+    ### fi
+    ### echo "|> Sucessfully ran the bpftrace function to perform tracing over the k3s process and its kernel subsystem usage. Proceeding..."
+    ### echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 26"
+    ### echo && echo
+
     # list namespaces of k3s with ctr
     if ! (k3s ctr namespace list); then
-        echo "|> Error: could not list namespaces of k3s with ctr. Exiting now..."
+        echo && echo "|> Error: could not list namespaces of k3s with ctr. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 27"
         echo && echo
         return 1
@@ -1411,7 +1463,7 @@ EOF
 
     # import the k3s airgap images with k3s ctr
     if ! (k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/k3s-airgap-images-amd64.tar); then
-        echo "|> Error: could not import the k3s airgap images with k3s ctr. Exiting now..."
+        echo && echo "|> Error: could not import the k3s airgap images with k3s ctr. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 28"
         echo && echo
         return 1
@@ -1423,7 +1475,7 @@ EOF
     # Make sure to unmount the /dev/sdb that had the squashfs now
     # that it isn't needed anymore (previous test).
     if ! (mount | grep /dev/sdb); then
-        echo "|> Error: DID NOT found the /dev/sdb mounted. Exiting now..."
+        echo && echo "|> Error: DID NOT found the /dev/sdb mounted. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 29"
         echo && echo
         return 1
@@ -1433,7 +1485,7 @@ EOF
     echo && echo
 
     if ! (umount /dev/sdb); then
-        echo "|> Error: could not unmount /dev/sdb. Exiting now..."
+        echo && echo "|> Error: could not unmount /dev/sdb. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 30"
         echo && echo
         return 1
@@ -1444,7 +1496,7 @@ EOF
 
     # import the OCI registry:3.0 server image
     if ! (k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/skopeo-convert-registry.oci.tar); then
-        echo "|> Error: could not import the OCI registry:3.0 server image. Exiting now..."
+        echo && echo "|> Error: could not import the OCI registry:3.0 server image. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 31"
         echo && echo
         return 1
@@ -1456,7 +1508,7 @@ EOF
     # get name of the image at the time of import
     # OR_IMG_NAME=$(k3s ctr -n="k8s.io" images import /mnt/k3s-squashfs/skopeo-convert-registry.oci.tar | grep "unpacking" | awk '{ print $2 }')
     if ! UNPACK_NAME=$(k3s ctr images list | grep import | awk '{print $1}'); then
-        echo "|> Error: could not get the name of the image at the time of import (with the UNPACK_NAME variable). Exiting now..."
+        echo && echo "|> Error: could not get the name of the image at the time of import (with the UNPACK_NAME variable). Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 32"
         echo && echo
         return 1
@@ -1467,7 +1519,7 @@ EOF
 
     # tag image with the default name for localhost registry deploys
     if ! (k3s ctr -n="k8s.io" images tag "$UNPACK_NAME" "localhost:5000/registry:3.0"); then
-        echo "|> Error: could not tag image with the default name for localhost registry deploys. Exiting now..."
+        echo && echo "|> Error: could not tag image with the default name for localhost registry deploys. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 33"
         echo && echo
         return 1
@@ -1478,7 +1530,7 @@ EOF
 
     # check the tagged image on the list
     if ! (k3s ctr images ls); then
-        echo "|> Error: could not check the tagged image on the list. Exiting now..."
+        echo && echo "|> Error: could not check the tagged image on the list. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 33"
         echo && echo
         return 1
@@ -1498,7 +1550,7 @@ EOF
         localhost:5000/registry:3.0 \
         registry-test \
         /entrypoint.sh); then
-        echo "|> Error: could not create the container with k3s ctr, which would be run by k3s containerd. Exiting now..."
+        echo && echo "|> Error: could not create the container with k3s ctr, which would be run by k3s containerd. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 34"
         echo && echo
         return 1
@@ -1510,7 +1562,7 @@ EOF
     # define variable to check the metrics-server state
     # (beware sub-shell scopes)
     if ! CHECK_METRICS_SERVER="$(k3s kubectl get pods -n=kube-system | grep "metrics-server" | awk '{ print $1 }')"; then
-        echo "|> Error: could not check metrics-server state. Exiting now..."
+        echo && echo "|> Error: could not check metrics-server state. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 35"
         echo && echo
         return 1
@@ -1521,7 +1573,7 @@ EOF
 
     # describe Pod of the metrics-server state
     if ! (k3s kubectl describe pod "${CHECK_METRICS_SERVER:-[EMPTY_VARIABLE]}" -n=kube-system); then
-        echo "|> Error: could not describe Pod of the metrics-server state. Exiting now..."
+        echo && echo "|> Error: could not describe Pod of the metrics-server state. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 36"
         echo && echo
         return 1
@@ -1548,7 +1600,7 @@ EOF
 
     # FUNCTION CALL
     if ! runtimeclass_job; then
-        echo "|> Error: could not create the runtimeClass(rc) job to be performed to each of the microvms and other (rc) classes in k3s. Exiting now..."
+        echo && echo "|> Error: could not create the runtimeClass(rc) job to be performed to each of the microvms and other (rc) classes in k3s. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 37"
         echo && echo
         return 1
@@ -1561,7 +1613,7 @@ EOF
     if ! [ "${BPFTRACE_PID:-[EMPTY_VARIABLE]}" = "" ]; then
         #(kill -SIGINT "$BPFTRACE_PID")
         if ! (kill -SIGTERM "$BPFTRACE_PID"); then
-            echo "|> Error: could not gracefully exit BPFTRACE_PID=${BPFTRACE_PID:-[EMPTY_VARIABLE]}. Exiting now..."
+            echo && echo "|> Error: could not gracefully exit BPFTRACE_PID=${BPFTRACE_PID:-[EMPTY_VARIABLE]}. Exiting now..."
             echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 38"
             echo && echo
             return 1
@@ -1573,7 +1625,7 @@ EOF
 
     # Kill k3s
     if ! (kill -SIGTERM $(pgrep k3s)); then
-        echo "|> Error: could not kill k3s. Exiting now..."
+        echo && echo "|> Error: could not kill k3s. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 39"
         echo && echo
         return 1
@@ -1585,7 +1637,7 @@ EOF
     # reboot: power down
     # stops recording the asciinema section
     if ! (poweroff -f); then
-        echo "|> Error: could not reboot/power-down the QEMU guest virtual machine. Exiting now (anyway! haha)..."
+        echo && echo "|> Error: could not reboot/power-down the QEMU guest virtual machine. Exiting now (anyway! haha)..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 40"
         echo && echo
         return 1
@@ -1595,3 +1647,37 @@ EOF
     echo && echo
 
 }
+
+print_usage() {
+    cat <<-END >&2
+USAGE: poc-bootscript [-options]
+                - main
+                - help
+                - version
+eg,
+MODE="main" . /app/poc-bootscript.sh
+poc-bootscript -main    # runs the [_main_scope] function of this program.
+poc-bootscript -help    # shows this help message
+poc-bootscript -version # shows script version
+
+See the man page and example file for more info.
+
+END
+
+}
+
+if [ "${MODE}" = "--main" ] || [ "${MODE}" = "-m" ] || [ "${MODE}" = "-main" ]; then
+    if ! _main_scope; then
+        echo && echo "|> Error: could not run the [_main_scope] function of [poc-bootscript] shellscript. Exiting now..."
+        print_usage
+        echo && echo
+        return 1
+    fi
+    echo
+    echo "|> Sucessfully ran the [_main_scope] function of [poc-bootscript] shellscript. Proceeding..."
+    echo && echo
+else
+    echo && echo "|> Error: could not run the [_main_scope], probably no option was oferred. Exiting now..."
+    echo
+    return 1
+fi
