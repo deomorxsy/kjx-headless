@@ -235,7 +235,7 @@ k8s:
 
 # ===============
 # ISO9660 build phase creation with mount namespaces and squashfs
-.PHONY: iso
+#.PHONY: iso
 
 # ==============
 # ISO9660 runtime phase with mount namespaces, libguestfs and squashfs
