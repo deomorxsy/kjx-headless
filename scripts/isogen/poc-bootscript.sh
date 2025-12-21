@@ -1151,7 +1151,7 @@ _main_scope() {
         echo "|> could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
         echo && echo
-        #return 1
+        return 1
     fi
     echo "|> Sucessfully created symlink (soft link) of [/run] at [/var]. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
