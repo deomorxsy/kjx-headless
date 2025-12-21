@@ -53,6 +53,54 @@ MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
 # poc-bootscript filepath
 POC_BOOTSCRIPT="./scripts/isogen/poc-bootscript.sh"
 
+prepare_packaging() {
+
+    # Packaging
+
+    # setup user and groups management with shadow, doas and others
+    if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
+        echo "|> Error: it was not possible to setup user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Exiting now..."
+        echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully ran the setup for user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Proceeding..."
+    echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+    echo && echo
+
+    # setup iptables, conntrack, netfilter, bpf and other network things for k3s and OCI-CRI.
+    if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
+        echo "|> Error: it was not possible to run the usgp-man shellscript to build iptables dependencies. Exiting now..."
+        echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully ran the usgp-man shellscript to build iptables dependencies. Proceeding..."
+    echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+    echo && echo
+
+}
+
+prepare_rootfs() {
+
+    if (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache rootfs); then
+        echo "|> Error: could not run the [./deploy/isogen/rootfs/Dockerfile] script to build the rootfs (based on dropbear ssh and others). Exiting now..."
+        echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Sucessfully ran the [./deploy/isogen/rootfs/Dockerfile] script to build the rootfs (based on dropbear ssh and others). Exiting now..."
+    echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+
+    if ! prepare_packaging; then
+        echo "|> Error: could not run the [prepare_packaging] function. Exiting now..."
+        echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+        return 1
+    fi
+    echo "|> Sucessfully ran the [prepare_packaging] function. Proceeding..."
+    echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+
+}
+
 airgap_clean() {
 
     CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT="/tmp/k3s-tarball.squashfs"
@@ -115,32 +163,6 @@ airgap_clean() {
 
 prepare_tracers() {
     echo
-}
-
-packaging() {
-
-    # Packaging
-
-    # setup user and groups management with shadow, doas and others
-    if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
-        echo "|> Error: it was not possible to setup user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Exiting now..."
-        echo "|> SCOPE: ./scripts/sandbox/run-qemu; packaging() function"
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully ran the setup for user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Proceeding..."
-    echo && echo
-
-    # setup iptables, conntrack, netfilter, bpf and other network things for k3s and OCI-CRI.
-    if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
-        echo "|> Error: it was not possible to run the usgp-man shellscript to build iptables dependencies. Exiting now..."
-        echo "|> SCOPE: ./scripts/sandbox/run-qemu; packaging() function"
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully ran the usgp-man shellscript to build iptables dependencies. Proceeding..."
-    echo && echo
-
 }
 
 microvm_poc_gvisor() {
@@ -1619,13 +1641,12 @@ runiso() {
     fi
     case "${LOG_VERBOSE}" in
     "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: runiso"
-        printf "\n|> CHECK 01:"
         printf "\n|> Is PWD the root of the repository?... [PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 01"
         ;;
     esac
     printf "\n|> success: the PWD DOES correspond to the root of the repository.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 01"
 
     # independent call to save_registry
     if ! [ -f "${SKOPEO_TARBALL_ARTIFACT}" ]; then
@@ -1637,32 +1658,32 @@ runiso() {
     fi
     case "${LOG_VERBOSE}" in
     "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: runiso"
-        printf "\n|> CHECK 02:"
         printf "\n|> Does the SKOPEO_TARBALL_ARTIFACT filepath exists?...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 02"
         ;;
     esac
     printf "\n|> success: the SKOPEO_TARBALL_ARTIFACT filepath exists.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 02"
 
     if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
         printf "\n|> Error: the filepath %s does not exist. Attempting to create it..." "${K3S_SQUASHFS_IMAGE_PATH:-[EMPTY_VARIABLE]}"
 
         if ! squash_k3s; then
-            echo && echo "|> SCOPE: check 03, runiso"
             echo "|> Error: it was not possible to create the $K3S_SQUASHFS_IMAGE_PATH filepath. Exiting now..."
+            echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
             return 1
         fi
+        echo "|> Sucessfully created the $K3S_SQUASHFS_IMAGE_PATH filepath. Exiting now..."
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
     fi
     case "${LOG_VERBOSE}" in
     "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: runiso"
-        printf "\n|> CHECK 03:"
         printf "\n|> check if raw image exists at utils. ... [PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
         ;;
     esac
     printf "\n|> success: the raw image DOES exists at utils.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
 
     # Check if raw virtual disk sparse file exists at utils
     if ! create_rvdsf; then
@@ -1672,13 +1693,12 @@ runiso() {
     #fi
     case "${LOG_VERBOSE}" in
     "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: runiso"
-        printf "\n|> CHECK 04:"
         printf "\n|> Does RVDSF filepath exists?...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 04"
         ;;
     esac
     printf "\n|> checked if the RVDSF filepath exists.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 04"
 
     # create the virtfs directory path to be shared between host and guest
     if ! [ -d "${VIRTFS_ART_PATH}" ]; then
@@ -1687,28 +1707,36 @@ runiso() {
     fi
     case "${LOG_VERBOSE}" in
     "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: runiso"
-        printf "\n|> CHECK 05:"
         printf "\n|> Create the virtfs directory path to be shared between host and guest. ...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 05"
         ;;
     esac
     printf "\n|> created the virtfs directory to be shared between host and guest. \n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 05"
 
     # Copy the registry to serve the images locally to the single-node k3s cluster
     if ! cp "${SKOPEO_TARBALL_ARTIFACT}" "${VIRTFS_ART_PATH}"; then
         printf "\n|> Error: could not copy the SKOPEO_TARBALL_ARTIFACT into the VIRTFS_ART_PATH. Exiting now... \n\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 06"
         return 1
     fi
     case "${LOG_VERBOSE}" in
     "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: runiso"
-        printf "\n|> CHECK 06:"
         printf "\n|> copy the registry to serve the images locally to the single-node k3s cluster. ...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 06"
         ;;
     esac
     printf "\n|> copied the registry tarball into the virtfs directory successfully. \n\n"
+
+    mkdir -p ./artifacts/burn-runiso
+
+    if ! prepare_rootfs; then
+        echo "|> Error: could not run the function [prepare_rootfs]. Exiting now..."
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 07"
+        return 1
+    fi
+    echo "|> Sucessfully ran the function [prepare_rootfs]. Proceeding..."
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 07"
 
     ### # it will only run if the k3s squashfs image does not exist.
     ### if [ "${KJXPATH}" = "kjx-headless" ]; then
