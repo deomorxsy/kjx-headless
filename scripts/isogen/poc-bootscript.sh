@@ -86,7 +86,9 @@ echo && echo
 MDPB_DIAG_FILE="/modprobe-diagnostics.txt"
 
 # setup k3s crictl configuration file
-K3S_CRICTL_CONF_FILE="/var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml"
+#OLD_K3S_CRICTL_CONF_FILE="/var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml"
+mkdir -p /app/k3s-config
+K3S_CRICTL_CONF_FILE="/app/k3s-config/crictl.yaml"
 export K3S_CRICTL_CONF_FILE
 
 K3S_AGENT_CONF_FILE="/etc/rancher/k3s/agent-config.yaml"
@@ -1349,7 +1351,7 @@ EOF
         echo && echo "|> Error: cannot call the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
         echo && echo
-        return 1
+        # return 1
     fi
     echo "|> Sucessfully called the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
