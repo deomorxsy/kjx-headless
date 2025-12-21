@@ -1137,22 +1137,29 @@ _main_scope() {
     # mkdir -p /run /var/run
     mkdir -p /run /var
 
-    if ! (mount -t tmpfs tmpfs /run); then
-        echo && echo "|> Error: could not mount type tmpfs at [/run]. Exiting now..."
+    # if [tmpfs] filesystem is not already mounted at /run, attempt to mount it
+    if ! (mount | grep "/run" | grep "tmpfs"); then
+        echo "|> WARNING: There is no known [tmpfs] filesystem mounted at [/run]. Attempting to create symlink..."
+
+        if ! (mount -t tmpfs tmpfs /run); then
+            echo && echo "|> Error: could not mount type tmpfs at [/run]. Exiting now..."
+            echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully mounted type tmpfs at [/run]. Proceeding..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
         echo && echo
-        return 1
+
     fi
-    echo "|> Sucessfully mounted type tmpfs at [/run]. Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
-    echo && echo
+    echo "|> Found an already mounted [tmpfs] filesystem at [/run]. Proceeding..."
 
     # soft link of the previous mounted tmpfs filesystem at /run
     if ! [ -f /var/run ]; then
-        echo "|> There is no known [/var/run]. Attempting to create symlink..."
+        echo "|> WARNING: There is no known [/var/run]. Attempting to create symlink..."
 
         if ! (ln -s /run /var/ 2>/dev/null); then
-            echo "|> could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
+            echo "|> Error: could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
             echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
             echo && echo
             return 1
