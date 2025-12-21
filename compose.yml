@@ -141,6 +141,7 @@ services:
         - "localhost:5000/initramfs:latest"
     stop_signal: SIGINT
   dropbear:
+    container_name: dropbear
     environment:
       - git_hash
     build:
