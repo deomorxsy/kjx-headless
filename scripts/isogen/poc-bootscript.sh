@@ -558,10 +558,29 @@ EOF
 }
 
 ftrace_function() {
-    TARGET_PID="${FTRACE_PID:-[EMPTY_VARIABLE]}" \
+    if ! (TARGET_PID="${FTRACE_PID:-[EMPTY_VARIABLE]}" \
         USR_TRACE_FUNCTION="function_graph" \
         USR_TRACE_FILTER="dsadas" \
-        . "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/trace/Ftrace/kerfuncs.sh"
+        . "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/trace/Ftrace/kerfuncs.sh"); then
+        echo "|> Error: could not run the kerfuncs scripts for Ftrace. Exiting now..."
+        echo "|> SCOPE: [ftrace], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+    fi
+    echo "|> Sucessfully ran the kerfuncs scripts for Ftrace. Proceeding..."
+    echo "|> SCOPE: [ftrace_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+}
+
+beetor_function() {
+    if ! /app/beetor; then
+        echo "|> Error: could not run [/app/beetor]. Exiting now..."
+        echo "|> SCOPE: [beetor_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+    fi
+    echo "|> Error: could not run [/app/beetor]. Exiting now..."
+    echo "|> SCOPE: [beetor_function], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
 
 }
 
@@ -601,8 +620,77 @@ tracer_type_caller() {
             BEETOR_ARGS="HMM"
             export BEETOR_ARGS
             if ! beetor_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [beetor_function]. Exiting now..."
                 return 1
             fi
+            echo "|> Sucessfully used [tracer_type_caller] function to call [beetor_function]. Proceeding..."
+            echo && echo
+            ;;
+        # call zig ebpf with wasm on deno
+        "-zwtd_bpf")
+            ZWTD_BPF_ARGS="HMM"
+            export ZWTD_BPF_ARGS
+            if ! zwtd_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [zwtd_function]. Exiting now..."
+                return 1
+            fi
+            echo "|> Sucessfully used [tracer_type_caller] function to call [zwtd_function]. Proceeding..."
+            echo && echo
+            ;;
+        # call aya-rs
+        "-ayaya")
+            AYA_BPF_ARGS="HMM"
+            export AYA_BPF_ARGS
+            if ! ayaya_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [ayaya_function]. Exiting now..."
+                return 1
+            fi
+            echo "|> Sucessfully used [tracer_type_caller] function to call [ayaya_function]. Proceeding..."
+            echo && echo
+            ;;
+        # call elixir's honey-potion
+        "-hpota")
+            HPOTA_BPF_ARGS="HMM"
+            export HPOTA_BPF_ARGS
+            if ! hpota_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [hpota_function]. Exiting now..."
+                return 1
+            fi
+            echo "|> Sucessfully used [tracer_type_caller] function to call [hpota_function]. Proceeding..."
+            echo && echo
+            ;;
+            # call elixir's honey-potion
+        "-jvm")
+            JVM_BPF_ARGS="HMM"
+            export JVM_BPF_ARGS
+            if ! jvm_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [jvm_function]. Exiting now..."
+                return 1
+            fi
+            echo "|> Sucessfully used [tracer_type_caller] function to call [jvm_function]. Proceeding..."
+            echo && echo
+            ;;
+        # call ebpf with ocaml posix interface
+        "-ocaml")
+            OCAML_BPF_ARGS="HMM"
+            export OCAML_BPF_ARGS
+            if ! ocaml_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [ocaml_function]. Exiting now..."
+                return 1
+            fi
+            echo "|> Sucessfully used [tracer_type_caller] function to call [ocaml_function]. Proceeding..."
+            echo && echo
+            ;;
+        # call lunatik bpf
+        "-lua")
+            LUA_BPF_ARGS="HMM"
+            export LUA_BPF_ARGS
+            if ! lua_function; then
+                echo "|> Error: the [tracer_type_caller] function could not call [lua_function]. Exiting now..."
+                return 1
+            fi
+            echo "|> Sucessfully used [tracer_type_caller] function to call [lua_function]. Proceeding..."
+            echo && echo
             ;;
         "*")
             echo "|> Error: WHICH_TRACER_FUNCTION=${WHICH_TRACER_FUNCTION:-[EMPTY_VARIABLE]} is not a valid [TRACER] option. Options are:"
