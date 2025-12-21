@@ -5,13 +5,16 @@ apk upgrade && apk update &&
 # zig cc
 
 # set variables
-#
+
+mkdir -p /app/artifacts/dropbear/
+
 # previous: DB_LINK="https://matt.ucc.asn.au/dropbear/dropbear-2025.87.tar.bz2"
 # DB_TARBALL="dropbear-2025.87.tar.bz2"
 DB_LINK="https://matt.ucc.asn.au/dropbear/releases/dropbear-2025.88.tar.bz2"
 DB_TARBALL_BZADO="dropbear-2025.88.tar.bz2"
 DB_TARBALL="dropbear-2025.88.tar"
 DB_PATH="artifacts/dropbear"
+DROPBEAR_VERSION="dropbear-2025.88"
 
 IS_IN_ROOT_REPO=$(basename "$PWD")
 IS_IN_BUILD_ENV=$(
@@ -19,21 +22,24 @@ IS_IN_BUILD_ENV=$(
 )
 
 if ! [ "${IS_IN_ROOT_REPO:-[EMPTY_VARIABLE]}" = "kjx-headless" ]; then
-    return 1
+    return
 fi
 
 if ! (${IS_IN_BUILD_ENV}); then
 
+    mkdir -p /app/artifacts/dropbear/
     # fetch artifact and decompress tarball
-    mkdir -p "${DB_PATH:-[EMPTY_VARIABLE]}"
+    #mkdir -p "${DB_PATH:-[EMPTY_VARIABLE]}"
 
-    if ! (wget "${DB_LINK:-[EMPTY_VARIABLE]}" --directory-prefix="${DB_PATH:-[EMPTY_VARIABLE]}"); then
+    #if ! (wget "${DB_LINK:-[EMPTY_VARIABLE]}" --directory-prefix="${DB_PATH:-[EMPTY_VARIABLE]}"); then
+    if ! (wget "${DB_LINK:-[EMPTY_VARIABLE]}" --directory-prefix="/app/artifacts/dropbear/"); then
         echo "|> Error: could not fetch ${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]} from the URL ${DB_LINK:-[EMPTY_VARIABLE]}. Exiting now..."
         return 1
     fi
     echo "|> Sucessfully fetched ${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]} from the URL ${DB_LINK:-[EMPTY_VARIABLE]}. Proceeding..."
 
-    cd "${DB_PATH:-[EMPTY_VARIABLE]}" || return
+    #cd "${DB_PATH:-[EMPTY_VARIABLE]}" || return
+    cd "/app/artifacts/dropbear/" || return
 
     if ! (cp "./${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]}" "./v2_${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]}"); then
         echo "|> Error: it was not possible to copy the DB_TARBALL_BZADO into a v2 backup. Exiting now..."
@@ -61,7 +67,7 @@ if ! (${IS_IN_BUILD_ENV}); then
 
     # configure and install binary
     #cd ./artifacts/dropbear/dropbear-2025.87 || return
-    cd ./artifacts/dropbear/${DB_TARBALL%.*:-[EMPTY_VARIABLE]} || return
+    cd /app/artifacts/dropbear/${DROPBEAR_VERSION:-[EMPTY_VARIABLE]} || return
 
     # # set zig env
     # export CC="zig cc"
@@ -80,12 +86,14 @@ if ! (${IS_IN_BUILD_ENV}); then
     # create the dropbear multi-binary
     make PROGRAMS="dropbear dropbearkey dropbearconvert scp dbclient" MULTI=1
 
-# setup symlinks for the multi-binary
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbear"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearkey"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearconvert"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/scp"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dbclient"
+    # setup symlinks for the multi-binary
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbear"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearkey"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearconvert"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/scp"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dbclient"
+
+    cd - || return
 
 #/home/rkd/app/artifacts/dropbear-multi/*
 

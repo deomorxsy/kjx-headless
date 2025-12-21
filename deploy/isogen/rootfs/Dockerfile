@@ -262,11 +262,105 @@ COPY ./deploy/isogen/rootfs/setup-dropbear.sh /app/scripts/setup-dropbear.sh
 #COPY --from=relay /ramdisk/ /app/ramdisk/
 RUN <<EOF
 
-if ! (. /app/scripts/setup-dropbear.sh); then
-    echo "|> Error: could not run [./deploy/isogen/rootfs/setup-dropbear.sh]. Exiting now..."
-    return 1
-fi
-    echo "|> Sucessfully ran [./deploy/isogen/rootfs/setup-dropbear.sh]. Proceeding..."
+apk upgrade && apk update && \
+    apk add musl-dev gcc make
+
+ls -allhtr /app/scripts/
+
+# if ! (. /app/scripts/setup-dropbear.sh); then
+#     echo "|> Error: could not run [./deploy/isogen/rootfs/setup-dropbear.sh]. Exiting now..."
+#     return 1
+# fi
+#     echo "|> Sucessfully ran [./deploy/isogen/rootfs/setup-dropbear.sh]. Proceeding..."
+#
+#
+# ls -allhtr /app/artifacts/dropbear/
+
+EOF
+
+RUN <<EOF
+DB_LINK="https://matt.ucc.asn.au/dropbear/releases/dropbear-2025.88.tar.bz2"
+DB_TARBALL_BZADO="dropbear-2025.88.tar.bz2"
+DB_TARBALL="dropbear-2025.88.tar"
+DB_PATH="artifacts/dropbear"
+DROPBEAR_VERSION="dropbear-2025.88"
+
+mkdir -p /app/artifacts/dropbear/
+    # fetch artifact and decompress tarball
+    #mkdir -p "${DB_PATH:-[EMPTY_VARIABLE]}"
+
+    #if ! (wget "${DB_LINK:-[EMPTY_VARIABLE]}" --directory-prefix="${DB_PATH:-[EMPTY_VARIABLE]}"); then
+    if ! (wget "${DB_LINK:-[EMPTY_VARIABLE]}" --directory-prefix="/app/artifacts/dropbear/"); then
+        echo "|> Error: could not fetch ${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]} from the URL ${DB_LINK:-[EMPTY_VARIABLE]}. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully fetched ${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]} from the URL ${DB_LINK:-[EMPTY_VARIABLE]}. Proceeding..."
+
+    #cd "${DB_PATH:-[EMPTY_VARIABLE]}" || return
+    cd "/app/artifacts/dropbear/" || return
+
+    if ! (cp "./${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]}" "./v2_${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the DB_TARBALL_BZADO into a v2 backup. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied the DB_TARBALL_BZADO into a v2 backup. Proceding..."
+
+    if ! (bzip2 -d "./${DB_TARBALL_BZADO:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: could not decompress the bzip2 file at [DB_TARBALL_BZADO=${DB_TARBALL_BZADO}]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully decompressed the bzip2 file at [DB_TARBALL_BZADO=${DB_TARBALL_BZADO}]. Proceeding..."
+
+    if ! (tar -xvf "${DB_TARBALL:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: could not decompress the tarball at [${DB_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully decompressed the tarball at [${DB_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
+
+    echo "=========="
+    echo "|> Dropbear tarball extracted with success."
+    echo "=========="
+
+    cd - || return
+
+EOF
+
+RUN <<EOF
+
+DB_LINK="https://matt.ucc.asn.au/dropbear/releases/dropbear-2025.88.tar.bz2"
+DB_TARBALL_BZADO="dropbear-2025.88.tar.bz2"
+DB_TARBALL="dropbear-2025.88.tar"
+DB_PATH="artifacts/dropbear"
+DROPBEAR_VERSION="dropbear-2025.88"
+
+
+cd /app/artifacts/dropbear/${DROPBEAR_VERSION:-[EMPTY_VARIABLE]} || return
+
+    # # set zig env
+    # export CC="zig cc"
+    # export CXX="zig c++"
+    # export CFLAGS="-target x86_64-linux-musl"
+    # export CXXFLAGS="-target x86_64-linux-musl"
+    # export LDFLAGS="-target x86_64-linux-musl"
+
+    # set gcc options for stripping unused code
+    LDFLAGS="$LDFLAGS -Wl,--gc-sections"
+    CFLAGS="$CFLAGS -ffunction-sections -fdata-sections"
+
+    # compile statically and disable zlib so it gets slim
+    ./configure --prefix=/usr --enable-static --disable-zlib
+
+    # create the dropbear multi-binary
+    make PROGRAMS="dropbear dropbearkey dropbearconvert scp dbclient" MULTI=1
+
+    # setup symlinks for the multi-binary
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbear"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearkey"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearconvert"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/scp"
+    ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dbclient"
+
+cd - || return
 
 EOF
 
