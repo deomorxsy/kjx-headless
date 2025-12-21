@@ -59,29 +59,57 @@ airgap_clean() {
     CLEAN_K3S_TARBALL_IMAGE="./utils/storage/k3s-tarball-squashfs.img"
     CLEAN_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
 
-    if ! (rm "${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Exiting now..."
+    if [ -f "${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Artifact found. Attempting to remove now..."
         echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully removed the [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Proceeding..."
-    echo && echo
 
-    if ! (rm "${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Exiting now..."
+        if ! (rm "${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}"); then
+            echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Exiting now..."
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 01"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully removed the [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Proceeding..."
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 01"
         echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully removed [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Proceeding..."
-    echo && echo
 
-    if ! (rm "${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: could not remove [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
-        echo && echo
-        return 1
+        return
     fi
-    echo "|> Sucessfully removed [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
-    echo && echo
+
+    if [ -f "${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Artifact found. Attempting to remove now..."
+        echo && echo
+
+        if ! (rm "${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}"); then
+            echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Exiting now..."
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 02"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully removed [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Proceeding..."
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 02"
+        echo && echo
+
+        return
+    fi
+
+    if [ -f "${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Artifact found. Attempting to remove now..."
+        echo && echo
+
+        if ! (rm "${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}"); then
+            echo "|> Error: could not remove [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 03"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully removed [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 03"
+        echo && echo
+
+        return
+
+    fi
 
 }
 
@@ -1768,6 +1796,8 @@ elif [ "${MODE}" = "kjx" ]; then
     kjx
 elif [ "${MODE}" = "--airgap" ] || [ "${MODE}" = "-ag" ] || [ "${MODE}" = "-airgap" ]; then
     airgap_k3s
+elif [ "${MODE}" = "--airgap_clean" ] || [ "${MODE}" = "-agc" ] || [ "${MODE}" = "-airgap_clean" ]; then
+    airgap_clean
 elif [ "${MODE}" = "--squash" ] || [ "${MODE}" = "-sq" ] || [ "${MODE}" = "-sq" ] || [ "${MODE}" = "-squash" ]; then
     squash_k3s
 elif [ "${MODE}" = "--runiso" ] || [ "${MODE}" = "-runiso" ] || [ "${MODE}" = "runiso" ]; then
