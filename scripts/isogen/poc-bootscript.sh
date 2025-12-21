@@ -1389,8 +1389,8 @@ EOF
     if ! unsquash_squashfs_sdb; then
         echo && echo "|> Error: cannot call the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
-        echo && echo
-        # return 1
+        echo
+        return 1
     fi
     echo "|> Sucessfully called the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
