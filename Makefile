@@ -365,6 +365,12 @@ qemu_builder:
 airgap:
 	MODE="-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
+# airgap k3s inside QEMU
+.PHONY: airgap_clean
+airgap_clean:
+	MODE="-airgap_clean" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+
 
 # generate k3s dependencies
 .PHONY: squash
