@@ -1136,6 +1136,7 @@ _main_scope() {
     # Prepare run directory for containerd and k3s
     # mkdir -p /run /var/run
     mkdir -p /run /var
+
     if ! (mount -t tmpfs tmpfs /run); then
         echo && echo "|> Error: could not mount type tmpfs at [/run]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 05"
@@ -1147,15 +1148,53 @@ _main_scope() {
     echo && echo
 
     # soft link of the previous mounted tmpfs filesystem at /run
-    if ! (ln -s /run /var/ 2>/dev/null); then
-        echo "|> could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
+    if ! [ -f /var/run ]; then
+        echo "|> There is no known [/var/run]. Attempting to create symlink..."
+
+        if ! (ln -s /run /var/ 2>/dev/null); then
+            echo "|> could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
+            echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully created symlink (soft link) of [/run] at [/var]. Proceeding..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
         echo && echo
-        return 1
+
     fi
-    echo "|> Sucessfully created symlink (soft link) of [/run] at [/var]. Proceeding..."
+    echo "|> Sucessfully created symlink of [/run] at [/var/run] There is no known [/var/run]. Attempting to create symlink..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 06"
-    echo && echo
+
+    # if there is a [/var/run], then check if it is a symlink to [/run].
+    # if it is not, create the symlink.
+    CHECK_VARRUN_REAL_PATH="$(readlink -f /var/run)"
+    if ! [ "${CHECK_VARRUN_REAL_PATH:-[EMPTY_VARIABLE]}" = "/run" ]; then
+
+        echo "|> WARNING: [/var/run] is not a symlink to [/run]. Attempting to remove and recreate the symlink..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07"
+
+        if ! rm -rf /var/run; then
+            echo "|> Error: could not remove [/var/run]"
+            echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07-01"
+            return 1
+        fi
+        echo "|> Sucessfully removed [/var/run]. Proceeding..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07-01"
+        echo
+
+        if ! (ln -s /run /var/ 2>/dev/null); then
+            echo "|> could not create symlink (soft link) of [/run] at [/var]. Exiting now..."
+            echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07-02"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully created symlink (soft link) of [/run] at [/var]. Proceeding..."
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07-02"
+
+    fi
+    echo "|> Sucessfully checked if [/var/run] was a symlink to [/run]. Proceeding..."
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07"
+    echo
 
     # create k3s directories
     if ! (
@@ -1164,12 +1203,12 @@ _main_scope() {
         mkdir -p /etc/rancher/k3s
     ); then
         echo && echo "|> Error: could not create k3s directories. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07"
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 08"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created k3s directories. Proceding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 07"
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 08"
     echo && echo
 
     # Generate a sample crictl.yaml, any path will suffice.
@@ -1183,12 +1222,12 @@ EOF
         ) | tee /app/crictl.yaml
     ); then
         echo && echo "|> Error: could not generate a simple crictl.yaml at [/app/crictl.yaml]. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 08"
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 09"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully generated a simple crictl.yaml at [/app/crictl.yaml]. Proceding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 08"
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 09"
 
     # ===============================================
     #
@@ -1267,12 +1306,12 @@ EOF
         ) | tee "${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]}"
     ); then
         echo && echo "|> Error: could not create ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 09"
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 10"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created ${ETC_CONTAINERS_CONF:-[EMPTY_VARIABLE]} configuration file, the runtimeClass lookup filepaths for k3s. Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 09"
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 10"
     echo && echo
 
     # Setup storage info for containers
@@ -1315,12 +1354,12 @@ EOF
         ) | tee "${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}"
     ); then
         echo && echo "|> Error: could not create the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 10"
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 11"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully created the ${ETC_CONTAINERS_STORAGE_CONF:-[EMPTY_VARIABLE]}, the storage info for OCI containers. Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 10"
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 11"
     echo && echo
 
     # setup the k3s crictl configuration file: crictl.yaml
@@ -1336,12 +1375,12 @@ EOF
         ) | tee "${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]}"
     ); then
         echo && echo "|> Error: could not setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 11"
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
         echo && echo
         return 1
     fi
     echo "|> Sucessfully setup the k3s crictl configuration file K3S_CRICTL_CONF_FILE=${K3S_CRICTL_CONF_FILE:-[EMPTY_VARIABLE]} . Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 11"
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
     echo && echo
 
     # k3s crictl --config=/app/crictl.yaml ps --all
@@ -1349,12 +1388,12 @@ EOF
     # FUNCTION CALL
     if ! unsquash_squashfs_sdb; then
         echo && echo "|> Error: cannot call the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
+        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
         echo && echo
         # return 1
     fi
     echo "|> Sucessfully called the [unsquash_squashfs_sdb] function to decompress the squashfs filesystem holding the k3s airgap images. Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 12"
+    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
     echo && echo
 
     # bpftrace dependencies, libclang from llvm17, podman dependencies
