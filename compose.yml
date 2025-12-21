@@ -140,17 +140,17 @@ services:
       tags:
         - "localhost:5000/initramfs:latest"
     stop_signal: SIGINT
-  dropbear:
-    container_name: dropbear
+  rootfs:
+    container_name: rootfs
     environment:
       - git_hash
     build:
       context: "."
-      dockerfile: "./deploy/isogen/dropbear/Dockerfile"
+      dockerfile: "./deploy/isogen/rootfs/Dockerfile"
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
-        - "localhost:5000/dropbear:latest"
+        - "localhost:5000/rootfs:latest"
     stop_signal: SIGINT
   grub:
     environment:

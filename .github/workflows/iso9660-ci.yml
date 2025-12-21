@@ -4,14 +4,14 @@ name: iso9660
 on:
   push:
     branches:
-      - 'isogen/iso9660'
-      - 'pipelines/ci-cd'
+      - "isogen/iso9660"
+      - "pipelines/ci-cd"
   pull_request:
     branches:
-      - 'main'
-      - 'releases/**'
+      - "main"
+      - "releases/**"
   schedule:
-    - cron: '11 12 * * 1,3,6'
+    - cron: "11 12 * * 1,3,6"
   # run the workflow manually from Actions tab
   workflow_dispatch:
   # run the workflow when called from another workflow
@@ -27,7 +27,7 @@ on:
       - libbpf-core
     types:
       - completed
-    branches: ['isogen/iso9660']
+    branches: ["isogen/iso9660"]
 
 # jobs can run in sequence or parallel in a workflow
 jobs:
@@ -68,9 +68,9 @@ jobs:
         run: |
           make fa-initramfs
 
-      - name: Retrieve dropbear-based ssh-enabled-rootfs artifact from previous actions workflow
+      - name: Retrieve rootfs artifact from previous actions workflow
         run: |
-          make fa-ssh-rootfs
+          make fa-rootfs
 
       - name: Retrieve qonq-qdb packaging
         run: |
@@ -87,8 +87,6 @@ jobs:
       - name: Build ISO9660
         run: |
           make iso9660
-
-
 
   # This single job is called "export"
   export:
@@ -126,5 +124,3 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-

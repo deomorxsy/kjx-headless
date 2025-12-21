@@ -513,8 +513,8 @@ fa-kernel:
 fa-initramfs:
 	MODE="-initramfs" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-ssh-rootfs
-fa-ssh-rootfs:
-	MODE="-ssh-rootfs" . ./scripts/ci-cd/fa-gha.sh
+fa-rootfs:
+	MODE="-rootfs" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-qonq-qdb
 fa-qonq-qdb:
 	MODE="-qonq-qdb" . ./scripts/ci-cd/fa-gha.sh

@@ -10,6 +10,9 @@ FROM alpine:3.22 as relay
 ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
 
+ENV DROPBEAR_VERSION="dropbear-2025.88"
+ARG DROPBEAR_VERSION="dropbear-2025.88"
+
 WORKDIR /ramdisk/
 RUN mkdir -p bin dev etc lib mnt/root proc root sbin sys tmp var
 # ======== NETWORK SETUP ===========
@@ -254,81 +257,17 @@ FROM alpine:3.22 as sshbear
 
 WORKDIR /app/
 
+COPY ./deploy/isogen/rootfs/setup-dropbear.sh /app/scripts/setup-dropbear.sh
+
 #COPY --from=relay /ramdisk/ /app/ramdisk/
 RUN <<EOF
 
-apk upgrade && apk update && \
-    apk add musl-dev gcc make
-# zig cc
+if ! (. /app/scripts/setup-dropbear.sh); then
+    echo "|> Error: could not run [./deploy/isogen/rootfs/setup-dropbear.sh]. Exiting now..."
+    return 1
+fi
+    echo "|> Sucessfully ran [./deploy/isogen/rootfs/setup-dropbear.sh]. Proceeding..."
 
-# set variables
-db_link="https://matt.ucc.asn.au/dropbear/dropbear-2025.87.tar.bz2"
-db_tarball="dropbear-2025.87.tar.bz2"
-db_path="./artifacts/dropbear"
-
-# fetch artifact and decompress tarball
-mkdir -p "$db_path"
-wget "$db_link" --directory-prefix="$db_path"
-cd "$db_path" || return
-cp "./$db_tarball" "./v2_$db_tarball"
-bzip2 -d "./$db_tarball" && \
-    tar -xvf "./dropbear-2025.87.tar" && \
-        printf "\n|> Dropbear tarball extracted with success.\n"
-cd - || return
-
-# configure and install binary
-cd ./artifacts/dropbear/dropbear-2025.87 || return
-
-# # set zig env
-# export CC="zig cc"
-# export CXX="zig c++"
-# export CFLAGS="-target x86_64-linux-musl"
-# export CXXFLAGS="-target x86_64-linux-musl"
-# export LDFLAGS="-target x86_64-linux-musl"
-
-# set gcc options for stripping unused code
-LDFLAGS="$LDFLAGS -Wl,--gc-sections"
-CFLAGS="$CFLAGS -ffunction-sections -fdata-sections"
-
-# compile statically and disable zlib so it gets slim
-./configure --prefix=/usr --enable-static --disable-zlib
-
-# create the dropbear multi-binary
-make PROGRAMS="dropbear dropbearkey dropbearconvert scp dbclient" MULTI=1
-
-# setup symlinks for the multi-binary
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbear"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearkey"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dropbearconvert"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/scp"
-# ln -s ./dropbearmulti "$HOME/app/artifacts/dropbear-multi/dbclient"
-
-#/home/rkd/app/artifacts/dropbear-multi/*
-
-#mkdir -p /app/extract; tar -czf /app/extract/results.tar.gz /home/rkd/app/artifacts/dropbear-multi/*'
-
-# if [ $(nproc) = "1" ]; then
-# make -j$(nproc)
-# else
-# make -j$($(nproc)-1)
-# fi
-#
-# mkdir -p /app/final/
-#
-# make install DESTDIR=/app/final/
-
-# ======================
-# # convert openssh to dropbear style public key
-# dropbearconvert openssh dropbear ~/.ssh/id_rsa  ~/.ssh/id_rsa.db
-# # associate hostname with the public key
-# dbclient -i ~/.ssh/id_rsa.db <hostname>
-# # create local dropbear key, then pipe the public key to an existing path
-# ./dropbearkey -y -f ~/.ssh/id_ed25519 | grep "^ssh-" > ~/.ssh/id_ed25519.pub
-# # generate server keys and then run the server
-# ./dropbearkey -t ed25519 -f dropbear_ed25519_host_key
-#
-
-# ========================
 EOF
 
 
@@ -338,7 +277,12 @@ FROM alpine:3.22 as packer
 WORKDIR /app/dropbear/
 
 #COPY --from=sshbear /home/rkd/app/artifacts/dropbear/dropbear-2025.87/dropbearmulti .
-COPY --from=sshbear /app/artifacts/dropbear/dropbear-2025.87/dropbearmulti .
+# COPY --from=sshbear /app/artifacts/dropbear/dropbear-2025.87/dropbearmulti .
+# COPY --from=sshbear /app/artifacts/dropbear/dropbear-2025.88/dropbearmulti .
+ENV DROPBEAR_VERSION="dropbear-2025.88"
+ARG DROPBEAR_VERSION="dropbear-2025.88"
+
+COPY --from=sshbear /app/artifacts/dropbear/${DROPBEAR_VERSION}/dropbearmulti .
 
 
 WORKDIR /app/ramdisk/

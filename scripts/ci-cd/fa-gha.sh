@@ -225,6 +225,9 @@ if [ "$MODE" = "-kernel" ] || [ "$MODE" = "--kernel" ] || [ "$MODE" = "kernel" ]
     fetch_kernel
 elif [ "$MODE" = "-initramfs" ] || [ "$MODE" = "--initramfs" ] || [ "$MODE" = "initramfs" ]; then
     fetch_initramfs
+elif [ "$MODE" = "-rootfs" ] || [ "$MODE" = "--rootfs" ] || [ "$MODE" = "rootfs" ]; then
+    fetch_initramfs
+
 elif [ "$MODE" = "-beetor" ] || [ "$MODE" = "--beetor" ] || [ "$MODE" = "beetor" ]; then
     fetch_beetor_bwc
 elif [ "$MODE" = "-runit" ] || [ "$MODE" = "--runit" ] || [ "$MODE" = "runit" ]; then
