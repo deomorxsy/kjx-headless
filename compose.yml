@@ -3,6 +3,7 @@
 volumes:
   prometheus_data: {}
   grafana_data: {}
+  qemu_kjx: {}
 
 services:
   # zig-wasm-typescript-deno-bpf
@@ -72,6 +73,8 @@ services:
     stop_signal: SIGINT
   qemu_kjx:
     container_name: qemu_kjx
+    volumes:
+      - qemu_kjx:/app/qemu-kjx/:ro
     build:
       context: "."
       dockerfile: "./Dockerfile"
@@ -415,25 +418,27 @@ services:
   # Packaging
   # ============
   qonq-shadow:
+    container_name: qonq_shadow
     environment:
       - git_hash
     build:
       context: "."
       dockerfile: "./scripts/packages/Dockerfile.shadow.qonq"
       tags:
-        - "localhost:5000/shadow-qonq:latest"
+        - "localhost:5000/qonq_shadow:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
       echo hmm
     stop_signal: SIGINT
   qonq-iptables:
+    container_name: qonq_iptables
     environment:
       - git_hash
     build:
       context: "."
       dockerfile: "./scripts/packages/Dockerfile.iptables.qonq"
       tags:
-        - "localhost:5000/shadow-qonq:latest"
+        - "localhost:5000/qonq_iptables:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
       echo hmm
