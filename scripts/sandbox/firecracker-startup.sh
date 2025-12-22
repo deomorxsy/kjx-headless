@@ -164,13 +164,34 @@ EOF
 # Thin pools are to block devices what sparse files are to filesystems.
 
 if ! [ -f "${DEVMAPPER_DIR}/data" ]; then
-    sudo touch "${DEVMAPPER_DIR}/data"
-    sudo truncate -s 100G "${DEVMAPPER_DIR}/data"
+    if ! (touch "${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/data"); then
+        echo "|> Error: could not create the [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/data] filepath. Exiting now..."
+        return 1
+    fi
+        echo "|> Sucessfully created the [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/data] filepath. Proceeding..."
+
+    # if ! (truncate -s 100G "${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/data"); then
+    # sparse file
+    if ! (truncate -s 200MB "${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/data"); then
+        echo "|> Error: could not create the SPARSE FILE [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/data] filepath with truncate. Exiting now..."
+        return 1
+    fi
+        echo "|> Sucessfully created the SPARSE FILE [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/data] filepath with truncate. Proceeding..."
 fi
 
 if ! [ -f "${DEVMAPPER_DIR}/metadata" ]; then
-    sudo touch "${DEVMAPPER_DIR}/metadata"
-    sudo truncate -s 2G "${DEVMAPPER_DIR}/metadata"
+
+    if ! (touch "${DEVMAPPER_DIR}/metadata"); then
+        echo "|> Error: could not create the [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/metadata] filepath. Exiting now..."
+        return 1
+    fi
+        echo "|> Sucessfully created the [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/metadata] filepath. Proceeding..."
+
+    if ! (truncate -s 2G "${DEVMAPPER_DIR}/metadata"); then
+        echo "|> Error: could not create the SPARSE FILE [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/metadata] filepath with truncate. Exiting now..."
+        return 1
+    fi
+        echo "|> Sucessfully created the SPARSE FILE [${DEVMAPPER_DIR:-[EMPTY_VARIABLE]}/metadata] filepath with truncate. Proceeding..."
 fi
 
 DATADEV="$(sudo losetup --output NAME --noheadings --associated ${DEVMAPPER_DIR}/data)"
