@@ -34,8 +34,13 @@ out.*
 
 # include submodules for nvim-telescope
 assets/unikernels
+assets/tracers
+assets/vm-specs
 assets/oci-cri
 assets/non-oci
+assets/makefile2graph
+assets/visualization
+
 assets/async-profiler/*
 assets/apk-tools
 assets/ebpf_exporter
@@ -214,3 +219,7 @@ assets/bootloaders/
 
 # asciinema casts
 artifacts/*.cast
+
+# virtfs, microvms
+virtfstest*
+
