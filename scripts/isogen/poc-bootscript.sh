@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # old filename: ./scripts/qemu-k3s-startup.sh
+# from ./scripts/isogen/poc-bootscript.sh
 
 # virtio virtfs interface for
 # file sharing between guest and host
@@ -55,7 +56,80 @@ echo "|> Successfully mounted 9P using virtio as transport option. Proceeding...
 echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
 echo && echo
 
-#MODE="-main" . /app/poc-bootscript.sh
+# manually,
+# cp /mnt/virtio-test/poc-bootscript.sh /app
+# MODE="-main" . /app/poc-bootscript.sh
+
+isogen_initramfs_adapter_starter() {
+    # from ./scripts/isogen/poc-bootscript.sh
+
+    # virtio virtfs interface for
+    # file sharing between guest and host
+    VIRTIO_PASSTHRU_DIR="/mnt/virtio-test"
+    export VIRTIO_PASSTHRU_DIR
+
+    # ================
+    # check if inside guest vm. If so, mount the
+    # virtfs virtio passthrough paravirt interface
+    # logically it will branch into the rest once the condition passes.
+    #
+    # ================
+    #
+    if (cat /proc/cpuinfo | grep QEMU >/dev/null 2>&1); then
+        echo && echo "|> Error: not running inside QEMU, outside of POC scope. Exiting now..."
+        echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
+        echo && echo
+        # ETC_CONTAINERS_CONF="${ISO_DIR:-[EMPTY_VARIABLE]}/rootfs/etc/containers/containers.conf"
+        # ETC_CONTAINERS_STORAGE_CONF="${ISO_DIR:-[EMPTY_VARIABLE]}/rootfs/etc/containers/storage.conf"
+
+        # direct-style return
+        # return 1
+
+        ###
+        ### mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+        ### mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"
+        ###
+        mkdir -p "${VIRTIO_PASSTHRU_DIR}"
+        mkdir -p /app
+
+        if [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh" ]; then
+
+            if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/poc-bootscript.sh" /app); then
+                echo "|> Error: could not copy the bootscript"
+                echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+                return 1
+            fi
+            echo "|> Sucessfully copied the bootscript"
+            echo
+        fi
+
+        if (mount | grep hostshare); then
+            if ! umount "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}"; then
+                echo "|> Error: could not unmount the hostshare 9P virtio for the virtfs option of QEMU. Exiting now..."
+                return 1
+            fi
+            echo "|> Sucessfully unmounted the hostshare 9P virtio for the virtfs option of QEMU. Proceeding..."
+        fi
+
+        if ! (mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"); then
+            echo && echo "|> Error: it was not possible to mount 9P using virtio as transport option. Exiting now..."
+            echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+            echo && echo
+            return 1
+        fi
+        echo "|> Successfully mounted 9P using virtio as transport option. Proceeding..."
+        echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
+        echo && echo
+
+        cp /mnt/virtio-test/poc-bootscript.sh /app
+        MODE="-main" . /app/poc-bootscript.sh
+
+    fi
+    echo "|> Sucessfully running inside QEMU, inside of the POC scope. Proceeding..."
+    echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 01"
+    echo && echo
+
+}
 
 ### first_setup() {
 ###
