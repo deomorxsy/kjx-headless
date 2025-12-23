@@ -107,10 +107,107 @@ submit_fire() {
     }'
 }
 
-fc_pre_req() {
-    # https://github.com/firecracker-microvm/firecracker-containerd/blob/main/docs/getting-started.md#prerequisites
+fc_demo_network() {
 
-    echo
+    ##########################
+    # CNI Network
+    ##########################
+    BINPATH="./bin"
+    CNI_BIN_ROOT="/opt/cni/bin"
+    FCNET_CONFIG_ETC="/etc/cni/conf.d/fcnet.conflist"
+    FCNET_CONFIG_LOCAL_REPO="tools/demo/fcnet.conflist"
+
+    if ! [ -f "${FCNET_CONFIG_LOCAL_REPO}" ]; then
+        echo "|> Error: the file [FCNET_CONFIG_LOCAL_REPO=${FCNET_CONFIG_LOCAL_REPO}] was not found. Exiting now..."
+        return 1
+
+    fi
+    echo "|> Error: the file [FCNET_CONFIG_LOCAL_REPO=${FCNET_CONFIG_LOCAL_REPO}] was not found. Exiting now..."
+
+    # if the ETC file does not exist or if the local config is newer than the ETC file,
+    # create the directory and install local config into the ETC filepath
+    if ! [ -f "${FCNET_CONFIG_ETC}" ] ||
+        ! [ "${FCNET_CONFIG_LOCAL_REPO}" -nt "${FCNET_CONFIG_ETC}" ]; then
+        echo "|> WARNING: either the ETC file [DOES] exist or the local config for the demo network is [NOT NEWER/OLDER] than the ETC config. Nothing to be done. Exiting now..."
+        return 1
+
+    fi
+    echo "|> WARNING: either the ETC file [DOES NOT] exist or the local config for the demo network is [NEWER] than the ETC config. Proceeding to [UPDATE] the ETC file..."
+
+    mkdir -p "$(dirname "${FCNET_CONFIG_ETC}")"
+    if ! (install -o root -g root -m644 "${FCNET_CONFIG_LOCAL_REPO:-[EMPTY_VARIABLE]}" "${FCNET_CONFIG_ETC:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to install [FCNET_CONFIG_LOCAL_REPO=${FCNET_CONFIG_LOCAL_REPO:-[EMPTY_VARIABLE]} into the [FCNET_CONFIG_ETC=${FCNET_CONFIG_ETC:-[EMPTY_VARIABLE]}. Exiting now...]"
+        return 1
+    fi
+
+    mkdir --parents "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}"
+    chmod -R 0755 "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}"
+
+    BRIDGE_BIN="${BINPATH}/bridge"
+    PTP_BIN="${BINPATH}/ptp"
+    HOSTLOCAL_BIN="${BINPATH}/host-local"
+    FIREWALL_BIN="${BINPATH}/firewall"
+    TC_REDIRECT_TAP_BIN="${BINPATH}/tc-redirect-tap"
+    TEST_BRIDGED_TAP_BIN="${BINPATH}/test-bridged-tap"
+    LOOPBACK_BIN="${BINPATH}/loopback-bin"
+
+    (
+        cat <<EOF
+
+
+
+# bridge interface
+        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/main/bridge@v1.1.0
+
+        # ptp
+        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/main/ptp@v1.1.0
+# hostlocal interface
+        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/ipam/host-local@v1.1.0
+        # firewall
+        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/meta/firewall@v1.1.0
+
+        # tc redirect tap
+        GOBIN=$(dir $@) go install github.com/awslabs/tc-redirect-tap/cmd/tc-redirect-tap@v0.0.0-20250516183331-34bf829e9a5c
+
+# loopback interface
+        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/main/loopback@v1.1.0
+
+# test-cni-bins:
+# test bridged tap
+        go build -o $@ $(CURDIR)/internal/cmd/test-bridged-tap
+
+# install-cni-bins: cni-bins $(CNI_BIN_ROOT)
+        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${BRIDGE_BIN:-[EMPTY_VARIABLE]}
+        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${PTP_BIN:-[EMPTY_VARIABLE]}
+        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${HOSTLOCAL_BIN:-[EMPTY_VARIABLE]}
+        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${FIREWALL_BIN:-[EMPTY_VARIABLE]}
+        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${TC_REDIRECT_TAP_BIN:-[EMPTY_VARIABLE]}
+        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${LOOPBACK_BIN:-[EMPTY_VARIABLE]}
+
+# install-test-cni-bins: test-cni-bins $(CNI_BIN_ROOT)
+        install -D -o root -g root -m755 -t ${CNI_BIN_ROOT:-[EMPTY_VARIABLE]} ${TEST_BRIDGED_TAP_BIN:-[EMPTY_VARIABLE]}
+
+# $(FCNET_CONFIG): tools/demo/fcnet.conflist
+        mkdir -p $(dir $(FCNET_CONFIG))
+        install -o root -g root -m644 tools/demo/fcnet.conflist $(FCNET_CONFIG)
+
+FCNET_BRIDGE_CONFIG?=/etc/network/interfaces.d/fc-br0
+$(FCNET_BRIDGE_CONFIG): tools/demo/fc-br0.interface
+        mkdir -p $(dir $(FCNET_BRIDGE_CONFIG))
+        install -o root -g root -m644 tools/demo/fc-br0.interface $(FCNET_BRIDGE_CONFIG)
+
+.PHONY: demo-network
+demo-network: install-cni-bins $(FCNET_CONFIG)
+
+
+        EOF
+        ) | tee ./artifacts/Makefile.fr_demo_network
+
+}
+
+# firecracker-containerd packaging
+fc_packaging() {
+    # https://github.com/firecracker-microvm/firecracker-containerd/blob/main/docs/getting-started.md#prerequisites
 
     if ! [ "$(uname) $(uname -m)" = "Linux x86_64" ]; then
         echo "|> ERROR: your system is not Linux x86_64. ...[FAILED]"
@@ -126,6 +223,16 @@ fc_pre_req() {
     fi
     echo "|> Sucessfully detected  [/dev/kvm] as acessible. ...[PASSED]"
 
+    if ! ( ("$(uname -r | cut -d. -f1)*1000" + "$(uname -r | cut -d. -f2)" 4014 >=)); then
+        echo "ERROR: your kernel version ($(uname -r)) is too old. Exiting now..."
+        return 1
+    fi
+
+    if ! (dmesg | grep -i "hypervisor detected"); then
+        echo "WARNING: you are running in a virtual machine. Firecracker is not well tested under nested virtualization."
+        return 1
+    fi
+
     #!/bin/sh
     err=""
     [ "$(uname) $(uname -m)" = "Linux x86_64" ] ||
@@ -139,7 +246,10 @@ fc_pre_req() {
     [ -z "$err" ] && echo "Your system looks ready for Firecracker!" || echo -e "$err"
 }
 
-firecracker_containerd() {
+# firecracker-containerd runtime setup
+# which relies in kernel modules such as Device Mapper,
+# built-in or kernel object
+fc_runner() {
     # docs: https://github.com/firecracker-microvm/firecracker-containerd/blob/main/docs/
     # run on a container pipeline
 
