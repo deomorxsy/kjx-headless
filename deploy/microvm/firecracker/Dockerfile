@@ -12,6 +12,10 @@ ARG PATH="/usr/lib/go-1.24/bin:${PATH}"
 ENV SANDBOX_USER="firecontainerd"
 ARG SANDBOX_USER="firecontainerd"
 
+# firecracker artifact directory
+ENV FIREART="/home/${SANDBOX_USER}/fireart"
+ARG FIREART="/home/${SANDBOX_USER}/fireart"
+
 ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
 
@@ -42,6 +46,12 @@ EOF
 WORKDIR /app
 RUN <<EOF
 
+# user management
+SANDBOX_USER="firecontainerd"
+# firecracker artifact directory
+FIREART="/home/${SANDBOX_USER}/fireart"
+
+
 PATH="/usr/lib/go-1.24/bin:${PATH}"
 export PATH
 
@@ -55,6 +65,9 @@ adduser -s /bin/sh -u 1000 -G "${SANDBOX_USER}" \
 # Certify it will have the correct user:group permissions
 chown -R ${SANDBOX_USER}:${SANDBOX_USER} /home/${SANDBOX_USER}
 
+mkdir -p "/home/${SANDBOX_USER}/app"
+mkdir -p "${FIREART}/json-config/"
+
 EOF
 
 
@@ -67,6 +80,14 @@ EOF
 WORKDIR "/home/${SANDBOX_USER}/app"
 
 RUN <<EOF
+
+# user management
+SANDBOX_USER="firecontainerd"
+# firecracker artifact directory
+FIREART="/home/${SANDBOX_USER}/fireart"
+
+
+mkdir -p "${FIREART}/json-config/"
 
 if ! (git clone https://github.com/firecracker-microvm/firecracker-containerd.git); then
     echo "|> Error: could not clone the firecracker-containerd repository. Exiting now..."
@@ -85,7 +106,6 @@ if ! (make all); then
 # ls -l ./firecracker-control/cmd/containerd/
 # ls -l ./bin
 
-mkdir -p /home/firecontainerd/fireart
 
 if ! (cp -r ./bin/ /home/firecontainerd/fireart/); then
     echo "|> Error: could not copy the [./bin] directory to [/home/firecontainerd/fireart/]. Exiting now..."
@@ -126,23 +146,52 @@ return 1
 fi
 echo "|> Sucessfully copied the [./runtime/containerd-shim-aws-firecracker] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
 
-if ! (cp ./examples/etc/containerd/firecracker-runtime.json); then
-echo "|> Error: could not copy the [./examples/etc/containerd/firecracker-runtime.json] binary directory to [/home/firecontainerd/fireart/]. Exiting now..."
-return 1
+# Copy JSON configuration files
+FIND_JSON=$(find ./ \( -iname '*.json' \) -type f -exec ls -lt {} + | awk '{print $9}')
+if ! (cp "$FIND_JSON" "${FIREART}/json-config/"); then
+    echo "|> Error: could not find a [./*.json] file and copy it to [FIREART=${FIREART}]. Exiting now..."
+    #return 1
 fi
-echo "|> Sucessfully copied the [./examples/etc/containerd/firecracker-runtime.json] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
+    echo "|> Sucessfully found at least one [./*.json] file. Proceeding..."
+
+
+# if ! (cp ./examples/etc/containerd/firecracker-runtime.json); then
+# echo "|> Error: could not copy the [./examples/etc/containerd/firecracker-runtime.json] binary directory to [/home/firecontainerd/fireart/]. Exiting now..."
+# return 1
+# fi
+# echo "|> Sucessfully copied the [./examples/etc/containerd/firecracker-runtime.json] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
 
 
 # create a tarball of firecracker-containerd artifacts
 # warning: it relies on a networking setup with iptables
 # refer to: ./scripts/packaging/iptables-setup.sh
-tar -czf /firecracker-core.tar.gz /home/firecontainerd/fireart/
+#
+
+FIREAR
+
+if ! (tar -czf "/home/${SANDBOX_USER}/firecracker-core.tar.gz" "${FIREART}"); then
+    echo "|> Error: could not create a tarball from [FIREART=${FIREART}] at [/home/${SANDBOX_USER}/firecracker-core.tar.gz]. Exiting now..."
+    return 1
+    fi
+    echo "|> Sucessfully created a tarball from [FIREART=${FIREART}] at [/home/${SANDBOX_USER}/firecracker-core.tar.gz]. Proceeding..."
 
 EOF
 
 FROM alpine:3.22 AS empty
 
-COPY --from=builder /root/artifacts/sources/firecracker-core.tar.gz .
+# user management
+ENV SANDBOX_USER="firecontainerd"
+ARG SANDBOX_USER="firecontainerd"
+
+# firecracker artifact directory
+ENV FIREART="/home/${SANDBOX_USER}/fireart"
+ARG FIREART="/home/${SANDBOX_USER}/fireart"
+
+ARG GIT_CONTAINERFILE_HASH
+ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
+
+
+COPY --from=builder "/home/${SANDBOX_USER}/firecracker-core.tar.gz" .
 
 RUN echo "done!!!"
 
