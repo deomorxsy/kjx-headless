@@ -7,7 +7,7 @@ MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
 MICROVM_ART_DIR="./artifacts/microvms"
 
 if ! [ -d "${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}" ]; then
-    echo "|> Error: [MICROVM_ART_DIR=${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}] does not exist. Attempting to create..."
+    echo "|> WARNING: [MICROVM_ART_DIR=${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}] does not exist. Attempting to create..."
     echo "|> SCOPE: [global], file: [./scripts/entrypoints/microvms.sh], check: 01"
 
     if ! (mkdir -p "${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}"); then
@@ -20,12 +20,6 @@ if ! [ -d "${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}" ]; then
 fi
 echo "|> Successfully found [MICROVM_ART_DIR=${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}] directory. Proceeding..."
 echo "|> SCOPE: [global], file: [./scripts/entrypoints/microvms.sh], check: 01"
-
-mvm_aio() {
-
-    #MODE="microvm, hlcr" STACK="firecracker, podman" . ./scripts/qonq-qdb.sh
-    MODE="microvm" STACK="firecracker, gvisor, kata" . ./scripts/qonq-qdb.sh
-}
 
 mvm_firecracker() {
 
@@ -290,6 +284,33 @@ mvm_kata() {
     echo "|> Successfully stopped the OCI registry server."
     echo && echo
 
+}
+
+mvm_aio() {
+
+    #MODE="microvm, hlcr" STACK="firecracker, podman" . ./scripts/qonq-qdb.sh
+    #MODE="microvm" STACK="firecracker, gvisor, kata" . ./scripts/qonq-qdb.sh
+
+    # build gvisor
+    if ! mvm_gvisor; then
+        echo "|> Error: could not finish the function [mvm_firecracker] to build artifacts for firecracker-containerd as runtimeClass. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully finished the function [mvm_firecracker] to build artifacts for firecracker-containerd as runtimeClass. Proceeding..."
+
+    # build firecracker
+    if ! mvm_firecracker; then
+        echo "|> Error: could not finish the function [mvm_firecracker] to build artifacts for firecracker-containerd as runtimeClass. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully finished the function [mvm_firecracker] to build artifacts for firecracker-containerd as runtimeClass. Proceeding..."
+
+    # build kata
+    if ! mvm_kata; then
+        echo "|> Error: could not finish the function [mvm_kata] to build artifacts for kata-containers as runtimeClass. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully finished the function [mvm_kata] to build artifacts for kata-containers as runtimeClass. Proceeding..."
 }
 
 print_usage() {
