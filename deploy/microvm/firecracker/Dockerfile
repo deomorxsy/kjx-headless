@@ -76,7 +76,11 @@ if ! (git clone https://github.com/firecracker-microvm/firecracker-containerd.gi
 
 cd ./firecracker-containerd/ || return
 
-make all
+if ! (make all); then
+    echo "|> Error: failed running [make all]. Exiting now..."
+    return 1
+    fi
+    echo "|> Sucessfully runned [make all]. Proceeding..."
 
 # ls -l ./firecracker-control/cmd/containerd/
 # ls -l ./bin
@@ -109,7 +113,11 @@ if [ -f ./firecracker-control/cmd/containerd/firecracker-ctr ] && [ -f ./firecra
 fi
 
 # just to make...sure...
-make
+if ! (make); then
+    echo "|> Error: failed running [make all]. Exiting now..."
+    return 1
+    fi
+    echo "|> Sucessfully runned [make all]. Proceeding..."
 #fzf -e
 ls -allhtr runtime/
 if !( cp ./runtime/containerd-shim-aws-firecracker /home/firecontainerd/fireart/); then
