@@ -117,8 +117,6 @@ fc_demo_network() {
     UID:=$(shell id -u)
     GID:=$(shell id -g)
 
-
-
     ##########################
     # CNI Network
     ##########################
@@ -179,16 +177,34 @@ fc_demo_network() {
     # loopback interface
     GOBIN="${LOOPBACK_BIN}" go install github.com/containernetworking/plugins/plugins/main/loopback@v1.1.0
 
+    # =======================
     # test-cni-bins:
     # test bridged tap
     #
     # TEST_BRIDGED_TAP_BIN?=$(BINPATH)/test-bridged-tap
     # $(TEST_BRIDGED_TAP_BIN): $(shell find internal/cmd/test-bridged-tap -name *.go) $(GOMOD) $(GOSUM)
-    if ! $(shell find internal/cmd/test-bridged-tap -name *.go) $(GOMOD) $(GOSUM)
-        go build -o "${TEST_BRIDGED_TAP_BIN}" $(CURDIR)/internal/cmd/test-bridged-tap
+    #if ! $(shell find internal/cmd/test-bridged-tap -name *.go) $(GOMOD) $(GOSUM)
+    #    go build -o "${TEST_BRIDGED_TAP_BIN}" $(CURDIR)/internal/cmd/test-bridged-tap
+    #
 
+    MICROVM_FIREART_GOMOD="$(go env GOMOD)"
+    MICROVM_FIREART_GOSUM="${MICROVM_FIREART_GOMOD:-[EMPTY_VARIABLE]}/.mod/.sum"
+    MICROVM_FIREART_GOPATH="$(go env GOPATH)"
+    MICROVM_FIREART_GID="$(id -u)"
+    MICROVM_FIREART_UID="$(id -g)"
+    MICROVM_SUBMODULES="_submodules"
+    export MICROVM_FIREART_GOSUM MICROVM_FIREART_GOPATH MICROVM_FIREART_GID MICROVM_FIREART_UID
 
-    go build -o $@ $(CURDIR)/internal/cmd/test-bridged-tap
+    # TEST_BRIDGED_TAP_BIN
+    TBTB_PATH="./internal/cmd/test-bridged-tap/"
+    # if (find ./ \( -iname 'internal/cmd/test-bridged-tap/*.go' \) -type f -exec MICROVM_FIREART_GOMOD MICROVM_FIREART_GOSUM {} +); then
+    if ! (find "${TBTB_PATH:-[EMPTY_VARIABLE]}" -type f -name "*.go"); then
+        echo "|> Error: it was not possible to find any [*.go] files at "
+        return 1
+    fi
+
+    # build the main.go inside
+    go build -o "${TEST_BRIDGED_TAP_BIN:-[EMPTY_VARIABLE]}" "${TBTB_PATH:-[EMPTY_VARIABLE]}"
 
     # install-cni-bins: cni-bins $(CNI_BIN_ROOT)
     install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${BRIDGE_BIN:-[EMPTY_VARIABLE]}"
@@ -199,30 +215,17 @@ fc_demo_network() {
     install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${LOOPBACK_BIN:-[EMPTY_VARIABLE]}"
 
     # install-test-cni-bins: test-cni-bins $(CNI_BIN_ROOT)
-    install -D -o root -g root -m755 -t ${CNI_BIN_ROOT:-[EMPTY_VARIABLE]} ${TEST_BRIDGED_TAP_BIN:-[EMPTY_VARIABLE]}
+    install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${TEST_BRIDGED_TAP_BIN:-[EMPTY_VARIABLE]}"
 
-    (
-        cat <<EOF
+    FCNET_BRIDGE_CONFIG="/etc/network/interfaces.d/fc-br0"
+    if ! [ -f "tools/demo/fc-br0.interface" ]; then
+        return 1
+    fi
+    mkdir -p "$(dirname ${FCNET_BRIDGE_CONFIG:-[EMPTY_VARIABLE]})"
+    install -o root -g root -m644 tools/demo/fc-br0.interface ${FCNET_BRIDGE_CONFIG:-[EMPTY_VARIABLE]}
 
-
-
-
-
-# $(FCNET_CONFIG): tools/demo/fcnet.conflist
-        mkdir -p $(dir $(FCNET_CONFIG))
-        install -o root -g root -m644 tools/demo/fcnet.conflist $(FCNET_CONFIG)
-
-FCNET_BRIDGE_CONFIG?=/etc/network/interfaces.d/fc-br0
-$(FCNET_BRIDGE_CONFIG): tools/demo/fc-br0.interface
-        mkdir -p $(dir $(FCNET_BRIDGE_CONFIG))
-        install -o root -g root -m644 tools/demo/fc-br0.interface $(FCNET_BRIDGE_CONFIG)
-
-.PHONY: demo-network
-demo-network: install-cni-bins $(FCNET_CONFIG)
-
-
-        EOF
-        ) | tee ./artifacts/Makefile.fr_demo_network
+    # .PHONY: demo-network
+    # demo-network: install-cni-bins $(FCNET_CONFIG)
 
 }
 
