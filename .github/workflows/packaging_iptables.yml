@@ -36,16 +36,16 @@ jobs:
       - name: Build OCI image
         run: |
           docker run -d -p 5000:5000 --name registry registry:latest
-          docker compose -f ./compose.yml --progress=plain build --no-cache qonq-iptables
+          docker compose -f ./compose.yml --progress=plain build --no-cache qonq_iptables
           docker push localhost:5000/qonq_iptables:latest
 
       - name: Retrieve artifact from docker image
         run: |
-          # docker create qonq-iptables -d localhost:5000/qonq-iptables:latest
-          docker compose -f ./compose.yml create qonq-iptables
+          # docker create qonq_iptables -d localhost:5000/qonq_iptables:latest
+          docker compose -f ./compose.yml create qonq_iptables
           mkdir -p "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq-iptables:/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq-iptables:/iptables-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          docker cp qonq_iptables:/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          docker cp qonq_iptables:/iptables-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4

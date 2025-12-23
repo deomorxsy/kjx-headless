@@ -36,16 +36,16 @@ jobs:
       - name: Build OCI image
         run: |
           docker run -d -p 5000:5000 --name registry registry:latest
-          docker compose -f ./compose.yml --progress=plain build --no-cache qonq-shadow
+          docker compose -f ./compose.yml --progress=plain build --no-cache qonq_shadow
           docker push localhost:5000/qonq_shadow:latest
 
       - name: Retrieve artifact from docker image
         run: |
-          # docker create qonq-shadow -d localhost:5000/qonq-shadow:latest
-          docker compose -f ./compose.yml create qonq-shadow
+          # docker create qonq_shadow -d localhost:5000/qonq_shadow:latest
+          docker compose -f ./compose.yml create qonq_shadow
           mkdir -p "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq-shadow:/shadow-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq-shadow:/shadow-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          docker cp qonq_shadow:/shadow-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          docker cp qonq_shadow:/shadow-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4

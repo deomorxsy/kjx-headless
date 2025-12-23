@@ -419,7 +419,7 @@ services:
   # ============
   # Packaging
   # ============
-  qonq-shadow:
+  qonq_shadow:
     container_name: qonq_shadow
     environment:
       - git_hash
@@ -432,7 +432,7 @@ services:
     command: |
       echo hmm
     stop_signal: SIGINT
-  qonq-iptables:
+  qonq_iptables:
     container_name: qonq_iptables
     environment:
       - git_hash
