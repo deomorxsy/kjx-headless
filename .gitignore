@@ -223,3 +223,8 @@ artifacts/*.cast
 # virtfs, microvms
 virtfstest*
 
+# others
+artifacts/ci-cd/
+artifacts/microvms/
+artifacts/oci-registry_3.0_tarball.tar
+hpota-shellscript.sh
