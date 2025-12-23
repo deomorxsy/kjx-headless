@@ -79,6 +79,19 @@ prepare_packaging() {
     echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 02"
     echo && echo
 
+    # setup podman shared objects
+    if ! [ -f "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/podman-archive.tar.gz"]; then
+
+        MODE="podman-deps" . ./scripts/isogen/qonq-qdb.sh
+
+    fi
+
+    # prepre bpftrace shared objects (just for the flamegraph and log2 histograms)
+
+    # setup firecracker dependencies
+    ## iptables/networking already met
+    ##
+
 }
 
 prepare_rootfs() {
