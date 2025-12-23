@@ -109,6 +109,16 @@ submit_fire() {
 
 fc_demo_network() {
 
+    GOMOD := $(shell go env GOMOD)
+    GOSUM := $(GOMOD:.mod=.sum)
+    GOPATH:=$(shell go env GOPATH)
+    BINPATH:=$(abspath ./bin)
+    SUBMODULES=_submodules
+    UID:=$(shell id -u)
+    GID:=$(shell id -g)
+
+
+
     ##########################
     # CNI Network
     ##########################
@@ -151,41 +161,52 @@ fc_demo_network() {
     TEST_BRIDGED_TAP_BIN="${BINPATH}/test-bridged-tap"
     LOOPBACK_BIN="${BINPATH}/loopback-bin"
 
+    # bridge interface
+    GOBIN="${BRIDGE_BIN}/bridge" go install github.com/containernetworking/plugins/plugins/main/bridge@v1.1.0
+
+    # ptp
+    GOBIN="${PTP_BIN}" go install github.com/containernetworking/plugins/plugins/main/ptp@v1.1.0
+
+    # hostlocal interface
+    GOBIN="${HOSTLOCAL_BIN}" go install github.com/containernetworking/plugins/plugins/ipam/host-local@v1.1.0
+
+    # firewall
+    GOBIN="${FIREWALL_BIN}" go install github.com/containernetworking/plugins/plugins/meta/firewall@v1.1.0
+
+    # tc redirect tap
+    GOBIN="${TC_REDIRECT_TAP_BIN}" go install github.com/awslabs/tc-redirect-tap/cmd/tc-redirect-tap@v0.0.0-20250516183331-34bf829e9a5c
+
+    # loopback interface
+    GOBIN="${LOOPBACK_BIN}" go install github.com/containernetworking/plugins/plugins/main/loopback@v1.1.0
+
+    # test-cni-bins:
+    # test bridged tap
+    #
+    # TEST_BRIDGED_TAP_BIN?=$(BINPATH)/test-bridged-tap
+    # $(TEST_BRIDGED_TAP_BIN): $(shell find internal/cmd/test-bridged-tap -name *.go) $(GOMOD) $(GOSUM)
+    if ! $(shell find internal/cmd/test-bridged-tap -name *.go) $(GOMOD) $(GOSUM)
+        go build -o "${TEST_BRIDGED_TAP_BIN}" $(CURDIR)/internal/cmd/test-bridged-tap
+
+
+    go build -o $@ $(CURDIR)/internal/cmd/test-bridged-tap
+
+    # install-cni-bins: cni-bins $(CNI_BIN_ROOT)
+    install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${BRIDGE_BIN:-[EMPTY_VARIABLE]}"
+    install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${PTP_BIN:-[EMPTY_VARIABLE]}"
+    install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${HOSTLOCAL_BIN:-[EMPTY_VARIABLE]}"
+    install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${FIREWALL_BIN:-[EMPTY_VARIABLE]}"
+    install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${TC_REDIRECT_TAP_BIN:-[EMPTY_VARIABLE]}"
+    install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${LOOPBACK_BIN:-[EMPTY_VARIABLE]}"
+
+    # install-test-cni-bins: test-cni-bins $(CNI_BIN_ROOT)
+    install -D -o root -g root -m755 -t ${CNI_BIN_ROOT:-[EMPTY_VARIABLE]} ${TEST_BRIDGED_TAP_BIN:-[EMPTY_VARIABLE]}
+
     (
         cat <<EOF
 
 
 
-# bridge interface
-        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/main/bridge@v1.1.0
 
-        # ptp
-        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/main/ptp@v1.1.0
-# hostlocal interface
-        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/ipam/host-local@v1.1.0
-        # firewall
-        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/meta/firewall@v1.1.0
-
-        # tc redirect tap
-        GOBIN=$(dir $@) go install github.com/awslabs/tc-redirect-tap/cmd/tc-redirect-tap@v0.0.0-20250516183331-34bf829e9a5c
-
-# loopback interface
-        GOBIN=$(dir $@) go install github.com/containernetworking/plugins/plugins/main/loopback@v1.1.0
-
-# test-cni-bins:
-# test bridged tap
-        go build -o $@ $(CURDIR)/internal/cmd/test-bridged-tap
-
-# install-cni-bins: cni-bins $(CNI_BIN_ROOT)
-        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${BRIDGE_BIN:-[EMPTY_VARIABLE]}
-        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${PTP_BIN:-[EMPTY_VARIABLE]}
-        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${HOSTLOCAL_BIN:-[EMPTY_VARIABLE]}
-        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${FIREWALL_BIN:-[EMPTY_VARIABLE]}
-        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${TC_REDIRECT_TAP_BIN:-[EMPTY_VARIABLE]}
-        install -D -o root -g root -m755 -t "${CNI_BIN_ROOT:-[EMPTY_VARIABLE]}" "${LOOPBACK_BIN:-[EMPTY_VARIABLE]}
-
-# install-test-cni-bins: test-cni-bins $(CNI_BIN_ROOT)
-        install -D -o root -g root -m755 -t ${CNI_BIN_ROOT:-[EMPTY_VARIABLE]} ${TEST_BRIDGED_TAP_BIN:-[EMPTY_VARIABLE]}
 
 # $(FCNET_CONFIG): tools/demo/fcnet.conflist
         mkdir -p $(dir $(FCNET_CONFIG))
