@@ -126,12 +126,12 @@ airgap_clean() {
 
         if ! (rm "${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}"); then
             echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Exiting now..."
-            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 01"
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
             echo && echo
             return 1
         fi
         echo "|> Sucessfully removed the [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Proceeding..."
-        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 01"
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
         echo && echo
 
         return
@@ -143,12 +143,12 @@ airgap_clean() {
 
         if ! (rm "${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}"); then
             echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Exiting now..."
-            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 02"
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 02"
             echo && echo
             return 1
         fi
         echo "|> Sucessfully removed [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Proceeding..."
-        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 02"
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 02"
         echo && echo
 
         return
@@ -160,12 +160,12 @@ airgap_clean() {
 
         if ! (rm "${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}"); then
             echo "|> Error: could not remove [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
-            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 03"
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
             echo && echo
             return 1
         fi
         echo "|> Sucessfully removed [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
-        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], check 03"
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
         echo && echo
 
         return
@@ -718,7 +718,7 @@ save_registry() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: save_registry"
-        printf "\n|> CHECK 01:"
+        printf "\n|> CHECK: 01"
         printf "\n|> pull the registry:3.0 OCI image. ...[PASSED]\n"
         ;;
     esac
@@ -747,7 +747,7 @@ save_registry() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: save_registry"
-        printf "\n|> CHECK 03:"
+        printf "\n|> CHECK: 03"
         printf "\n|> convert the registry tarball bundle (continers-storage) to the OCI spec at tmp. ...[PASSED]\n"
         ;;
     esac
@@ -765,7 +765,7 @@ save_registry() {
     ### "yes")
     ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
     ###     printf "\n|> SCOPE: save_registry"
-    ###     printf "\n|> CHECK 04:"
+    ###     printf "\n|> CHECK: 04"
     ###     printf "\n|> fetch tarball.gz image with said version on the filepath. ...[PASSED]\n"
     ###     ;;
     ### esac
@@ -780,7 +780,7 @@ save_registry() {
     ## "yes")
     ##     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
     ##     printf "\n|> SCOPE: save_registry"
-    ##     printf "\n|> CHECK 03:"
+    ##     printf "\n|> CHECK: 03"
     ##     printf "\n|> check contents of the oci registry:3.0 tarball ...[PASSED]\n"
     ##     ;;
     ## esac
@@ -795,7 +795,7 @@ save_registry() {
     ### "yes")
     ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
     ###     printf "\n|> SCOPE: save_registry"
-    ###     printf "\n|> CHECK 04:"
+    ###     printf "\n|> CHECK: 04"
     ###     printf "\n|> convert the docker-save tarball bundle (docker-archive) to OCI spec. ...[PASSED]\n"
     ###     ;;
     ### esac
@@ -810,7 +810,7 @@ save_registry() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: save_registry"
-        printf "\n|> CHECK 04:"
+        printf "\n|> CHECK: 04"
         printf "\n|> create a rootless umoci-unpack from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). ...[PASSED]\n"
         ;;
     esac
@@ -828,7 +828,7 @@ save_registry() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: save_registry"
-        printf "\n|> CHECK 05:"
+        printf "\n|> CHECK: 05"
         printf "\n|> created a tarball from the containers-storage format tarball bundle with success. ...[PASSED]\n"
         ;;
     esac
@@ -844,7 +844,7 @@ save_registry() {
         "yes")
             printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
             printf "\n|> SCOPE: save_registry"
-            printf "\n|> CHECK 06:"
+            printf "\n|> CHECK: 06"
             printf "\n|> remove the umoci-rootfs runtime bundle artifact dir at tmp. ...[PASSED]\n"
             ;;
         esac
@@ -861,7 +861,7 @@ save_registry() {
         "yes")
             printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
             printf "\n|> SCOPE: save_registry"
-            printf "\n|> CHECK 07:"
+            printf "\n|> CHECK: 07"
             printf "\n|> remove the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). ...[PASSED]\n"
             ;;
         esac
@@ -894,7 +894,7 @@ fetch_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: fetch_k3s"
-        printf "\n|> CHECK 01:"
+        printf "\n|> CHECK: 01"
         printf "\n|> make sure the k3s airgap path exists...[PASSED]\n"
         ;;
     esac
@@ -908,7 +908,7 @@ fetch_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: fetch_k3s"
-        printf "\n|> CHECK 02:"
+        printf "\n|> CHECK: 02"
         printf "\n|> fetch tarball.gz image with said version on the filepath...[PASSED]\n"
         ;;
     esac
@@ -923,7 +923,7 @@ fetch_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: fetch_k3s"
-        printf "\n|> CHECK 03:"
+        printf "\n|> CHECK: 03"
         printf "\n|> fetch tarball.gz image SHA256SUM with said version on the filepath...[PASSED]\n"
         ;;
     esac
@@ -945,7 +945,7 @@ fetch_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: fetch_k3s"
-        printf "\n|> CHECK 04:"
+        printf "\n|> CHECK: 04"
         printf "\n|> check the SHA256SUM if it is the correct tarball...[PASSED]\n"
         ;;
     esac
@@ -991,7 +991,7 @@ squash_k3s() {
     # "yes")
     #     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
     #     printf "\n|> SCOPE: squash_k3s"
-    #     printf "\n|> CHECK 01:"
+    #     printf "\n|> CHECK: 01"
     #     printf "\n|> Does the SKOPEO_TARBALL_ARTIFACT filepath exists?...[PASSED]\n\n"
     #     ;;
     # esac
@@ -1005,7 +1005,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 02:"
+        printf "\n|> CHECK: 02"
         printf "\n|> Does the K3S_AIRGAP_TARBALL_GZ filepath exists?...[PASSED]\n\n"
         ;;
     esac
@@ -1020,7 +1020,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 03:"
+        printf "\n|> CHECK: 03"
         printf "\n|> Is PWD the root of the kjx-headless repository?...[PASSED]\n\n"
         ;;
     esac
@@ -1039,7 +1039,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 05:"
+        printf "\n|> CHECK: 05"
         printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
         ;;
     esac
@@ -1054,7 +1054,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 06:"
+        printf "\n|> CHECK: 06"
         printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
         ;;
     esac
@@ -1070,7 +1070,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 07:"
+        printf "\n|> CHECK: 07"
         printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
         ;;
     esac
@@ -1086,7 +1086,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 08:"
+        printf "\n|> CHECK: 08"
         printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
         ;;
     esac
@@ -1104,7 +1104,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 05:"
+        printf "\n|> CHECK: 05"
         printf "\n|> create a mksquashfs from k3s-unpack tmp directory. ...[PASSED]\n"
         ;;
     esac
@@ -1120,7 +1120,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 06:"
+        printf "\n|> CHECK: 06"
         printf "\n|> create the K3S_SQUASHFS_IMAGE_PATH. ...[PASSED]\n"
         ;;
     esac
@@ -1135,7 +1135,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 07:"
+        printf "\n|> CHECK: 07"
         printf "\n|> create a raw image with dd. ...[PASSED]\n"
         ;;
     esac
@@ -1151,7 +1151,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 08:"
+        printf "\n|> CHECK: 08"
         printf "\n|> format the k3s squashfs image filepath with the ext4 filesystem. ...[PASSED]\n"
         ;;
     esac
@@ -1168,7 +1168,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 09:"
+        printf "\n|> CHECK: 09"
         printf "\n|> create mountpoint dir and a loop mount with the k3s squashfs image path. ...[PASSED]\n"
         ;;
     esac
@@ -1193,7 +1193,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 10:"
+        printf "\n|> CHECK 10"
         printf "\n|> copy the K3S_SQUASHFS_FILE to the MOUNTPOINT_K3S_SQUASHFS. ...[PASSED]\n"
         ;;
     esac
@@ -1207,8 +1207,8 @@ squash_k3s() {
     ls -allhtr $K3S_SQUASHFS_FILE
 
     if ! sudo cp "${K3S_SQUASHFS_FILE}" "${VIRTFS_ART_PATH}"; then
-        echo && echo "|> SCOPE: squash_k3s, check 09"
         echo "|> Error: it was not possible to copy the K3S_SQUASHFS_FILE=$K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. Exiting now... "
+        echo "|> SCOPE: squash_k3s, CHECK: 09"
         echo
         return 1
     fi
@@ -1216,7 +1216,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 09:"
+        printf "\n|> CHECK: 09"
         printf "\n|> copy the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. ...[PASSED]\n"
         ;;
     esac
@@ -1241,7 +1241,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 10:"
+        printf "\n|> CHECK 10"
         printf "\n|> clean artifacts. ...[PASSED]\n"
         ;;
     esac
@@ -1256,7 +1256,7 @@ squash_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: squash_k3s"
-        printf "\n|> CHECK 11:"
+        printf "\n|> CHECK 11"
         printf "\n|> unmount loopback device. ...[PASSED]\n"
         ;;
     esac
@@ -1289,7 +1289,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 01:"
+        printf "\n|> CHECK: 01"
         printf "\n|> Generating a macaddr... [PASSED]\n"
         ;;
     esac
@@ -1304,7 +1304,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 02:"
+        printf "\n|> CHECK: 02"
         printf "\n|> Is PWD the root of the repository?... [PASSED]\n"
         ;;
     esac
@@ -1322,7 +1322,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 03:"
+        printf "\n|> CHECK: 03"
         printf "\n|> Does the SKOPEO_TARBALL_ARTIFACT filepath exists?...[PASSED]\n"
         ;;
     esac
@@ -1340,7 +1340,7 @@ airgap_k3s() {
         #"${SKOPEO_TARBALL_ARTIFACT:-[EMPTY_VARIABLE]}"
 
         if ! squash_k3s; then
-            echo && echo "|> SCOPE: airgap_k3s, check 04"
+            echo && echo "|> SCOPE: airgap_k3s, CHECK: 04"
             echo "|> Error: it was not possible to create the K3S_SQUASHFS_IMAGE_PATH=$K3S_SQUASHFS_IMAGE_PATH filepath. Exiting now..."
             echo
             return 1
@@ -1350,7 +1350,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 04:"
+        printf "\n|> CHECK: 04"
         printf "\n|> check if raw image exists at utils. ... [PASSED]\n"
         ;;
     esac
@@ -1369,7 +1369,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 04:"
+        printf "\n|> CHECK: 04"
         printf "\n|> Does RVDSF filepath exists?...[PASSED]\n"
         ;;
     esac
@@ -1435,7 +1435,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 05:"
+        printf "\n|> CHECK: 05"
         printf "\n|> check if the initramfs.cpio.gz exists ...[PASSED]\n"
         ;;
     esac
@@ -1463,7 +1463,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 06:"
+        printf "\n|> CHECK: 06"
         printf "\n|> setup the kernel bzImage with some kernel modules and other k3s dependencies.  ...[PASSED]\n"
         ;;
     esac
@@ -1483,7 +1483,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 07:"
+        printf "\n|> CHECK: 07"
         printf "\n|> Create the virtfs directory path to be shared between host and guest. ...[PASSED]\n"
         ;;
     esac
@@ -1491,29 +1491,32 @@ airgap_k3s() {
 
     # Copy the registry to serve the images locally to the single-node k3s cluster
     if ! cp "${SKOPEO_TARBALL_ARTIFACT}" "${VIRTFS_ART_PATH}"; then
-        printf "\n|>Scope: airgap_k3s, check 08"
+        printf "\n|>SCOPE: airgap_k3s, file: [./scripts/sandbox/run-qemu.sh], CHECK: 08"
         printf "\n|> Error: could not copy the SKOPEO_TARBALL_ARTIFACT into the VIRTFS_ART_PATH. Exiting now... \n\n"
         return 1
     fi
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 08:"
+        printf "\n|>SCOPE: airgap_k3s, file: [./scripts/sandbox/run-qemu.sh], CHECK: 08"
         printf "\n|> copy the registry to serve the images locally to the single-node k3s cluster. ...[PASSED]\n"
         ;;
     esac
     printf "\n|> copied the registry tarball into the virtfs directory successfully. \n\n"
 
     if ! sudo cp "${K3S_SQUASHFS_FILE}" "${VIRTFS_ART_PATH}"; then
-        printf "\n|> Error: it was not possible to copy the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. Exiting now... \n\n"
+        echo
+        echo "|> Error: it was not possible to copy the [K3S_SQUASHFS_FILE=${K3S_SQUASHFS_FILE:-[EMPTY_VARIABLE]} to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]. Exiting now..."
+        printf "\n|>SCOPE: airgap_k3s, file: [./scripts/sandbox/run-qemu.sh], check: 09"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 09"
         return 1
     fi
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 09:"
+        printf "\n|> CHECK: 09"
         printf "\n|> copy the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. ...[PASSED]\n"
         ;;
     esac
@@ -1610,7 +1613,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 07:"
+        printf "\n|> CHECK: 07"
         printf "\n|> cleanup the bridge.  ...[PASSED]\n"
         ;;
     esac
@@ -1625,7 +1628,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s"
-        printf "\n|> CHECK 08:"
+        printf "\n|> CHECK: 08"
         printf "\n|> cleanup the capabilities.  ...[PASSED]\n"
         ;;
     esac
