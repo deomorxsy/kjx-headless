@@ -20,9 +20,11 @@ COPY ./scripts/sandbox/firecracker-startup.sh /app/scripts/
 
 RUN <<EOF
 
-# Set dependencies
+# Set dependencies, last two for debugging
 apk upgrade && apk update && \
-    apk add git make curl
+    apk add git make curl \
+        vim fzf
+
 
 # Set dependencies from [edge] branch
 (
@@ -40,7 +42,8 @@ EOF
 WORKDIR /app
 RUN <<EOF
 
-export PATH="/usr/lib/go-1.24/bin:${PATH}"
+PATH="/usr/lib/go-1.24/bin:${PATH}"
+export PATH
 
 SANDBOX_USER=firecontainerd
 
@@ -72,43 +75,60 @@ if ! (git clone https://github.com/firecracker-microvm/firecracker-containerd.gi
     echo "|> Sucessfully cloned the firecracker-containerd repository. Proceeding..."
 
 cd ./firecracker-containerd/ || return
-# make
 
-# Set firecracker-containerd directories
-SNAPSHOTTER_BIN_DIR="/etc/firecracker-containerd"
-ALTERNATE_STORAGE_DIR="/var/lib/firecracker-containerd/containerd"
-SHIM_BASE_DIR="/var/lib/firecracker-containerd"
-# Set device mapper thin pool
-DEVMAPPER_DIR="/var/lib/firecracker-containerd/snapshotter/devmapper"
-DEVMAPPER_POOL="fc-dev-thinpool"
+make all
 
-# Create paths
-mkdir -p "${SNAPSHOTTER_BIN_DIR}"
-mkdir -p "${ALTERNATE_STORAGE_DIR}"
-mkdir -p "${SHIM_BASE_DIR}"
-mkdir -p "${DEVMAPPER_DIR}"
+# ls -l ./firecracker-control/cmd/containerd/
+# ls -l ./bin
+
+mkdir -p /home/firecontainerd/fireart
+
+if ! (cp -r ./bin/ /home/firecontainerd/fireart/); then
+    echo "|> Error: could not copy the [./bin] directory to [/home/firecontainerd/fireart/]. Exiting now..."
+    return 1
+    fi
+    echo "|> Sucessfully copied the [./bin] directory to [/home/firecontainerd/fireart/]. Proceeding..."
+
+ls -l /home/firecontainerd/fireart/
+
+# check if both binary filepaths exist
+if [ -f ./firecracker-control/cmd/containerd/firecracker-ctr ] && [ -f ./firecracker-control/cmd/containerd/firecracker-containerd ]; then
+
+ if ! (cp ./firecracker-control/cmd/containerd/firecracker-ctr /home/firecontainerd/fireart/); then
+    echo "|> Error: could not copy the [./firecracker-control/cmd/containerd/firecracker-ctr] binary directory to [/home/firecontainerd/fireart/]. Exiting now..."
+    return 1
+    fi
+    echo "|> Sucessfully copied the [./firecracker-control/cmd/containerd/firecracker-ctr] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
+
+    if ! (cp ./firecracker-control/cmd/containerd/firecracker-containerd /home/firecontainerd/fireart/); then
+    echo "|> Error: could not copy the [./firecracker-control/cmd/containerd/firecracker-containerd] binary directory to [/home/firecontainerd/fireart/]. Exiting now..."
+
+        return 1
+    fi
+    echo "|> Sucessfully copiedthe [./firecracker-control/cmd/containerd/firecracker-containerd] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
+fi
+
+# just to make...sure...
+make
+#fzf -e
+ls -allhtr runtime/
+if !( cp ./runtime/containerd-shim-aws-firecracker /home/firecontainerd/fireart/); then
+echo "|> Error: could not copy the [./runtime/containerd-shim-aws-firecracker] binary directory to [/home/firecontainerd/fireart/]. Exiting now..."
+return 1
+fi
+echo "|> Sucessfully copied the [./runtime/containerd-shim-aws-firecracker] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
+
+if ! (cp ./examples/etc/containerd/firecracker-runtime.json); then
+echo "|> Error: could not copy the [./examples/etc/containerd/firecracker-runtime.json] binary directory to [/home/firecontainerd/fireart/]. Exiting now..."
+return 1
+fi
+echo "|> Sucessfully copied the [./examples/etc/containerd/firecracker-runtime.json] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
 
 
-(
-cat <<EOF
-version = 2
-disabled_plugins = ["io.containerd.grpc.v1.cri"]
-root = "/var/lib/firecracker-containerd/containerd"
-state = "/run/firecracker-containerd"
-[grpc]
-  address = "/run/firecracker-containerd/containerd.sock"
-[plugins]
-  [plugins."io.containerd.snapshotter.v1.devmapper"]
-    pool_name = "fc-dev-thinpool"
-    base_image_size = "10GB"
-    root_path = "/var/lib/firecracker-containerd/snapshotter/devmapper"
-
-[debug]
-  level = "debug"
-EOF
-) | tee "${SNAPSHOTTER_BIN_DIR}"/config.toml
-
-
+# create a tarball of firecracker-containerd artifacts
+# warning: it relies on a networking setup with iptables
+# refer to: ./scripts/packaging/iptables-setup.sh
+tar -czf /firecracker-core.tar.gz /home/firecontainerd/fireart/
 
 EOF
 

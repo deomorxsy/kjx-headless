@@ -401,6 +401,8 @@ services:
       echo hmm
     stop_signal: SIGINT
 
+  # on a host this will depend on
+  # a networking setup with iptables.
   firecracker:
     container_name: firecracker
     environment:
