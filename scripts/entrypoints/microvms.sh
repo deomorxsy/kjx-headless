@@ -10,7 +10,7 @@ if ! [ -d "${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}" ]; then
     echo "|> Error: [MICROVM_ART_DIR=${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}] does not exist. Attempting to create..."
     echo "|> SCOPE: [global], file: [./scripts/entrypoints/microvms.sh], check: 01"
 
-    if ! (mkdir -p); then
+    if ! (mkdir -p "${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}"); then
         echo "|> Error: could not create [MICROVM_ART_DIR=${MICROVM_ART_DIR:-[EMPTY_VARIABLE]}] directory. Exiting now..."
         echo "|> SCOPE: [global], file: [./scripts/entrypoints/microvms.sh], check: 02"
         return 1
