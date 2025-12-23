@@ -456,6 +456,11 @@ mvm-gvisor:
 mvm-firecracker:
 	MODE="firecracker" . ./scripts/entrypoints/microvms.sh
 
+###
+# firecracker-containerd setup, translated
+# from Makefile syntax to ash
+.PHONY: fr-demo-network
+	MODE="fr-demo-network" . ./scripts/sandbox/firecracker-startup.sh
 
 # ===========
 # HLCR: High-Level Container Runtime
