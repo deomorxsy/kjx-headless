@@ -1,4 +1,4 @@
-name: qonq-qdb_shadow
+name: qonq-qdb_iptables
 
 # This rule triggers when the workflow will run
 on:
@@ -36,25 +36,28 @@ jobs:
       - name: Build OCI image
         run: |
           docker run -d -p 5000:5000 --name registry registry:latest
-          docker compose -f ./compose.yml --progress=plain build --no-cache qonq-shadow
-          docker push localhost:5000/qonq_shadow:latest
+          docker compose -f ./compose.yml --progress=plain build --no-cache qonq-iptables
+          docker push localhost:5000/qonq_iptables:latest
 
       - name: Retrieve artifact from docker image
         run: |
-          # docker create qonq-shadow -d localhost:5000/qonq-shadow:latest
-          docker compose -f ./compose.yml create qonq-shadow
+          # docker create qonq-iptables -d localhost:5000/qonq-iptables:latest
+          docker compose -f ./compose.yml create qonq-iptables
           mkdir -p "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq-shadow:/shadow-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq-shadow:/shadow-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          docker cp qonq-iptables:/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          docker cp qonq-iptables:/iptables-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qonq-shadow
-          path: ${{ github.workspace }}/artifacts/packaging/shadow-so-pkg.tar.gz
-          path: ${{ github.workspace }}/artifacts/packaging/shadow-bin-pkg.tar.gz
+          name: qonq-iptables_shared-objects
+          path: ${{ github.workspace }}/artifacts/packaging/iptables-so-pkg.tar.gz
 
-
+      - name: Archive the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qonq-iptables_bin
+          path: ${{ github.workspace }}/artifacts/packaging/iptables-bin-pkg.tar.gz
 
   ### make:
   ###   # Specify the operating system for the runner job

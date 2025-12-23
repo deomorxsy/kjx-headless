@@ -50,11 +50,13 @@ jobs:
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qonq-shadow
+          name: qonq-shadow_shared-objects
           path: ${{ github.workspace }}/artifacts/packaging/shadow-so-pkg.tar.gz
+      - name: Archive the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qonq-shadow_bin
           path: ${{ github.workspace }}/artifacts/packaging/shadow-bin-pkg.tar.gz
-
-
 
   ### make:
   ###   # Specify the operating system for the runner job
