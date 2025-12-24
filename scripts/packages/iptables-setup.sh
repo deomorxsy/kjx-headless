@@ -118,7 +118,7 @@ set_iptables_so() {
     sort /foobar.txt | uniq >/quux.txt
 
     # generate a tarball of shared objects from filepaths on a text file
-    tar -czf /iptables-pkg.tar.gz -T /quux.txt
+    tar -czf /app/iptables-so-pkg.tar.gz -T /quux.txt
 
 }
 set_iptables_bin() {
@@ -183,7 +183,7 @@ EOL
         sort /iptables-bin-foobar.txt | uniq >/iptables-bin-quux.txt &&
 
         # generate a tarball of shared objects from filepaths on a text file
-        tar -czf /iptables-bin-pkg.tar.gz -T /iptables-bin-quux.txt
+        tar -czf /app/iptables-bin-pkg.tar.gz -T /iptables-bin-quux.txt
 
 }
 

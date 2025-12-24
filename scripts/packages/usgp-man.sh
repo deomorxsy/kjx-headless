@@ -98,7 +98,7 @@ set_iptables() {
         echo "|> Error: could not copy the iptables shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         return 1
     fi
-    echo "|> Copied the iptables shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    echo "|> Copied the [qonq_iptables] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
 
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
     if ! podman cp qonq_iptables:/app/iptables-bin-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
