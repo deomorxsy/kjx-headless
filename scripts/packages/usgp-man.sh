@@ -35,7 +35,7 @@ set_iptables() {
 
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry sever. Attempting to run the image..."
+        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
         echo && echo
         #return 1
 
