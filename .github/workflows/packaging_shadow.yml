@@ -1,4 +1,4 @@
-name: qonq-qdb_shadow
+name: qonq_shadow
 
 # This rule triggers when the workflow will run
 on:

@@ -51,12 +51,29 @@ set_iptables() {
     echo "|> OCI registry server started with success"
 
     # check if the image already exists
+
+    if (podman images | grep "localhost:5000/qonq_iptables" | awk '{print $1}'); then
+        BUILT_IPTABLES_ALREADY=$(podman images | grep "localhost:5000/qonq_iptables" | awk '{print $3}')
+        export BUILT_IPTABLES_ALREADY
+
+        echo "|> WARNING: found a previously built [localhost:5000/qonq_iptables]. Attempting to remove image to [REBUILD]..."
+        echo
+
+        if ! (podman rmi "${BUILT_IPTABLES_ALREADY:-[EMPTY_VARIABLE]}" --force); then
+            echo "|> Error: YOU CAN (NOT) REDO the container image. Literally, it cannot be removed for some reason. No pun intended (or was it?). Exiting now... :)"
+            echo
+            return 1
+        fi
+        echo "|> Error: YOU (CAN) REDO the container image. Proceeding..."
+    fi
+    echo "|> WARNING: previously built [localhost:5000/qonq_iptables] removed with sucess. ...[PASSED]"
+    #
     if ! (podman images | grep "localhost:5000/qonq_iptables" | awk '{print $1}'); then
         echo "|> Error: could not find the localhost:5000/qonq_iptables image at the OCI registry:3.0 server. Attempting to build now..."
         echo && echo
         # return 1
         # Build the iptables container with ccr.sh to use  Podman Service as the compose tool
-        if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache qonq_iptables; then
+        if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache qonq_iptables); then
             echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
             echo && echo
             return 1
@@ -66,7 +83,7 @@ set_iptables() {
         echo && echo
 
         # push built image into the registry:3.0 localhost:5000 server container.
-        if ! podman push localhost:5000/qonq_iptables:latest; then
+        if ! (podman push localhost:5000/qonq_iptables:latest); then
             echo "|> Error: could not push the built [qonq_iptables] image into the OCI registry:3.0 localhost:5000 server container. Exiting now..."
             echo && echo
             return 1

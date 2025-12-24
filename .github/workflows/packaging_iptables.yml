@@ -1,4 +1,4 @@
-name: qonq-qdb_iptables
+name: qonq_iptables
 
 # This rule triggers when the workflow will run
 on:
@@ -35,26 +35,27 @@ jobs:
 
       - name: Build OCI image
         run: |
-          docker run -d -p 5000:5000 --name registry registry:latest
-          docker compose -f ./compose.yml --progress=plain build --no-cache qonq_iptables
-          docker push localhost:5000/qonq_iptables:latest
+          make qonq_iptables
+          # docker run -d -p 5000:5000 --name registry registry:latest
+          # docker compose -f ./compose.yml --progress=plain build --no-cache qonq_iptables
+          # docker push localhost:5000/qonq_iptables:latest
 
-      - name: Retrieve artifact from OCI image
-        run: |
-          # docker create qonq_iptables -d localhost:5000/qonq_iptables:latest
-          docker compose -f ./compose.yml create qonq_iptables
-          mkdir -p "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq_iptables:/app/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq_iptables:/app/iptables-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+      #- name: Retrieve artifact from OCI image
+      #  run: |
+      #    # docker create qonq_iptables -d localhost:5000/qonq_iptables:latest
+      #    docker compose -f ./compose.yml create qonq_iptables
+      #    mkdir -p "${{ github.workspace }}"/artifacts/packaging/
+      #    docker cp qonq_iptables:/app/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+      #    docker cp qonq_iptables:/app/iptables-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qonq-iptables_shared-objects
+          name: iptables-so-pkg
           path: ${{ github.workspace }}/artifacts/packaging/iptables-so-pkg.tar.gz
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qonq-iptables_bin
+          name: iptables-bin-pkg
           path: ${{ github.workspace }}/artifacts/packaging/iptables-bin-pkg.tar.gz
