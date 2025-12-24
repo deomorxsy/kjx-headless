@@ -541,10 +541,10 @@ iso9660:
 # ===============
 # Packaging
 #
-.PHONY: qonq-shadow
-qonq-shadow:
+.PHONY: qonq_shadow
+qonq_shadow:
 	MODE="shadow" . ./scripts/packages/usgp-man.sh
 
-.PHONY: qonq-iptables
-qonq-iptables:
+.PHONY: qonq_iptables
+qonq_iptables:
 	MODE="iptables" . ./scripts/packages/usgp-man.sh
