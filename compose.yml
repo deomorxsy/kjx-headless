@@ -445,3 +445,17 @@ services:
     command: |
       echo hmm
     stop_signal: SIGINT
+  # llcr packaging
+  qonq_podman:
+    container_name: qonq_podman
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.podman.qonq"
+      tags:
+        - "localhost:5000/qonq_podman:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
