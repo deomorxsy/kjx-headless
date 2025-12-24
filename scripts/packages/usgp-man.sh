@@ -68,7 +68,7 @@ set_iptables() {
     fi
     echo "|> WARNING: previously built [localhost:5000/qonq_iptables] removed with sucess. ...[PASSED]"
     #
-    if ! (podman images | grep "localhost:5000/qonq_iptables" | awk '{print $1}'); then
+    if ! (podman images | grep "localhost:5000/qonq_iptables"); then
         echo "|> Error: could not find the localhost:5000/qonq_iptables image at the OCI registry:3.0 server. Attempting to build now..."
         echo && echo
         # return 1
