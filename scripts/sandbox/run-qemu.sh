@@ -182,7 +182,7 @@ microvm_poc_gvisor() {
 
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry sever. Attempting to run the image..."
+        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
         echo && echo
         #return 1
 
@@ -261,7 +261,7 @@ microvm_poc_gvisor() {
 microvm_poc_firecracker() {
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry sever. Attempting to run the image..."
+        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
         echo && echo
         #return 1
 
@@ -340,7 +340,7 @@ microvm_poc_firecracker() {
 microvm_poc_kata() {
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry sever. Attempting to run the image..."
+        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
         echo && echo
         #return 1
 
@@ -1521,6 +1521,31 @@ airgap_k3s() {
         ;;
     esac
     printf "\n|> Successfully copied the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. \n\n"
+
+    # ================================
+    # Microvms
+    #
+    # ================================
+    # # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
+    ### if ! [ -f ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} ]; then
+    ###     echo "|> Warning: MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} does not exist in this filepath. Attempting to generate it:"
+    ###     echo && echo
+    ###     #return 1
+    ###     if ! microvm_poc_firecracker; then
+    ###         echo "|> Error: could not run the [microvm_poc_firecracker] function! Exiting now..."
+    ###         echo && echo
+    ###         return 1
+    ###     fi
+    ### fi
+    ### case "${LOG_VERBOSE}" in
+    ### "yes")
+    ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+    ###     printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+    ###     echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} filepath. ...[PASSED]"
+    ###     echo && echo
+    ###     ;;
+    ### esac
+    ### echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
 
     # returns if the [MICROVM_GVISOR_TARBALL] filepath does not exist
     if ! [ -f ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} ]; then

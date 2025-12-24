@@ -28,7 +28,7 @@ mvm_firecracker() {
     #
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry sever. Attempting to run the image..."
+        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
         echo && echo
         #return 1
 
@@ -111,7 +111,7 @@ mvm_gvisor() {
 
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry sever. Attempting to run the image..."
+        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
         echo "|> SCOPE: [mvm_gvisor], file: [./scripts/entrypoints/microvms.sh], check: 01"
         echo && echo
         #return 1
@@ -210,7 +210,7 @@ mvm_kata() {
     #
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry sever. Attempting to run the image..."
+        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
         echo && echo
         #return 1
 
