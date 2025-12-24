@@ -52,7 +52,7 @@ set_iptables() {
 
     # check if the image already exists
 
-    if (podman images | grep "localhost:5000/qonq_iptables" | awk '{print $1}'); then
+    if (podman images | grep "localhost:5000/qonq_iptables"); then
         BUILT_IPTABLES_ALREADY=$(podman images | grep "localhost:5000/qonq_iptables" | awk '{print $3}')
         export BUILT_IPTABLES_ALREADY
 
