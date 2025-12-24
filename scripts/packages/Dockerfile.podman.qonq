@@ -1,0 +1,77 @@
+FROM alpine:3.22 AS builder
+
+COPY ./scripts/packages/podman-setup.sh /app/scripts/podman-setup.sh
+
+WORKDIR /app
+# STEP 1
+RUN <<EOF
+apk upgrade && apk update && \
+#    apk add podman conmon runc crun
+#
+
+
+
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+apk upgrade && apk update && \
+    apk add podman crun
+
+
+if ! MODE="podman-so" . /app/scripts/podman-setup.sh; then
+    printf "\n|> Error: could not execute the podman-so function from the podman-setup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run podman-so from podman-setup.sh. Proceeding..."
+
+EOF
+
+# set podman binaries
+RUN <<EOF
+
+if ! MODE="podman-bin" . /app/scripts/podman-setup.sh; then
+    printf "\n|> Error: could not execute the podman-bin function from the podman-setup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run podman-bin from podman-setup.sh. Proceeding..."
+
+EOF
+
+
+FROM alpine:3.22 AS relay
+
+ARG PODMAN_SO_DIR="/app/podman-shared-deps/"
+ARG PODMAN_BIN_DIR="/app/podman/usr/bin/"
+
+ENV PODMAN_SO_DIR="/app/podman-shared-deps/"
+ENV PODMAN_BIN_DIR="/app/podman/usr/bin/"
+
+WORKDIR /app/
+RUN <<EOF
+mkdir -p "${PODMAN_SO_DIR}"
+mkdir -p "${PODMAN_BIN_DIR}"
+EOF
+
+
+# copy podman shared objects
+COPY --from=builder "/podman-so-pkg.tar.gz" /app
+
+# copy podman  binaries
+COPY --from=builder "/podman-bin-pkg.tar.gz" /app
+
+RUN <<EOF
+
+ls -allhtr /app
+
+#ls -allhtr "${PODMAN_SO_DIR}"
+#ls -allhtr "${PODMAN_BIN_DIR}"
+EOF
+
+
+ENTRYPOINT ["/bin/sh"]

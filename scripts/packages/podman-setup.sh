@@ -18,6 +18,7 @@ set_podman_deps() {
     # so:libsqlite3.so.0
 
     # conmon
+    ## provides: cmd:conmon
     for f in /usr/sbin/*; do
         case $f in
         /usr/sbin/conmon) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
@@ -25,7 +26,7 @@ set_podman_deps() {
     done
 
     # oci-runtime
-    ## cmd provided: oci-runtime, crun
+    ## cmd provided: cmd:oci-runtime, cmd:crun
     for f in /usr/sbin/*; do
         case $f in
         /usr/sbin/oci-runtime) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
@@ -34,7 +35,7 @@ set_podman_deps() {
     done
 
     # passt
-    ## CMD provided: passt-repair, passt, pasta, qrap
+    ## CMD provided: cmd:passt-repair, cmd:passt, cmd:pasta, cmd:qrap
     for f in /usr/sbin/*; do
         case $f in
         /usr/sbin/passt-repair) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
@@ -45,6 +46,19 @@ set_podman_deps() {
     done
 
     # shadow-subids
+    for f in /usr/sbin/*; do
+        case $f in
+        /usr/sbin/shadow-uidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+        /usr/sbin/getsubids) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+        /usr/sbin/newgidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+        /usr/sbin/newuidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+        esac
+    done
+    shadow-uidmap
+    cmd:getsubids
+    cmd:newgidmap
+    cmd:newuidmap
+
     # containers-common
     # netavark
     # aardvark-dns
