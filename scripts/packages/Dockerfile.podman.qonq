@@ -1,6 +1,6 @@
 FROM alpine:3.22 AS builder
 
-COPY ./scripts/packages/podman-setup.sh /app/scripts/podman-setup.sh
+COPY ./scripts/packages/podman-setup.sh /app/scripts/packages/podman-setup.sh
 
 WORKDIR /app
 # STEP 1
