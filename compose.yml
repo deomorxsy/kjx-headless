@@ -445,7 +445,67 @@ services:
     command: |
       echo hmm
     stop_signal: SIGINT
+  # ===============
   # llcr packaging
+  #
+  # ==============
+  # crun
+  qonq_crun:
+    container_name: qonq_crun
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.crun.qonq"
+      tags:
+        - "localhost:5000/qonq_crun:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  # runc
+  qonq_runc:
+    container_name: qonq_runc
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.runc.qonq"
+      tags:
+        - "localhost:5000/qonq_runc:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  # containerd
+  qonq_containerd:
+    container_name: qonq_containerd
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.containerd.qonq"
+      tags:
+        - "localhost:5000/qonq_containerd:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  # youki
+  qonq_youki:
+    container_name: qonq_youki
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.youki.qonq"
+      tags:
+        - "localhost:5000/qonq_youki:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  # hlcr packaging
   qonq_podman:
     container_name: qonq_podman
     environment:
