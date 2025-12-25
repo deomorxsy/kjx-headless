@@ -167,7 +167,6 @@ fi
 # refer to: ./scripts/packaging/iptables-setup.sh
 #
 
-FIREAR
 
 if ! (tar -czf "/home/${SANDBOX_USER}/firecracker-core.tar.gz" "${FIREART}"); then
     echo "|> Error: could not create a tarball from [FIREART=${FIREART}] at [/home/${SANDBOX_USER}/firecracker-core.tar.gz]. Exiting now..."
