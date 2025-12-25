@@ -11,7 +11,7 @@
 	path = assets/visualization/HeatMap
 	url = git@github.com:brendangregg/HeatMap.git
 [submodule "assets/libbpf-bootstrap"]
-	path = assets/libbpf-bootstrap
+	path = assets/tracers/libbpf-bootstrap
 	url = git@github.com:libbpf/libbpf-bootstrap.git
 
 [submodule "assets/blazesym"]
@@ -21,7 +21,7 @@
 	path = assets/tracers/bpftool
 	url = git@github.com:libbpf/bpftool.git
 [submodule "assets/libbpf"]
-	path = assets/libbpf
+	path = assets/tracers/libbpf
 	url = git@github.com:libbpf/libbpf.git
 [submodule "assets/bcc"]
 	path = assets/tracers/bcc
