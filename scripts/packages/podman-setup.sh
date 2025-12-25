@@ -18,8 +18,10 @@ core_routine() {
     export CORE_PODMAN_DEPS
     #escape awk $3 with a blackslash '\'
 
-    (
-        cat <<EOF
+    if ! (
+
+        (
+            cat <<EOF
 PODMAN_PKGDEPS_PLACEHOLDER="\$(apk info -L placeholder | awk 'NR > 1')"
 export PODMAN_PKGDEPS_PLACEHOLDER
 
@@ -47,16 +49,35 @@ for f in /bin/* /usr/bin/* /usr/sbin/*; do
 done
 
 EOF
-    ) | tee /app/depslist.sh
+        ) | tee /app/depslist.sh
+    ); then
+        echo "|> Error: could not create the filepath [/app/depslist.sh]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully created the filepath [/app/depslist.sh]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
 
-    for f in $CORE_PODMAN_DEPS; do
+    if ! (for f in $CORE_PODMAN_DEPS; do
         COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
         export COREUPPER
 
         sed -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" /app/depslist.sh >"/app/depslist-replaSED_$f.sh"
-    done
+    done); then
+        echo "|> Error: could not replace every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 02"
+        return 1
+    fi
+    echo "|> Successfully replaced every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 02"
 
-    sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*
+    if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
+        echo "|> Error: could not replace every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 03"
+        return 1
+    fi
+    echo "|> Successfully replaced every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 03"
 
 }
 
@@ -164,79 +185,13 @@ set_podman_so() {
         return 1
     fi
     echo "|> Successfully resolved podman dependencies. Proceeding..."
+    echo "|> SCOPE: [set_podman_so], file [./scripts/packages/podman-setup.sh]; check: 01"
 
     # podman commands
     for f in /usr/sbin/*; do
         case $f in
         /usr/sbin/podman) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
         /usr/sbin/podmansh) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
-
-    # doas shared objects
-    ldd "$(readlink -f "$(which "doas")")" | awk '{print $3}' >>/foo.txt
-
-    # podman shared objects
-    for f in /usr/sbin/*; do
-        case $f in
-        /usr/sbin/chage) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/chfn) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/chgpasswd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/chpasswd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/chsh) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/expiry) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/gpasswd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/groupadd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/groupdel) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/groupmems) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/groupmod) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/grpck) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/logoutd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/newusers) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/passwd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/pwck) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/useradd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/userdel) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/usermod) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/vigr) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/vipw) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-
-        esac
-    done
-
-    # other dependencies shared objects
-    for f in /usr/lib/*; do
-        case $f in
-        # musl
-        /usr/lib/libc.musl-x86*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        # linux-pam deps
-        /usr/lib/libpam*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        #/usr/lib/libpam_misc*) ldd "$(readlink -f "$(which "$f")")"        | awk '{print $3}' >> /foo.txt ;;
-        #/usr/lib/libpamc*) ldd "$(readlink -f "$(which "$f")")"            | awk '{print $3}' >> /foo.txt ;;
-
-        # utmps-libs shared objects
-        /usr/lib/libutm*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        # libbsd deps
-        /usr/lib/libbsd*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/lib/libmd*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        # skalibs-libs
-        /usr/lib/libskarnet*) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-
-        esac
-    done
-
-    # linux-pam shared objects
-    for f in /usr/sbin/*; do
-        case $f in
-        # pam dynamicaly linked user binaries
-        /usr/sbin/chage) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/faillock) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/mkhomedir_helper) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/pam_namespace_helper) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/pam_timestamp_check) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/pwhistory_helper) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/unix_chkpwd) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-
         esac
     done
 
