@@ -1,4 +1,4 @@
-FROM alpine:3.22 as builder
+FROM alpine:3.22 AS builder
 
 COPY ./scripts/packages/shadow-setup.sh /app/scripts/shadow-setup.sh
 
@@ -40,7 +40,7 @@ printf "\n|> Succesfully run shadow-bin from shadow-setup.sh. Proceeding..."
 EOF
 
 
-FROM alpine:3.22 as relay
+FROM alpine:3.22 AS relay
 
 ARG SHADOW_SO_DIR="/app/shadow-shared-deps/"
 ARG SHADOW_BIN_DIR="/app/shadow/usr/bin/"
