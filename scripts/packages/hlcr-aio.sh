@@ -1,10 +1,12 @@
 #!/bin/sh
 
-PODMAN_PACKAGING_DIRECTORY="./artifacts/packaging/llcr-aio/podman"
-export PODMAN_PACKAGING_DIRECTORY
+PACKAGING_ART_DIR="./artifacts/packaging"
+export PACKAGING_ART_DIR
 
 # this will be called with [./scripts/sandbox/run-qemu.sh] before copying to the VIRTFS_ART_PATH
 rootless_podman() {
+    PODMAN_PACKAGING_DIRECTORY="./artifacts/packaging/llcr-aio/podman"
+    export PODMAN_PACKAGING_DIRECTORY
     # avoid permission problems with crun
 
     # this will need users/groups configured.
@@ -375,6 +377,17 @@ set_tarball() {
         return 1
     fi
     echo "|> Successfully created the all-in-one tarball with [set_tarball]. Proceeding..."
+
+    if ! (
+        tar -czf "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/hlcr-tarball.tar.gz" \
+            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/podman-tarball.tar.gz" \
+            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/docker-tarball.tar.gz" \
+            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/crio-tarball.tar.gz"
+    ); then
+        echo "|> Error: it was not possible to create all-in-one tarball with [set_tarball]. Exiting now..."
+        return 1
+    fi
+    echo "|> Successfully created all-in-one tarball with [set_tarball]. Proceeding..."
 
 }
 
