@@ -487,7 +487,7 @@ hlcr-crio:
 # LLCR: High-Level Container Runtime
 # ==============
 .PHONY: llcr-aio
-llcr-aio: llcr-runc llcr-crun llcr-containerd llcr-youki
+llcr-aio:
 	MODE="llcr-aio" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: llcr-runc
