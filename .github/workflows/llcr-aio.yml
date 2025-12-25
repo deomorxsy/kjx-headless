@@ -1,4 +1,4 @@
-name: llcr all-in-one
+name: llcr-aio
 # builds and packages all low-level container runtimes
 on:
   push:
