@@ -27,22 +27,31 @@ ftrace_pipeline() {
     # --------- Tracing steps
 
     #  tell Ftrace to get traces from this PID only
-    if ! echo "${TARGET_PID}" | sudo tee "${FTRACE_DIR}/set_ftrace_pid"; then
+    if ! (echo "${TARGET_PID}" | sudo tee "${FTRACE_DIR}/set_ftrace_pid"); then
         echo "|> Error: it was not possible to write ${TARGET_PID:-[EMPTY_VAR]} to get traces from this PID only. Exiting now..."
         echo && echo
         return 1
     fi
 
     # ensure that tracing is enabled for Ftrace
-    if ! echo 1 | sudo tee "$FTRACE_DIR"/tracing_on; then
+    if ! (echo 1 | sudo tee "$FTRACE_DIR"/tracing_on); then
         echo "|> Error: failed in writing to [$FTRACE_DIR/tracing_on] in order to ensure tracing is enabled for Ftrace. Exiting now..."
         echo && echo
         return 1
     fi
     echo "|> wrote to [$FTRACE_DIR/tracing_on] to ensure tracing is enabled for Ftrace with success."
 
+    # return error if the specified filter type is not part of the TRACE_TYPE_POOL.
+    if ! [ "*${USR_TRACE_FILTER:-[EMPTY_VARIABLE]}*" = "${TRACE_TYPE_POOL}" ]; then
+        echo "|> Error: USR_TRACE_FILTER=${USR_TRACE_FILTER:-[EMPTY_VARIABLE]} is not on the TRACE_TYPE_POOL=${TRACE_TYPE_POOL:-[EMPTY_VARIABLE]}. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found USR_TRACE_FILTER=${USR_TRACE_FILTER:-[EMPTY_VARIABLE]} as a valid type of TRACE_TYPE_POOL=${TRACE_TYPE_POOL:-[EMPTY_VARIABLE]}. Proceeding..."
+
     # set the Ftrace filter for functions by the matching below
-    if ! echo '*sleep' | sudo tee "$FTRACE_DIR"/set_ftrace_filter; then
+    # if ! echo "*sleep" | sudo tee "$FTRACE_DIR"/set_ftrace_filter; thenu
+    if ! (echo "${USR_TRACE_FILTER:-[EMPTY_VARIABLE]}" | sudo tee "$FTRACE_DIR"/set_ftrace_filter); then
         echo "|> Error: it was not possible write to [$FTRACE_DIR/set_ftrace_filter] with the filter for functions. Exiting now..."
         echo && echo
         return 1
@@ -50,7 +59,7 @@ ftrace_pipeline() {
     echo "|> wrote to $FTRACE_DIR/set_ftrace_filter using the filter for functions with success."
 
     # set Ftrace's current tracer file to get function traces
-    if ! echo "${CHOSEN_FUNTRACER}" | sudo tee "$FTRACE_DIR"/current_tracer; then
+    if ! (echo "${CHOSEN_FUNTRACER}" | sudo tee "$FTRACE_DIR"/current_tracer); then
         echo "|> Error: it was not possible to write to [$FTRACE_DIR/current_tracer] to get function traces from the current tracer. Exiting now..."
         echo && echo
         return 1
@@ -60,7 +69,7 @@ ftrace_pipeline() {
     sleep "$SECS"
 
     # copy the result of the trace for later analysis
-    if ! sudo cp "$FTRACE_DIR"/trace "$OUT_FILE"; then
+    if ! (sudo cp "$FTRACE_DIR"/trace "$OUT_FILE"); then
         echo "|> Error: it was not possible to copy [$FTRACE_DIR/trace] to [OUT_FILE=$OUT_FILE] for later analysis. Exiting now..."
         echo && echo
         return 1
@@ -68,7 +77,7 @@ ftrace_pipeline() {
     echo "|> Copied [$FTRACE_DIR/trace] to [OUT_FILE=$OUT_FILE] for later analysis with success."
 
     # set no operation for Ftrace's current tracer file
-    if ! echo nop | sudo tee "$FTRACE_DIR"/current_tracer; then
+    if ! (echo "nop" | sudo tee "$FTRACE_DIR"/current_tracer); then
         echo "|> Error: it was not possible to set No-OPeration [NOP] for [$FTRACE_DIR/current_tracer] file. Exiting now..."
         echo && echo
         return 1
@@ -76,7 +85,7 @@ ftrace_pipeline() {
     echo "|> Set No-OPeration [NOP] for Ftrace's current tracer file with success."
 
     # overwrite the Ftrace filter to none
-    if ! echo | sudo tee "$FTRACE_DIR"/set_ftrace_filter; then
+    if ! (echo | sudo tee "$FTRACE_DIR"/set_ftrace_filter); then
         echo "|> Error: it was not possible to overwrite the [$FTRACE_DIR/set_ftrace_filter] to [none]. Exiting now..."
         echo && echo
         return 1
@@ -84,7 +93,7 @@ ftrace_pipeline() {
     echo "|> Overwrote the [$FTRACE_DIR/set_ftrace_filter] file to [none] with success."
 
     # change ownership of the OUT_FILE.
-    if ! sudo chown "$USER":users "$OUT_FILE"; then
+    if ! (sudo chown "${USER:-[EMPTY_VARIABLE]}":users "${OUT_FILE:-[EMPTY_VARIABLE]}"); then
         echo "|> Error: it was not possible to change the ownership of the [OUT_FILE=$OUT_FILE] . Exiting now..."
         echo && echo
         return 1
