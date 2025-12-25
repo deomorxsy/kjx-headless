@@ -506,6 +506,8 @@ services:
       echo hmm
     stop_signal: SIGINT
   # hlcr packaging
+
+  # podman
   qonq_podman:
     container_name: qonq_podman
     environment:
@@ -515,6 +517,36 @@ services:
       dockerfile: "./scripts/packages/Dockerfile.podman.qonq"
       tags:
         - "localhost:5000/qonq_podman:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # docker
+  qonq_docker:
+    container_name: qonq_docker
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.docker.qonq"
+      tags:
+        - "localhost:5000/qonq_docker:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # crio
+  qonq_crio:
+    container_name: qonq_crio
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.crio.qonq"
+      tags:
+        - "localhost:5000/qonq_crio:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
       echo hmm
