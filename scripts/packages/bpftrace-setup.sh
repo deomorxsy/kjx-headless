@@ -1,0 +1,350 @@
+#!/bin/sh
+
+core_routine() {
+    # bpftrace_PKGDEPS_PLACEHOLDER=""
+    # export bpftrace_PKGDEPS_PLACEHOLDER
+    #
+    DEMO_REPLASED_PATH="./scripts/packaging/demo-replased.sh"
+
+    mkdir -p /app
+
+    CORE_BPFTRACE_DEPS="
+    llvm20-libs
+    bcc
+    binutils
+    libbpf
+    musl
+    clang20-libs
+    libdw
+    libelf
+    llvm-next-libgcc
+    libstdc++
+    zlib
+    bpftrace
+    "
+    export CORE_BPFTRACE_DEPS DEMO_REPLASED_PATH
+    #escape awk $3 with a blackslash '\'
+
+    # check if demo file exist
+    if ! [ -f "${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Error: [DEMO_REPLASED_PATH=${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}] was not found. Exiting now..."
+        return 1
+    fi
+    echo "|> Successfully found [DEMO_REPLASED_PATH=${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}]. Proceeding..."
+
+    # copy demo file into the depslist to be replaced with sed later
+    if ! (cp "${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}" /app/depslist.sh); then
+        echo "|> Error: could not create the filepath [/app/depslist.sh]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully created the filepath [/app/depslist.sh]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+
+    # generalize the install by replacing every placeholder with the desired dependency
+    if ! (for f in $CORE_BPFTRACE_DEPS; do
+        COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
+        export COREUPPER
+
+        sed -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" /app/depslist.sh >"/app/depslist-replaSED_$f.sh"
+    done); then
+        echo "|> Error: could not replace every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 02"
+        return 1
+    fi
+    echo "|> Successfully replaced every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 02"
+
+    # now use the extended regex [-r/-E] to replace hyphen between uppecase characters
+    if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
+        echo "|> Error: could not replace every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 03"
+        return 1
+    fi
+    echo "|> Successfully replaced every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 03"
+
+}
+
+set_bpftrace_deps() {
+
+    # Depends (13)
+    ## so:libLLVM.so.20.1
+    ## so:libbcc_bpf.so.0
+    ## so:libbfd-2.45.1.so
+    ## so:libbpf.so.1
+    ## so:libc.musl-x86_64.so.1
+    ## so:libclang-cpp.so.20.1
+    ## so:libclang.so.20.1
+    ## so:libdw.so.1
+    ## so:libelf.so.1
+    ## so:libgcc_s.so.1
+    ## so:libopcodes-2.45.1.so
+    ## so:libstdc++.so.6
+    ## so:libz.so.1
+
+    if ! core_routine; then
+        echo "|> Error: could not run the function [core_routine]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully ran the function [core_routine]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+
+    # llvm20-libs
+    if ! (/bin/sh -c "/app/depslist-replaSED_llvm20-libs.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [llvm20-libs]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 02"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [llvm20-libs]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 02"
+
+    # bcc
+    if ! (/bin/sh -c "/app/depslist-replaSED_bcc.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [bcc]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 03"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [bcc]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 03"
+
+    # binutils
+    if ! (/bin/sh -c "/app/depslist-replaSED_binutils.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [binutils]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 04"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [binutils]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 04"
+
+    # libbpf
+    if ! (/bin/sh -c "/app/depslist-replaSED_libbpf.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [libbpf]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 05"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [libbpf]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 05"
+
+    # musl
+    if ! (/bin/sh -c "/app/depslist-replaSED_musl.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [musl]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 06"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [musl]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 06"
+
+    # clang20-libs
+    if ! (/bin/sh -c "/app/depslist-replaSED_clang20-libs.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [clang20-libs]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 07"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [clang20-libs]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 07"
+
+    # libdw
+    if ! (/bin/sh -c "/app/depslist-replaSED_libdw.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [libdw]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 08"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [libdw]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 08"
+
+    # libelf
+    if ! (/bin/sh -c "/app/depslist-replaSED_libelf.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [libelf]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 09"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [libelf]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 09"
+
+    # llvm-next-libgcc
+    if ! (/bin/sh -c "/app/depslist-replaSED_llvm-next-libgcc.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [llvm-next-libgcc]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 10"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [llvm-next-libgcc]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 10"
+
+    # libstdc++
+    if ! (/bin/sh -c "/app/depslist-replaSED_libstdc++.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [libstdc++]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 11"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [libstdc++]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 11"
+
+    # zlib
+    if ! (/bin/sh -c "/app/depslist-replaSED_zlib.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [zlib]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 12"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [zlib]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 12"
+
+    # bpftrace
+    if ! (/bin/sh -c "/app/depslist-replaSED_bpftrace.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [bpftrace]. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 13"
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [bpftrace]. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; check: 13"
+
+}
+
+# single tarball
+set_bpftrace() {
+
+    if ! set_bpftrace_deps; then
+        echo "|> Error: it was not possible to resolve bpftrace dependencies. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully resolved bpftrace dependencies. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+
+    # set IFS: input field separator
+    #IFS='\n\t'
+    IFS=$(printf '\n\t')
+
+    # read each line defining the input field separator,
+    # follow the soft link and append readlink output line to a new file
+    while IFS= read -r line; do
+        readlink -f "$line" >>/bar.txt
+    done </foo.txt
+
+    # remove new lines on the lists, then create new file
+    sed '/^$/d' /foo.txt >/foobar.txt
+    sed '/^$/d' /bar.txt >>/foobar.txt
+
+    # then remove duplicate shared objects
+    sort /foobar.txt | uniq >/quux.txt
+
+    # generate a tarball of shared objects from filepaths on a text file
+    tar -czf /bpftrace-single-pkg.tar.gz -T /quux.txt
+
+}
+
+set_bpftrace_so() {
+
+    if ! set_bpftrace_deps; then
+        echo "|> Error: it was not possible to resolve bpftrace dependencies. Exiting now..."
+        echo "|> SCOPE: [set_bpftrace_so], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully resolved bpftrace dependencies. Proceeding..."
+    echo "|> SCOPE: [set_bpftrace_so], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+
+    # bpftrace commands
+    for f in /usr/sbin/*; do
+        case $f in
+        /usr/sbin/bpftrace) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+        /usr/sbin/bpftracesh) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+        esac
+    done
+
+    # set IFS: input field separator
+    #IFS='\n\t'
+    IFS=$(printf '\n\t')
+
+    # read each line defining the input field separator,
+    # follow the soft link and append readlink output line to a new file
+    while IFS= read -r line; do
+        readlink -f "$line" >>/bar.txt
+    done </foo.txt
+
+    # remove new lines on the lists, then create new file
+    sed '/^$/d' /foo.txt >/foobar.txt
+    sed '/^$/d' /bar.txt >>/foobar.txt
+
+    # then remove duplicate shared objects
+    sort /foobar.txt | uniq >/quux.txt
+
+    # generate a tarball of shared objects from filepaths on a text file
+    tar -czf /bpftrace-so-pkg.tar.gz -T /quux.txt
+
+}
+
+set_bpftrace_bin() {
+
+    # set IFS: input field separator
+    IFS=$(printf '\n\t')
+
+    # read each line defining the input field separator,
+    # follow the soft link and append readlink output line to a new file
+    while IFS= read -r line; do
+        readlink -f "$(which "$line")" >>/bpftrace-bin-bar.txt
+    done </bpftrace-list.txt
+
+    # set the libpam-list alongside bpftrace-bin-bar just to leverage the others.
+    while IFS= read -r line; do
+        readlink -f "$(which "$line")" >>/bpftrace-bin-bar.txt
+    done </libpam-list.txt
+
+    # set IFS: input field separator
+    IFS=$(printf '\n\t')
+
+    # remove new lines on the lists, then create new file
+    sed '/^$/d' /bpftrace-bin-bar.txt >/bpftrace-bin-foobar.txt &&
+        #sed '/^$/d' /bar.txt >> /foobar.txt
+
+        # then remove duplicate shared objects
+        sort /bpftrace-bin-foobar.txt | uniq >/bpftrace-bin-quux.txt &&
+
+        # generate a tarball of shared objects from filepaths on a text file
+        tar -czf /bpftrace-bin-pkg.tar.gz -T /bpftrace-bin-quux.txt
+
+}
+
+print_usage() {
+    cat <<-END >&2
+USAGE: bpftrace-setup.sh [-options]
+                - bpftrace-so
+                - bpftrace-bin
+                - tarball
+                - version
+                - help
+eg,
+MODE="bpftrace-so"  . ./bpftrace-setup.sh   # setup bpftrace shared objects
+MODE="bpftrace-bin" . ./bpftrace-setup.sh   # setup bpftrace (musl) dynamically linked binaries
+MODE="tarball"      . ./bpftrace-setup.sh   # create a single tarball
+MODE="version"      . ./bpftrace-setup.sh   # shows script version
+MODE="help"         . ./bpftrace-setup.sh   # shows this help message
+
+See the man page and example file for more info.
+
+END
+
+}
+
+# Check the argument passed from the command line
+if ! [ -z "${MODE}" ] &&
+    [ "${MODE}" = "bpftrace-so" ] ||
+    [ "${MODE}" = "bpftrace-bin" ]; then
+    case "${MODE}" in
+    "bpftrace-so") set_bpftrace_so ;;
+    "bpftrace-bin") set_bpftrace_bin ;;
+    "tarball") set_bpftrace ;;
+    *)
+        echo "Invalid option. Please specify one of: bpftrace-so, bpftrace-bin, tarball"
+        print_usage
+        ;;
+    esac
+
+elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
+    print_usage
+elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
+    printf "\n|> Version: bpftrace-setup 1.0.0"
+else
+    echo "Invalid function name. Please specify one of the available functions:"
+    print_usage
+fi
