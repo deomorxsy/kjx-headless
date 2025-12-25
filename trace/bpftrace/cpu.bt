@@ -1,0 +1,69 @@
+#!/usr/bin/bpftrace -e
+
+#ifndef BPFTRACE_HAVE_BTF
+#include <linux/path.h>
+#include <linux/dcache.h>
+#include <linux/sched.h>
+#else
+#define TASK_RUNNING 0
+#endif
+
+#ifndef BPFTRACE_HAVE_BTF
+
+#endif
+
+config = { missing_probes = "ignore" }
+
+BEGIN {
+    printf("Tracing bash commands... Hit Ctrl-C to end.\n");
+	printf("%-9s %-6s %s\n", "TIME", "PID", "COMMAND");
+}
+
+/* ============================== */
+/* tracepoint example */
+/* ============================== */
+tracepoint:syscalls:sys_enter_open,
+tracepoint:syscalls:sys_enter_openat {
+    printf("%-6d %-16s %s\n", pid, comm, str(args.filename));
+}
+
+
+/* ============================== */
+/* user return probe example */
+/* ============================== */
+
+uretprobe:/bin/bash:readline,
+uretprobe:libreadline:readline
+/comm == "bash"/
+{
+	time("%H:%M:%S  ");
+	printf("%-6d %s\n", pid, str(retval));
+}
+
+/* ============================== */
+/* runqlat specific tracepoints */
+/* ============================== */
+
+tracepoint:sched:sched_wakeup,
+tracepoint:sched:sched_wakeup_new
+{
+	@qtime[args.pid] = nsecs;
+}
+
+tracepoint:sched:sched_switch
+{
+	if (args.prev_state == TASK_RUNNING) {
+		@qtime[args.prev_pid] = nsecs;
+	}
+	// Ignore the idle task
+	if (args.next_pid == 0) {
+		return;
+	}
+
+	$ns = @qtime[args.next_pid];
+	if ($ns) {
+		@usecs = hist((nsecs - $ns) / 1000);
+		// Swallowing deletion failures as they are expected
+		$ignore = delete(@qtime, args.next_pid);
+	}
+}

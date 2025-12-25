@@ -1,0 +1,14 @@
+#!/usr/bin/bpftrace -e
+
+kprobe:syscalls:sys_enter_open,
+kprobe:syscalls:sys_enter_openat {
+    @start[tid] = nsecs;
+}
+
+kretprobe:syscalls:sys_enter_open,
+kretprobe:syscalls:sys_enter_openat
+/@start[tid]/{
+    $duration_us = (nsecs - @start[tid]) / 1000;
+    @us = hist($duration_us);
+    delete(@start[tid]);
+}
