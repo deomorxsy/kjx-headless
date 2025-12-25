@@ -88,165 +88,71 @@ set_podman_deps() {
     # conmon
     ## provides: cmd:conmon
     if ! (/bin/sh -c "/app/depslist-replaSED_conmon.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [conmon]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
         return 1
     fi
-
-    ## for f in /bin/* /usr/bin/* /usr/sbin/*; do
-    ##     case $f in
-    ##     */conmon) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ##     esac
-    ## done
+    echo "|> Successfully resolved dependency list for [conmon]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
 
     # oci-runtime
     # provides: cmd:oci-runtime, cmd:crun
     if ! (/bin/sh -c "/app/depslist-replaSED_oci-runtime.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [oci-runtime]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 03"
         return 1
     fi
-
-    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
-    ###     case $f in
-    ###     */oci-runtime) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     */crun) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     esac
-    ### done
+    echo "|> Successfully resolved dependency list for [oci-runtime]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 03"
 
     # passt
     # provides: cmd:passt-repair, cmd:passt, cmd:pasta, cmd:qrap
     if ! (/bin/sh -c "/app/depslist-replaSED_passt.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [passt]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 04"
         return 1
     fi
-    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
-    ###     case $f in
-    ###     */passt-repair) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     */passt) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     */pasta) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     */qrap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     esac
-    ### done
-
-    ### # shadow-subids
-    ### # provides: shadow-uidmap, cmd:getsubids, cmd:newgidmap, cmd:newuidmap
-    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
-    ###     case $f in
-    ###     #/usr/sbin/shadow-uidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     */getsubids) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     */newgidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     */newuidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     esac
-    ### done
+    echo "|> Successfully resolved dependency list for [passt]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 04"
 
     # containers-common
     # non-cmds: dotfiles and dynamically linked binary dependencies (shared objects)
 
     if ! (/bin/sh -c "/app/depslist-replaSED_containers-common.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [containers-common]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 05"
         return 1
     fi
-
-    ### PODMAN_PKGDEPS_CONTAINERS_COMMON="$(apk info -L containers-common | awk 'NR > 1')"
-    ### export PODMAN_PKGDEPS_CONTAINERS_COMMON
-
-    ### # redirect the filepath of dotfiles for the [containers-common] apk package
-    ### if ! (for f in $PODMAN_PKGDEPS_CONTAINERS_COMMON; do
-    ###     echo "$f" >>/foo.txt
-    ### done); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [containers-common] apk package. Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of dotfiles for the [containers-common] apk package. Proceeding..."
-
-    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
-    ### if ! (ldd "$(readlink -f "$(apk info -L containers-common | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of [containers-common] dynamically linked binary dependencies (shared objects). Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of [containers-common] dynamically linked binary dependencies (shared objects). Proceeding..."
+    echo "|> Successfully resolved dependency list for [containers-common]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 05"
 
     # netavark
     # ldd "$(readlink -f "$(apk info -L netavark | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt
     if ! (/bin/sh -c "/app/depslist-replaSED_containers-netavark.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [netavark]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 06"
         return 1
     fi
-
-    ### PODMAN_PKGDEPS_NETAVARK="$(apk info -L netavark | awk 'NR > 1')"
-    ### export PODMAN_PKGDEPS_NETAVARK
-
-    ### # redirect the filepath of dotfiles for the [netavark] apk package
-    ### if ! (for f in $PODMAN_PKGDEPS_NETAVARK; do
-    ###     echo "$f" >>/foo.txt
-    ### done); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [netavark] apk package. Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of dotfiles for the [netavark] apk package. Proceeding..."
-
-    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
-    ### if ! (ldd "$(readlink -f "$(apk info -L netavark | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of [netavark] dynamically linked binary dependencies (shared objects). Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of [netavark] dynamically linked binary dependencies (shared objects). Proceeding..."
+    echo "|> Successfully resolved dependency list for [netavark]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 06"
 
     # aardvark-dns
     if ! (/bin/sh -c "/app/depslist-replaSED_containers-aardvark-dns.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [aardvark-dns]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 07"
         return 1
     fi
-    ## binaries
-    # readlink -f "$(apk info -L aardvark-dns | awk 'NR > 1')"
-    ## shared-objects
-    # ldd "$(readlink -f "$(apk info -L aardvark-dns | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt
-    ### PODMAN_PKGDEPS_AARDVARK_DNS="$(apk info -L aardvark-dns | awk 'NR > 1')"
-    ### export PODMAN_PKGDEPS_AARDVARK_DNS
-
-    ### # redirect the filepath of dotfiles for the [aardvark-dns] apk package
-    ### if ! (for f in $PODMAN_PKGDEPS_AARDVARK_DNS; do
-    ###     echo "$f" >>/foo.txt
-    ### done); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [aardvark-dns] apk package. Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of dotfiles for the [aardvark-dns] apk package. Proceeding..."
-
-    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
-    ### if ! (ldd "$(readlink -f "$(apk info -L aardvark-dns | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of [aardvark-dns] dynamically linked binary dependencies (shared objects). Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of [aardvark-dns] dynamically linked binary dependencies (shared objects). Proceeding..."
+    echo "|> Successfully resolved dependency list for [aardvark-dns]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 07"
 
     # catatonit
     if ! (/bin/sh -c "/app/depslist-replaSED_containers-catatonit.sh"); then
+        echo "|> Error: it was not possible to resolve dependency list for [catatonit]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 08"
         return 1
     fi
-    # /bin/sh
-    # so:libc.musl-x86.so.1
-    # so:libgpgme.so.11
-    # so:libseccomp.so.2
-    # so:libsqlite3.so.0
-    ### PODMAN_PKGDEPS_CATATONIT="$(apk info -L catatonit | awk 'NR > 1')"
-    ### export PODMAN_PKGDEPS_CATATONIT
-
-    ### # redirect the filepath of dotfiles for the [catatonit] apk package
-    ### if ! (for f in $PODMAN_PKGDEPS_CATATONIT; do
-    ###     echo "$f" >>/foo.txt
-    ### done); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [catatonit] apk package. Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of dotfiles for the [catatonit] apk package. Proceeding..."
-
-    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
-    ### if ! (ldd "$(readlink -f "$(apk info -L catatonit | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of [catatonit] dynamically linked binary dependencies (shared objects). Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of [catatonit] dynamically linked binary dependencies (shared objects). Proceeding..."
-
-    ### #
-    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
-    ###     case $f in
-    ###     */conmon) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-    ###     esac
-    ### done
+    echo "|> Successfully resolved dependency list for [catatonit]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 08"
 
 }
 
