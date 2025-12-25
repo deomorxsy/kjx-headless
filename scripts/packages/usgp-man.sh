@@ -35,9 +35,28 @@ set_iptables() {
 
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
+        echo "|> WARNING: could not start OCI registry server. Attempting to run the image..."
         echo && echo
         #return 1
+
+        # grep for lines of registries.conf that are not the demonstration of insecure = true being set,
+        # i.e. those which do not have a "#" character.
+        if ! (cat /etc/containers/registries.conf | grep "insecure = true" | grep -v "#"); then
+            echo "|> WARNING: it seems there is no [insecure] configuration for registries running locally at localhost:5000. Attempting to redirect a heredoc to [/etc/containers/registries.conf] to configure..."
+
+            if ! ( (
+                cat <<EOF
+                [[registry]]
+                location = "localhost:5000"
+                insecure = true
+EOF
+            ) >>/etc/containers/registries.conf); then
+                echo "|> Error: could not redirect the [insecure] configuration for OCI registries at localhost:5000to [/etc/containers/registries.conf]. Exiting now..."
+                return 1
+            fi
+            echo "|> Successfully redirected the [insecure] configuration for OCI registries at localhost:5000 to [/etc/containers/registries.conf]. Proceeding..."
+        fi
+        echo "|> Successfully found an [insecure] configuration for registries running locally at localhost:5000. Proceeding..."
 
         # run the registry:3.0 container image.
         if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
@@ -79,7 +98,7 @@ set_iptables() {
             return 1
 
         fi
-        echo "|> Build the [qonq_iptables container with ccr.sh to use Podman Service as the compose tool with success. Proceeding..."
+        echo "|> Successfully built the [qonq_iptables] container with ccr.sh to use Podman Service as the compose tool. Proceeding..."
         echo && echo
 
         # push built image into the registry:3.0 localhost:5000 server container.
