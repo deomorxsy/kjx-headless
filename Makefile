@@ -462,49 +462,6 @@ mvm-firecracker:
 .PHONY: fr-demo-network
 	MODE="fr-demo-network" . ./scripts/sandbox/firecracker-startup.sh
 
-# ===========
-# HLCR: High-Level Container Runtime
-#
-# uses: qonq-qdb
-# ==============
-.PHONY: hlcr-aio
-hlcr-aio:
-	MODE="tarball" . ./scripts/entrypoints/hlcr-aio.sh
-
-.PHONY: hlcr-docker
-hlcr-docker:
-	MODE="docker" . ./scripts/entrypoints/hlcr-aio.sh
-
-.PHONY: hlcr-podman
-hlcr-podman:
-	MODE="podman" . ./scripts/entrypoints/hlcr-aio.sh
-
-.PHONY: hlcr-crio
-hlcr-crio:
-	MODE="crio" . ./scripts/entrypoints/hlcr-aio.sh
-
-# ===========
-# LLCR: High-Level Container Runtime
-# ==============
-.PHONY: llcr-aio
-llcr-aio:
-	MODE="llcr-aio" . ./scripts/entrypoints/llcr-aio.sh
-
-.PHONY: llcr-runc
-llcr-runc:
-	MODE="llcr-runc" . ./scripts/entrypoints/llcr-aio.sh
-
-.PHONY: llcr-crun
-llcr-crun:
-	MODE="llcr-crun" . ./scripts/entrypoints/llcr-aio.sh
-
-.PHONY: llcr-containerd
-llcr-containerd:
-	MODE="containerd" . ./scripts/entrypoints/llcr-aio.sh
-
-.PHONY: llcr-youki
-llcr-youki:
-	MODE="youki" . ./scripts/entrypoints/llcr-aio.sh
 
 # ==========================
 # Fetch-GHA Artifacts logic
@@ -548,3 +505,54 @@ qonq_shadow:
 .PHONY: qonq_iptables
 qonq_iptables:
 	MODE="iptables" . ./scripts/packages/usgp-man.sh
+
+
+# ===========
+# HLCR: High-Level Container Runtime
+#
+# uses: qonq-qdb
+# ==============
+.PHONY: qonq_hlcr
+qonq_hlcr:
+	MODE="tarball" . ./scripts/entrypoints/hlcr-aio.sh
+
+.PHONY: qonq_docker
+qonq_docker:
+	MODE="docker" . ./scripts/entrypoints/hlcr-aio.sh
+
+.PHONY: qonq_podman
+qonq_podman:
+	MODE="podman" . ./scripts/entrypoints/hlcr-aio.sh
+
+.PHONY: qonq_crio
+qonq_crio:
+	MODE="crio" . ./scripts/entrypoints/hlcr-aio.sh
+
+# ===========
+# LLCR: High-Level Container Runtime
+# ==============
+.PHONY: qonq_llcr
+qonq_llcr:
+	MODE="llcr-aio" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_runc
+qonq_runc:
+	MODE="llcr-runc" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_crun
+qonq_crun:
+	MODE="llcr-crun" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_containerd
+qonq_containerd:
+	MODE="containerd" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_youki
+qonq_youki:
+	MODE="youki" . ./scripts/entrypoints/llcr-aio.sh
+
+
+
+
+
+
