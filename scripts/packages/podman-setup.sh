@@ -188,7 +188,7 @@ set_podman_deps() {
 
 }
 
-set_podman_so() {
+set_podman_tarball() {
 
     if ! set_podman_deps; then
         echo "|> Error: it was not possible to resolve podman dependencies. Exiting now..."
@@ -197,14 +197,6 @@ set_podman_so() {
     fi
     echo "|> Successfully resolved podman dependencies. Proceeding..."
     echo "|> SCOPE: [set_podman_so], file [./scripts/packages/podman-setup.sh]; check: 01"
-
-    # podman commands
-    for f in /usr/sbin/*; do
-        case $f in
-        /usr/sbin/podman) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/podmansh) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
 
     # set IFS: input field separator
     #IFS='\n\t'
@@ -224,40 +216,72 @@ set_podman_so() {
     sort /foobar.txt | uniq >/quux.txt
 
     # generate a tarball of shared objects from filepaths on a text file
-    tar -czf /podman-so-pkg.tar.gz -T /quux.txt
+    tar -czf /podman-tarball-pkg.tar.gz -T /quux.txt
 
 }
 
-set_podman_bin() {
-    #
-    # set IFS: input field separator
-    IFS=$(printf '\n\t')
-
-    # read each line defining the input field separator,
-    # follow the soft link and append readlink output line to a new file
-    while IFS= read -r line; do
-        readlink -f "$(which "$line")" >>/podman-bin-bar.txt
-    done </podman-list.txt
-
-    # set the libpam-list alongside podman-bin-bar just to leverage the others.
-    while IFS= read -r line; do
-        readlink -f "$(which "$line")" >>/podman-bin-bar.txt
-    done </libpam-list.txt
-
-    # set IFS: input field separator
-    IFS=$(printf '\n\t')
-
-    # remove new lines on the lists, then create new file
-    sed '/^$/d' /podman-bin-bar.txt >/podman-bin-foobar.txt &&
-        #sed '/^$/d' /bar.txt >> /foobar.txt
-
-        # then remove duplicate shared objects
-        sort /podman-bin-foobar.txt | uniq >/podman-bin-quux.txt &&
-
-        # generate a tarball of shared objects from filepaths on a text file
-        tar -czf /podman-bin-pkg.tar.gz -T /podman-bin-quux.txt
-
-}
+# set_podman_so() {
+#
+#     # podman commands
+#     for f in /usr/sbin/*; do
+#         case $f in
+#         /usr/sbin/podman) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo-so.txt ;;
+#         /usr/sbin/podmansh) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo-so.txt ;;
+#         esac
+#     done
+#
+#     # set IFS: input field separator
+#     #IFS='\n\t'
+#     IFS=$(printf '\n\t')
+#
+#     # read each line defining the input field separator,
+#     # follow the soft link and append readlink output line to a new file
+#     while IFS= read -r line; do
+#         readlink -f "$line" >>/bar-so.txt
+#     done </foo-so.txt
+#
+#     # remove new lines on the lists, then create new file
+#     sed '/^$/d' /foo-so.txt >/foobar-so.txt
+#     sed '/^$/d' /bar-so.txt >>/foobar-so.txt
+#
+#     # then remove duplicate shared objects
+#     sort /foobar-so.txt | uniq >/quux-so.txt
+#
+#     # generate a tarball of shared objects from filepaths on a text file
+#     tar -czf /podman-so-pkg.tar.gz -T /quux-so.txt
+#
+# }
+#
+# set_podman_bin() {
+#     #
+#     # set IFS: input field separator
+#     IFS=$(printf '\n\t')
+#
+#     # read each line defining the input field separator,
+#     # follow the soft link and append readlink output line to a new file
+#     while IFS= read -r line; do
+#         readlink -f "$(which "$line")" >>/podman-bin-bar.txt
+#     done </podman-list.txt
+#
+#     # set the libpam-list alongside podman-bin-bar just to leverage the others.
+#     while IFS= read -r line; do
+#         readlink -f "$(which "$line")" >>/podman-bin-bar.txt
+#     done </libpam-list.txt
+#
+#     # set IFS: input field separator
+#     IFS=$(printf '\n\t')
+#
+#     # remove new lines on the lists, then create new file
+#     sed '/^$/d' /podman-bin-bar.txt >/podman-bin-foobar.txt &&
+#         #sed '/^$/d' /bar.txt >> /foobar.txt
+#
+#         # then remove duplicate shared objects
+#         sort /podman-bin-foobar.txt | uniq >/podman-bin-quux.txt &&
+#
+#         # generate a tarball of shared objects from filepaths on a text file
+#         tar -czf /podman-bin-pkg.tar.gz -T /podman-bin-quux.txt
+#
+# }
 
 print_usage() {
     cat <<-END >&2
@@ -300,23 +324,23 @@ else
     print_usage
 fi
 
-old_deps() {
-    ldd "$(readlink -f "$(which conmon)")" | awk '{print $3}' >>/foo.txt
-    ldd "$(readlink -f "$(which podman)")" | awk '{print $3}' >>/foo.txt
-
-    ldd "$(readlink -f /usr/libexec/podman/netavark)" | awk '{print $3}' >>/foo.txt
-    ldd "$(readlink -f /usr/libexec/podman/aardvark-dns)" | awk '{print $3}' >>/foo.txt
-    ldd "$(readlink -f /usr/libexec/podman/rootlessport)" | awk '{print $3}' >>/foo.txt
-
-    # since catatonit is a static binary
-    echo "$(readlink -f /usr/libexec/podman/catatonit)" >>/foo.txt
-
-    # if [ -d /usr/libexec/podman ]; then
-    #
-    # fi
-
-    # crun support
-    ldd "$(readlink -f "$(which crun)")" | awk '{print $3}' >>/foo.txt
-
-}
+# old_deps() {
+#     ldd "$(readlink -f "$(which conmon)")" | awk '{print $3}' >>/foo.txt
+#     ldd "$(readlink -f "$(which podman)")" | awk '{print $3}' >>/foo.txt
+#
+#     ldd "$(readlink -f /usr/libexec/podman/netavark)" | awk '{print $3}' >>/foo.txt
+#     ldd "$(readlink -f /usr/libexec/podman/aardvark-dns)" | awk '{print $3}' >>/foo.txt
+#     ldd "$(readlink -f /usr/libexec/podman/rootlessport)" | awk '{print $3}' >>/foo.txt
+#
+#     # since catatonit is a static binary
+#     echo "$(readlink -f /usr/libexec/podman/catatonit)" >>/foo.txt
+#
+#     # if [ -d /usr/libexec/podman ]; then
+#     #
+#     # fi
+#
+#     # crun support
+#     ldd "$(readlink -f "$(which crun)")" | awk '{print $3}' >>/foo.txt
+#
+# }
 #
