@@ -1,5 +1,65 @@
 #!/bin/sh
 
+core_routine() {
+    # PODMAN_PKGDEPS_PLACEHOLDER=""
+    # export PODMAN_PKGDEPS_PLACEHOLDER
+    mkdir -p /app
+
+    CORE_PODMAN_DEPS="
+    conmon
+    oci-runtime
+    passt
+    shadow-subids
+    containers-common
+    netavark
+    aardvark-dns
+    catatonit
+    "
+    export CORE_PODMAN_DEPS
+    #escape awk $3 with a blackslash '\'
+
+    (
+        cat <<EOF
+PODMAN_PKGDEPS_PLACEHOLDER="\$(apk info -L placeholder | awk 'NR > 1')"
+export PODMAN_PKGDEPS_PLACEHOLDER
+
+# redirect the filepath of dotfiles for the [PLACEHOLDER] apk package
+if ! (for f in \$PODMAN_PKGDEPS_PLACEHOLDER; do
+    echo "\$f" >>/foo.txt
+done); then
+    echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [PLACEHOLDER] apk package. Exiting now..."
+    return 1
+fi
+echo "|> Successfully redirected the filepath of dotfiles for the [PLACEHOLDER] apk package. Proceeding..."
+
+# redirect filepath of dynamically linked binary dependencies (shared objects)
+if ! (ldd "\$(readlink -f "\$(apk info -L placeholder | awk 'NR > 1')")" | awk '{print \$3}' >>foo.txt); then
+    echo "|> Error: it was not possible to redirect the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Exiting now..."
+    return 1
+fi
+echo "|> Successfully redirected the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Proceeding..."
+
+#
+for f in /bin/* /usr/bin/* /usr/sbin/*; do
+    case \$f in
+    */placeholder) ldd "\$(readlink -f "\$(which "\$f")")" | awk '{print \$3}' >>/foo.txt ;;
+    esac
+done
+
+EOF
+    ) | tee /app/depslist.sh
+
+    for f in $CORE_PODMAN_DEPS; do
+        COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
+        export COREUPPER
+
+        sed -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" /app/depslist.sh >"/app/depslist-replaSED_$f.sh"
+    done
+
+    sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*
+
+}
+
 set_podman_deps() {
 
     # Depends (13)
@@ -17,61 +77,187 @@ set_podman_deps() {
     # so:libseccomp.so.2
     # so:libsqlite3.so.0
 
+    if ! core_routine; then
+        echo "|> Error: could not run the function [core_routine]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully ran the function [core_routine]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 01"
+
     # conmon
     ## provides: cmd:conmon
-    for f in /usr/sbin/*; do
-        case $f in
-        /usr/sbin/conmon) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
+    if ! (/bin/sh -c "/app/depslist-replaSED_conmon.sh"); then
+        return 1
+    fi
+
+    ## for f in /bin/* /usr/bin/* /usr/sbin/*; do
+    ##     case $f in
+    ##     */conmon) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ##     esac
+    ## done
 
     # oci-runtime
-    ## cmd provided: cmd:oci-runtime, cmd:crun
-    for f in /usr/sbin/*; do
-        case $f in
-        /usr/sbin/oci-runtime) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/crun) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
+    # provides: cmd:oci-runtime, cmd:crun
+    if ! (/bin/sh -c "/app/depslist-replaSED_oci-runtime.sh"); then
+        return 1
+    fi
+
+    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
+    ###     case $f in
+    ###     */oci-runtime) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     */crun) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     esac
+    ### done
 
     # passt
-    ## CMD provided: cmd:passt-repair, cmd:passt, cmd:pasta, cmd:qrap
-    for f in /usr/sbin/*; do
-        case $f in
-        /usr/sbin/passt-repair) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/passt) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/pasta) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/qrap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
+    # provides: cmd:passt-repair, cmd:passt, cmd:pasta, cmd:qrap
+    if ! (/bin/sh -c "/app/depslist-replaSED_passt.sh"); then
+        return 1
+    fi
+    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
+    ###     case $f in
+    ###     */passt-repair) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     */passt) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     */pasta) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     */qrap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     esac
+    ### done
 
-    # shadow-subids
-    for f in /usr/sbin/*; do
-        case $f in
-        /usr/sbin/shadow-uidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/getsubids) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/newgidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/newuidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
-    shadow-uidmap
-    cmd:getsubids
-    cmd:newgidmap
-    cmd:newuidmap
+    ### # shadow-subids
+    ### # provides: shadow-uidmap, cmd:getsubids, cmd:newgidmap, cmd:newuidmap
+    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
+    ###     case $f in
+    ###     #/usr/sbin/shadow-uidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     */getsubids) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     */newgidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     */newuidmap) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     esac
+    ### done
 
     # containers-common
+    # non-cmds: dotfiles and dynamically linked binary dependencies (shared objects)
+
+    if ! (/bin/sh -c "/app/depslist-replaSED_containers-common.sh"); then
+        return 1
+    fi
+
+    ### PODMAN_PKGDEPS_CONTAINERS_COMMON="$(apk info -L containers-common | awk 'NR > 1')"
+    ### export PODMAN_PKGDEPS_CONTAINERS_COMMON
+
+    ### # redirect the filepath of dotfiles for the [containers-common] apk package
+    ### if ! (for f in $PODMAN_PKGDEPS_CONTAINERS_COMMON; do
+    ###     echo "$f" >>/foo.txt
+    ### done); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [containers-common] apk package. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of dotfiles for the [containers-common] apk package. Proceeding..."
+
+    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
+    ### if ! (ldd "$(readlink -f "$(apk info -L containers-common | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of [containers-common] dynamically linked binary dependencies (shared objects). Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of [containers-common] dynamically linked binary dependencies (shared objects). Proceeding..."
+
     # netavark
+    # ldd "$(readlink -f "$(apk info -L netavark | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt
+    if ! (/bin/sh -c "/app/depslist-replaSED_containers-netavark.sh"); then
+        return 1
+    fi
+
+    ### PODMAN_PKGDEPS_NETAVARK="$(apk info -L netavark | awk 'NR > 1')"
+    ### export PODMAN_PKGDEPS_NETAVARK
+
+    ### # redirect the filepath of dotfiles for the [netavark] apk package
+    ### if ! (for f in $PODMAN_PKGDEPS_NETAVARK; do
+    ###     echo "$f" >>/foo.txt
+    ### done); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [netavark] apk package. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of dotfiles for the [netavark] apk package. Proceeding..."
+
+    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
+    ### if ! (ldd "$(readlink -f "$(apk info -L netavark | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of [netavark] dynamically linked binary dependencies (shared objects). Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of [netavark] dynamically linked binary dependencies (shared objects). Proceeding..."
+
     # aardvark-dns
+    if ! (/bin/sh -c "/app/depslist-replaSED_containers-aardvark-dns.sh"); then
+        return 1
+    fi
+    ## binaries
+    # readlink -f "$(apk info -L aardvark-dns | awk 'NR > 1')"
+    ## shared-objects
+    # ldd "$(readlink -f "$(apk info -L aardvark-dns | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt
+    ### PODMAN_PKGDEPS_AARDVARK_DNS="$(apk info -L aardvark-dns | awk 'NR > 1')"
+    ### export PODMAN_PKGDEPS_AARDVARK_DNS
+
+    ### # redirect the filepath of dotfiles for the [aardvark-dns] apk package
+    ### if ! (for f in $PODMAN_PKGDEPS_AARDVARK_DNS; do
+    ###     echo "$f" >>/foo.txt
+    ### done); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [aardvark-dns] apk package. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of dotfiles for the [aardvark-dns] apk package. Proceeding..."
+
+    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
+    ### if ! (ldd "$(readlink -f "$(apk info -L aardvark-dns | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of [aardvark-dns] dynamically linked binary dependencies (shared objects). Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of [aardvark-dns] dynamically linked binary dependencies (shared objects). Proceeding..."
+
     # catatonit
+    if ! (/bin/sh -c "/app/depslist-replaSED_containers-catatonit.sh"); then
+        return 1
+    fi
     # /bin/sh
     # so:libc.musl-x86.so.1
     # so:libgpgme.so.11
     # so:libseccomp.so.2
     # so:libsqlite3.so.0
+    ### PODMAN_PKGDEPS_CATATONIT="$(apk info -L catatonit | awk 'NR > 1')"
+    ### export PODMAN_PKGDEPS_CATATONIT
+
+    ### # redirect the filepath of dotfiles for the [catatonit] apk package
+    ### if ! (for f in $PODMAN_PKGDEPS_CATATONIT; do
+    ###     echo "$f" >>/foo.txt
+    ### done); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [catatonit] apk package. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of dotfiles for the [catatonit] apk package. Proceeding..."
+
+    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
+    ### if ! (ldd "$(readlink -f "$(apk info -L catatonit | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of [catatonit] dynamically linked binary dependencies (shared objects). Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of [catatonit] dynamically linked binary dependencies (shared objects). Proceeding..."
+
+    ### #
+    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
+    ###     case $f in
+    ###     */conmon) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+    ###     esac
+    ### done
 
 }
 
 set_podman_so() {
+
+    if ! set_podman_deps; then
+        echo "|> Error: it was not possible to resolve podman dependencies. Exiting now..."
+        echo "|> SCOPE: [set_podman_so], file [./scripts/packages/podman-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully resolved podman dependencies. Proceeding..."
 
     # podman commands
     for f in /usr/sbin/*; do
