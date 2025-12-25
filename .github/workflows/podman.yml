@@ -29,4 +29,4 @@ jobs:
 
       - name: Build OCI image (cross-compile)
         run: |
-          make podman
+          make qonq_podman
