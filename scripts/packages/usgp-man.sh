@@ -27,7 +27,12 @@ export BPFTRACE_SO_PKG BPFTRACE_BIN_PKG
 BFS_SHADOW_PKG_URI="https://github.com/shadow-maint/shadow/releases/download/4.18.0/shadow-4.18.0.tar.xz"
 export BFS_SHADOW_PKG_URI
 
+mkdir -p "./artifacts/rootless-oci"
+
 set_iptables() {
+    ROOTLESS_REGISTRIES="./artifacts/rootless-oci/registries.conf"
+    export ROOTLESS_REGISTRIES
+    mkdir -p "$(dirname "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}")"
 
     # CCR_MODE="-checker" . ./scripts/ccr.sh &&
     #     docker compose -f ./compose.yml --progress=plain build --no-cache qonq_iptables
@@ -39,24 +44,52 @@ set_iptables() {
         echo && echo
         #return 1
 
-        # grep for lines of registries.conf that are not the demonstration of insecure = true being set,
-        # i.e. those which do not have a "#" character.
-        if ! (cat /etc/containers/registries.conf | grep "insecure = true" | grep -v "#"); then
-            echo "|> WARNING: it seems there is no [insecure] configuration for registries running locally at localhost:5000. Attempting to redirect a heredoc to [/etc/containers/registries.conf] to configure..."
+        if ! [ -f "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}" ]; then
+            echo "|> WARNING: [ROOTLESS_REGISTRIES=${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]} filepath does not exist. Attempting to create...]"
 
             if ! ( (
                 cat <<EOF
-                [[registry]]
-                location = "localhost:5000"
-                insecure = true
+[[registry]]
+location = "localhost:5000"
+insecure = true
 EOF
-            ) >>/etc/containers/registries.conf); then
-                echo "|> Error: could not redirect the [insecure] configuration for OCI registries at localhost:5000to [/etc/containers/registries.conf]. Exiting now..."
+            ) | tee "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}"); then
+                echo "|> Error: could not redirect the [insecure] configuration for OCI registries at localhost:5000 to [${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}]. Exiting now..."
                 return 1
             fi
-            echo "|> Successfully redirected the [insecure] configuration for OCI registries at localhost:5000 to [/etc/containers/registries.conf]. Proceeding..."
+            echo "|> Successfully redirected the [insecure] configuration for OCI registries at localhost:5000 to [${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}]. Proceeding..."
+
         fi
-        echo "|> Successfully found an [insecure] configuration for registries running locally at localhost:5000. Proceeding..."
+
+        # grep for lines of registries.conf that are not the demonstration of insecure = true being set,
+        # i.e. those which do not have a "#" character.
+        if ! (cat /etc/containers/registries.conf | grep "insecure = true" | grep -v "#"); then
+            echo "|> WARNING: it seems there is no [insecure] configuration for registries running locally at localhost:5000. Attempting to use the rootless oci feature of Podman to set the [CONTAINERS_REGISTRIES_CONF] before running podman commands..."
+
+            CONTAINERS_REGISTRIES_CONF="${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}"
+            export CONTAINERS_REGISTRIES_CONF
+
+        fi
+        echo "|> Successfully set the [CONTAINERS_REGISTRIES_CONF] to point to a custom registries.conf [ROOTLESS_REGISTRIES=${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}]. Proceeding..."
+
+        ### # grep for lines of registries.conf that are not the demonstration of insecure = true being set,
+        ### # i.e. those which do not have a "#" character.
+        ### if ! (cat /etc/containers/registries.conf | grep "insecure = true" | grep -v "#"); then
+        ###     echo "|> WARNING: it seems there is no [insecure] configuration for registries running locally at localhost:5000. Attempting to redirect a heredoc to [/etc/containers/registries.conf] to configure..."
+
+        ###     if ! ( (
+        ###         cat <<EOF
+        ###         [[registry]]
+        ###         location = "localhost:5000"
+        ###         insecure = true
+        ###         EOF
+        ###     ) >>/etc/containers/registries.conf); then
+        ###         echo "|> Error: could not redirect the [insecure] configuration for OCI registries at localhost:5000to [/etc/containers/registries.conf]. Exiting now..."
+        ###         return 1
+        ###     fi
+        ###     echo "|> Successfully redirected the [insecure] configuration for OCI registries at localhost:5000 to [/etc/containers/registries.conf]. Proceeding..."
+        ### fi
+        ### echo "|> Successfully found an [insecure] configuration for registries running locally at localhost:5000. Proceeding..."
 
         # run the registry:3.0 container image.
         if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
