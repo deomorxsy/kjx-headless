@@ -105,3 +105,6 @@
 [submodule "assets/inferno-ds"]
 	path = assets/vm-specs/inferno-ds
 	url = git@github.com:deomorxsy/inferno-ds.git
+[submodule "assets/visualization/makefile2graph"]
+	path = assets/visualization/makefile2graph
+	url = git@github.com:lindenb/makefile2graph.git
