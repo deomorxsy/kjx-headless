@@ -468,43 +468,43 @@ mvm-firecracker:
 # uses: qonq-qdb
 # ==============
 .PHONY: hlcr-aio
-hlcr-aio: hlcr-docker hlcr-podman hlcr-crio
-	MODE="hlcr-aio" . ./scripts/entrypoints/hlcr.sh
+hlcr-aio:
+	MODE="tarball" . ./scripts/entrypoints/hlcr-aio.sh
 
 .PHONY: hlcr-docker
 hlcr-docker:
-	MODE="hlcr-docker" . ./scripts/entrypoints/hlcr.sh
+	MODE="docker" . ./scripts/entrypoints/hlcr-aio.sh
 
 .PHONY: hlcr-podman
 hlcr-podman:
-	MODE="hlcr-podman" . ./scripts/entrypoints/hlcr.sh
+	MODE="podman" . ./scripts/entrypoints/hlcr-aio.sh
 
 .PHONY: hlcr-crio
 hlcr-crio:
-	MODE="hlcr-crio" . ./scripts/entrypoints/hlcr.sh
+	MODE="crio" . ./scripts/entrypoints/hlcr-aio.sh
 
 # ===========
 # LLCR: High-Level Container Runtime
 # ==============
 .PHONY: llcr-aio
 llcr-aio: llcr-runc llcr-crun llcr-containerd llcr-youki
-	MODE="llcr-aio" . ./scripts/entrypoints/llcr.sh
+	MODE="llcr-aio" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: llcr-runc
 llcr-runc:
-	MODE="llcr-runc" . ./scripts/entrypoints/llcr.sh
+	MODE="llcr-runc" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: llcr-crun
 llcr-crun:
-	MODE="llcr-crun" . ./scripts/entrypoints/llcr.sh
+	MODE="llcr-crun" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: llcr-containerd
 llcr-containerd:
-	MODE="llcr-containerd" . ./scripts/entrypoints/llcr.sh
+	MODE="containerd" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: llcr-youki
 llcr-youki:
-	MODE="llcr-youki" . ./scripts/entrypoints/llcr.sh
+	MODE="youki" . ./scripts/entrypoints/llcr-aio.sh
 
 # ==========================
 # Fetch-GHA Artifacts logic
