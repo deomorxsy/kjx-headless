@@ -43,7 +43,7 @@ assets/visualization
 
 assets/async-profiler/*
 assets/apk-tools
-assets/ebpf_exporter
+# assets/ebpf_exporter
 assets/FlameGraph
 assets/builda.sh
 assets/zstd-test
@@ -191,15 +191,6 @@ dadada/*
 # Ftrace files
 set_ftrace_pid
 
-# bcc files
-assets/bcc/
-
-# other misc
-eeeita/
-assets/libbpf/
-assets/bpftool/
-assets/HeatMap/
-
 # do not include iso generated files
 *.iso
 
@@ -215,7 +206,13 @@ artifacts/bwc_off
 artifacts/qemu-sink/*
 
 # gitmodules
-assets/bootloaders/
+#assets/bootloaders/
+#assets/bcc/
+# other misc
+eeeita/
+#assets/libbpf/
+#assets/bpftool/
+assets/HeatMap/
 
 # asciinema casts
 artifacts/*.cast
