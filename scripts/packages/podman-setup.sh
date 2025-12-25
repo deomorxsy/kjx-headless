@@ -14,49 +14,60 @@ core_routine() {
     netavark
     aardvark-dns
     catatonit
+    podman
     "
     export CORE_PODMAN_DEPS
     #escape awk $3 with a blackslash '\'
 
-    if ! (
+    if ! [ -f "./scripts/packages/demo-replased.sh" ]; then
 
-        (
-            cat <<EOF
-PODMAN_PKGDEPS_PLACEHOLDER="\$(apk info -L placeholder | awk 'NR > 1')"
-export PODMAN_PKGDEPS_PLACEHOLDER
-
-# redirect the filepath of dotfiles for the [PLACEHOLDER] apk package
-if ! (for f in \$PODMAN_PKGDEPS_PLACEHOLDER; do
-    echo "\$f" >>/foo.txt
-done); then
-    echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [PLACEHOLDER] apk package. Exiting now..."
-    return 1
-fi
-echo "|> Successfully redirected the filepath of dotfiles for the [PLACEHOLDER] apk package. Proceeding..."
-
-# redirect filepath of dynamically linked binary dependencies (shared objects)
-if ! (ldd "\$(readlink -f "\$(apk info -L placeholder | awk 'NR > 1')")" | awk '{print \$3}' >>foo.txt); then
-    echo "|> Error: it was not possible to redirect the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Exiting now..."
-    return 1
-fi
-echo "|> Successfully redirected the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Proceeding..."
-
-#
-for f in /bin/* /usr/bin/* /usr/sbin/*; do
-    case \$f in
-    */placeholder) ldd "\$(readlink -f "\$(which "\$f")")" | awk '{print \$3}' >>/foo.txt ;;
-    esac
-done
-
-EOF
-        ) | tee /app/depslist.sh
-    ); then
-        echo "|> Error: could not create the filepath [/app/depslist.sh]. Exiting now..."
-        echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
+        cp
+        echo "|> Error: it was not possible to resolve dependency list for [conmon]. Exiting now..."
+        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
         return 1
     fi
-    echo "|> Successfully created the filepath [/app/depslist.sh]. Proceeding..."
-    echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
+    echo "|> Successfully resolved dependency list for [conmon]. Proceeding..."
+    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
+
+    ###     if ! (
+    ###
+    ###         (
+    ###             cat <<EOF
+    ### PODMAN_PKGDEPS_PLACEHOLDER="\$(apk info -L placeholder | awk 'NR > 1')"
+    ### export PODMAN_PKGDEPS_PLACEHOLDER
+    ###
+    ### # redirect the filepath of dotfiles for the [PLACEHOLDER] apk package
+    ### if ! (for f in \$PODMAN_PKGDEPS_PLACEHOLDER; do
+    ###     echo "\$f" >>/foo.txt
+    ### done); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [PLACEHOLDER] apk package. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of dotfiles for the [PLACEHOLDER] apk package. Proceeding..."
+    ###
+    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
+    ### if ! (ldd "\$(readlink -f "\$(apk info -L placeholder | awk 'NR > 1')")" | awk '{print \$3}' >>foo.txt); then
+    ###     echo "|> Error: it was not possible to redirect the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Successfully redirected the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Proceeding..."
+    ###
+    ### #
+    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
+    ###     case \$f in
+    ###     */placeholder) ldd "\$(readlink -f "\$(which "\$f")")" | awk '{print \$3}' >>/foo.txt ;;
+    ###     esac
+    ### done
+    ###
+    ### EOF
+    ###         ) | tee /app/depslist.sh
+    ###     ); then
+    ###         echo "|> Error: could not create the filepath [/app/depslist.sh]. Exiting now..."
+    ###         echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
+    ###         return 1
+    ###     fi
+    ###     echo "|> Successfully created the filepath [/app/depslist.sh]. Proceeding..."
+    ###     echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
 
     if ! (for f in $CORE_PODMAN_DEPS; do
         COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
@@ -218,50 +229,7 @@ set_podman_so() {
 }
 
 set_podman_bin() {
-    (
-        cat <<EOL
-chage
-chfn
-chgpasswd
-chpasswd
-chsh
-expiry
-gpasswd
-groupadd
-groupdel
-groupmems
-groupmod
-grpck
-logoutd
-newusers
-passwd
-pwck
-useradd
-userdel
-usermod
-vigr
-vipw
-chage
-faillock
-mkhomedir_helper
-pam_namespace_helper
-pam_timestamp_check
-pwhistory_helper
-unix_chkpwd
-EOL
-    ) | tee /podman-list.txt
-
-    (
-        cat <<EOL
-faillock
-mkhomedir_helper
-pam_namespace_helper
-pam_timestamp_check
-pwhistory_helper
-unix_chkpwd
-EOL
-    ) | tee /libpam-list.txt
-
+    #
     # set IFS: input field separator
     IFS=$(printf '\n\t')
 
