@@ -33,22 +33,22 @@ dot-dump-valgrind
 out.*
 
 # include submodules for nvim-telescope
-assets/unikernels
-assets/tracers
-assets/vm-specs
-assets/oci-cri
-assets/non-oci
-assets/makefile2graph
-assets/visualization
-
-assets/async-profiler/*
-assets/apk-tools
-# assets/ebpf_exporter
-assets/FlameGraph
-assets/builda.sh
-assets/zstd-test
-/sample/
-assets/ipxe
+#### assets/unikernels
+#### assets/tracers
+#### assets/vm-specs
+#### assets/oci-cri
+#### assets/non-oci
+#### assets/makefile2graph
+#### assets/visualization
+####
+#### assets/async-profiler/*
+#### assets/apk-tools
+#### # assets/ebpf_exporter
+#### assets/FlameGraph
+#### assets/builda.sh
+#### assets/zstd-test
+#### /sample/
+#### assets/ipxe
 # misc file formats
 *.svg
 trace/ayaya/dsds/
@@ -142,12 +142,12 @@ capable.bt
 trace/Ftrace/ftrace.sample.out
 
 # Assets
-assets/curl/
+# assets/curl/
 #assets/runit/
 newart/
 #assets/blazesym/
-assets/libbpf-bootstrap/
-
+# assets/libbpf-bootstrap/
+#
 # Workflows
 #.github/workflows/downloader.yml
 #.github/workflows/qemu.yml
@@ -206,8 +206,12 @@ artifacts/bwc_off
 artifacts/qemu-sink/*
 
 # gitmodules
-#assets/bootloaders/
-#assets/bcc/
+assets/bootloaders
+assets/tracers
+assets/non-oci
+assets/oci-cri
+assets/visualization
+assets/vm-specs
 # other misc
 eeeita/
 #assets/libbpf/
@@ -225,3 +229,13 @@ artifacts/ci-cd/
 artifacts/microvms/
 artifacts/oci-registry_3.0_tarball.tar
 hpota-shellscript.sh
+
+# jvm to ebpf
+trace/jvm/kotlin/yava-kotlin.tar.gz
+
+# libbpf vmlinux
+trace/libbpf-core/bootstrap.skel.h
+trace/libbpf-core/cpu.bpf.o
+trace/libbpf-core/cpu.skel.h
+trace/libbpf-core/vmlinux.h
+
