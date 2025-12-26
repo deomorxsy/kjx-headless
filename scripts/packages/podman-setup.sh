@@ -20,7 +20,6 @@ core_routine() {
     podman
     "
     export CORE_PODMAN_DEPS
-    #escape awk $3 with a blackslash '\'
 
     if ! [ -f "${DEPSLIST:-[EMPTY_VARIABLE]}" ]; then
 
@@ -33,46 +32,6 @@ core_routine() {
     echo "|> Successfully resolved dependency list for [podman]. Proceeding..."
     echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
     echo
-
-    ###     if ! (
-    ###
-    ###         (
-    ###             cat <<EOF
-    ### PODMAN_PKGDEPS_PLACEHOLDER="\$(apk info -L placeholder | awk 'NR > 1')"
-    ### export PODMAN_PKGDEPS_PLACEHOLDER
-    ###
-    ### # redirect the filepath of dotfiles for the [PLACEHOLDER] apk package
-    ### if ! (for f in \$PODMAN_PKGDEPS_PLACEHOLDER; do
-    ###     echo "\$f" >>/foo.txt
-    ### done); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [PLACEHOLDER] apk package. Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of dotfiles for the [PLACEHOLDER] apk package. Proceeding..."
-    ###
-    ### # redirect filepath of dynamically linked binary dependencies (shared objects)
-    ### if ! (ldd "\$(readlink -f "\$(apk info -L placeholder | awk 'NR > 1')")" | awk '{print \$3}' >>foo.txt); then
-    ###     echo "|> Error: it was not possible to redirect the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Exiting now..."
-    ###     return 1
-    ### fi
-    ### echo "|> Successfully redirected the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Proceeding..."
-    ###
-    ### #
-    ### for f in /bin/* /usr/bin/* /usr/sbin/*; do
-    ###     case \$f in
-    ###     */placeholder) ldd "\$(readlink -f "\$(which "\$f")")" | awk '{print \$3}' >>/foo.txt ;;
-    ###     esac
-    ### done
-    ###
-    ### EOF
-    ###         ) | tee /app/depslist.sh
-    ###     ); then
-    ###         echo "|> Error: could not create the filepath [/app/depslist.sh]. Exiting now..."
-    ###         echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
-    ###         return 1
-    ###     fi
-    ###     echo "|> Successfully created the filepath [/app/depslist.sh]. Proceeding..."
-    ###     echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
 
     if ! (for f in $CORE_PODMAN_DEPS; do
         COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
@@ -261,69 +220,6 @@ set_podman_tarball() {
 
 }
 
-# set_podman_so() {
-#
-#     # podman commands
-#     for f in /usr/sbin/*; do
-#         case $f in
-#         /usr/sbin/podman) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo-so.txt ;;
-#         /usr/sbin/podmansh) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo-so.txt ;;
-#         esac
-#     done
-#
-#     # set IFS: input field separator
-#     #IFS='\n\t'
-#     IFS=$(printf '\n\t')
-#
-#     # read each line defining the input field separator,
-#     # follow the soft link and append readlink output line to a new file
-#     while IFS= read -r line; do
-#         readlink -f "$line" >>/bar-so.txt
-#     done </foo-so.txt
-#
-#     # remove new lines on the lists, then create new file
-#     sed '/^$/d' /foo-so.txt >/foobar-so.txt
-#     sed '/^$/d' /bar-so.txt >>/foobar-so.txt
-#
-#     # then remove duplicate shared objects
-#     sort /foobar-so.txt | uniq >/quux-so.txt
-#
-#     # generate a tarball of shared objects from filepaths on a text file
-#     tar -czf /podman-so-pkg.tar.gz -T /quux-so.txt
-#
-# }
-#
-# set_podman_bin() {
-#     #
-#     # set IFS: input field separator
-#     IFS=$(printf '\n\t')
-#
-#     # read each line defining the input field separator,
-#     # follow the soft link and append readlink output line to a new file
-#     while IFS= read -r line; do
-#         readlink -f "$(which "$line")" >>/podman-bin-bar.txt
-#     done </podman-list.txt
-#
-#     # set the libpam-list alongside podman-bin-bar just to leverage the others.
-#     while IFS= read -r line; do
-#         readlink -f "$(which "$line")" >>/podman-bin-bar.txt
-#     done </libpam-list.txt
-#
-#     # set IFS: input field separator
-#     IFS=$(printf '\n\t')
-#
-#     # remove new lines on the lists, then create new file
-#     sed '/^$/d' /podman-bin-bar.txt >/podman-bin-foobar.txt &&
-#         #sed '/^$/d' /bar.txt >> /foobar.txt
-#
-#         # then remove duplicate shared objects
-#         sort /podman-bin-foobar.txt | uniq >/podman-bin-quux.txt &&
-#
-#         # generate a tarball of shared objects from filepaths on a text file
-#         tar -czf /podman-bin-pkg.tar.gz -T /podman-bin-quux.txt
-#
-# }
-
 print_usage() {
     cat <<-END >&2
 USAGE: podman-setup.sh [-options]
@@ -366,24 +262,3 @@ else
     echo "Invalid function name. Please specify one of the available functions:"
     print_usage
 fi
-
-# old_deps() {
-#     ldd "$(readlink -f "$(which conmon)")" | awk '{print $3}' >>/foo.txt
-#     ldd "$(readlink -f "$(which podman)")" | awk '{print $3}' >>/foo.txt
-#
-#     ldd "$(readlink -f /usr/libexec/podman/netavark)" | awk '{print $3}' >>/foo.txt
-#     ldd "$(readlink -f /usr/libexec/podman/aardvark-dns)" | awk '{print $3}' >>/foo.txt
-#     ldd "$(readlink -f /usr/libexec/podman/rootlessport)" | awk '{print $3}' >>/foo.txt
-#
-#     # since catatonit is a static binary
-#     echo "$(readlink -f /usr/libexec/podman/catatonit)" >>/foo.txt
-#
-#     # if [ -d /usr/libexec/podman ]; then
-#     #
-#     # fi
-#
-#     # crun support
-#     ldd "$(readlink -f "$(which crun)")" | awk '{print $3}' >>/foo.txt
-#
-# }
-#
