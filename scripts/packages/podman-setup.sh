@@ -3,7 +3,10 @@
 core_routine() {
     # PODMAN_PKGDEPS_PLACEHOLDER=""
     # export PODMAN_PKGDEPS_PLACEHOLDER
-    mkdir -p /app
+    mkdir -p /app/scripts/packages
+
+    DEPSLIST="/app/scripts/packages/demo-replased.sh"
+    export DEPSLIST
 
     CORE_PODMAN_DEPS="
     conmon
@@ -19,15 +22,17 @@ core_routine() {
     export CORE_PODMAN_DEPS
     #escape awk $3 with a blackslash '\'
 
-    if ! [ -f "./scripts/packages/demo-replased.sh" ]; then
+    if ! [ -f "${DEPSLIST:-[EMPTY_VARIABLE]}" ]; then
 
-        cp
-        echo "|> Error: it was not possible to resolve dependency list for [conmon]. Exiting now..."
-        echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
+        # cp
+        echo "|> Error: it was not possible to resolve dependency list for [podman]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
+        echo
         return 1
     fi
-    echo "|> Successfully resolved dependency list for [conmon]. Proceeding..."
-    echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
+    echo "|> Successfully resolved dependency list for [podman]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 01"
+    echo
 
     ###     if ! (
     ###
@@ -73,22 +78,40 @@ core_routine() {
         COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
         export COREUPPER
 
-        sed -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" /app/depslist.sh >"/app/depslist-replaSED_$f.sh"
+        sed -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" "${DEPSLIST:-[EMPTY_VARIABLE]}" >"/app/depslist-replaSED_$f.sh"
     done); then
         echo "|> Error: could not replace every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Exiting now..."
         echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 02"
+        echo
         return 1
     fi
     echo "|> Successfully replaced every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Proceeding..."
     echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 02"
+    echo
 
     if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
         echo "|> Error: could not replace every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Exiting now..."
         echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 03"
+        echo
         return 1
     fi
     echo "|> Successfully replaced every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Proceeding..."
     echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 03"
+    echo
+
+    ls -allhtr /app
+
+    if ! (chmod +x -R /app/"depslist"*); then
+        echo "|> Error: it was not possible to change file bits of execution permission [recursively] under [/app]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 04"
+        echo
+        return 1
+    fi
+    echo "|> Sucessfully changed file bits of execution permission [recursively] under [/app]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 04"
+    echo
+
+    ls -allhtr /app
 
 }
 
@@ -112,40 +135,48 @@ set_podman_deps() {
     if ! core_routine; then
         echo "|> Error: could not run the function [core_routine]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 01"
+        echo
         return 1
     fi
     echo "|> Successfully ran the function [core_routine]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 01"
+    echo
 
     # conmon
     ## provides: cmd:conmon
     if ! (/bin/sh -c "/app/depslist-replaSED_conmon.sh"); then
         echo "|> Error: it was not possible to resolve dependency list for [conmon]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
+        echo
         return 1
     fi
     echo "|> Successfully resolved dependency list for [conmon]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 02"
+    echo
 
     # oci-runtime
     # provides: cmd:oci-runtime, cmd:crun
     if ! (/bin/sh -c "/app/depslist-replaSED_oci-runtime.sh"); then
         echo "|> Error: it was not possible to resolve dependency list for [oci-runtime]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 03"
+        echo
         return 1
     fi
     echo "|> Successfully resolved dependency list for [oci-runtime]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 03"
+    echo
 
     # passt
     # provides: cmd:passt-repair, cmd:passt, cmd:pasta, cmd:qrap
     if ! (/bin/sh -c "/app/depslist-replaSED_passt.sh"); then
         echo "|> Error: it was not possible to resolve dependency list for [passt]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 04"
+        echo
         return 1
     fi
     echo "|> Successfully resolved dependency list for [passt]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 04"
+    echo
 
     # containers-common
     # non-cmds: dotfiles and dynamically linked binary dependencies (shared objects)
@@ -153,38 +184,46 @@ set_podman_deps() {
     if ! (/bin/sh -c "/app/depslist-replaSED_containers-common.sh"); then
         echo "|> Error: it was not possible to resolve dependency list for [containers-common]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 05"
+        echo
         return 1
     fi
     echo "|> Successfully resolved dependency list for [containers-common]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 05"
+    echo
 
     # netavark
     # ldd "$(readlink -f "$(apk info -L netavark | awk 'NR > 1')")" | awk '{print $3}' >>foo.txt
-    if ! (/bin/sh -c "/app/depslist-replaSED_containers-netavark.sh"); then
+    if ! (/bin/sh -c "/app/depslist-replaSED_netavark.sh"); then
         echo "|> Error: it was not possible to resolve dependency list for [netavark]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 06"
+        echo
         return 1
     fi
     echo "|> Successfully resolved dependency list for [netavark]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 06"
+    echo
 
     # aardvark-dns
-    if ! (/bin/sh -c "/app/depslist-replaSED_containers-aardvark-dns.sh"); then
+    if ! (/bin/sh -c "/app/depslist-replaSED_aardvark-dns.sh"); then
         echo "|> Error: it was not possible to resolve dependency list for [aardvark-dns]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 07"
+        echo
         return 1
     fi
     echo "|> Successfully resolved dependency list for [aardvark-dns]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 07"
+    echo
 
     # catatonit
-    if ! (/bin/sh -c "/app/depslist-replaSED_containers-catatonit.sh"); then
+    if ! (/bin/sh -c "/app/depslist-replaSED_catatonit.sh"); then
         echo "|> Error: it was not possible to resolve dependency list for [catatonit]. Exiting now..."
         echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 08"
+        echo
         return 1
     fi
     echo "|> Successfully resolved dependency list for [catatonit]. Proceeding..."
     echo "|> SCOPE: [set_podman_deps], file [./scripts/packages/podman-setup.sh]; check: 08"
+    echo
 
 }
 
@@ -192,11 +231,13 @@ set_podman_tarball() {
 
     if ! set_podman_deps; then
         echo "|> Error: it was not possible to resolve podman dependencies. Exiting now..."
-        echo "|> SCOPE: [set_podman_so], file [./scripts/packages/podman-setup.sh]; check: 01"
+        echo "|> SCOPE: [set_podman_tarball], file [./scripts/packages/podman-setup.sh]; check: 01"
+        echo
         return 1
     fi
     echo "|> Successfully resolved podman dependencies. Proceeding..."
-    echo "|> SCOPE: [set_podman_so], file [./scripts/packages/podman-setup.sh]; check: 01"
+    echo "|> SCOPE: [set_podman_tarball], file [./scripts/packages/podman-setup.sh]; check: 01"
+    echo
 
     # set IFS: input field separator
     #IFS='\n\t'
