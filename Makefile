@@ -556,7 +556,7 @@ qonq_youki:
 # ==============
 .PHONY: qonq_bpftrace
 qonq_bpftrace:
-	MODE="bpftrace" . ./scripts/packages/tracers-aio.sh
+	MODE="bpftrace" . ./scripts/entrypoints/tracers-aio.sh
 
 
 
