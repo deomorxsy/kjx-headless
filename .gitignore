@@ -33,22 +33,22 @@ dot-dump-valgrind
 out.*
 
 # include submodules for nvim-telescope
-#### assets/unikernels
-#### assets/tracers
-#### assets/vm-specs
-#### assets/oci-cri
-#### assets/non-oci
-#### assets/makefile2graph
-#### assets/visualization
-####
-#### assets/async-profiler/*
-#### assets/apk-tools
-#### # assets/ebpf_exporter
-#### assets/FlameGraph
-#### assets/builda.sh
-#### assets/zstd-test
-#### /sample/
-#### assets/ipxe
+assets/unikernels
+assets/tracers
+assets/vm-specs
+assets/oci-cri
+assets/non-oci
+assets/makefile2graph
+assets/visualization
+
+assets/async-profiler/*
+assets/apk-tools
+# assets/ebpf_exporter
+assets/FlameGraph
+assets/builda.sh
+assets/zstd-test
+/sample/
+assets/ipxe
 # misc file formats
 *.svg
 trace/ayaya/dsds/
@@ -238,4 +238,7 @@ trace/libbpf-core/bootstrap.skel.h
 trace/libbpf-core/cpu.bpf.o
 trace/libbpf-core/cpu.skel.h
 trace/libbpf-core/vmlinux.h
+
+# other artifacts
+artifacts/packaging/
 
