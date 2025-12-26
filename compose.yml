@@ -445,10 +445,11 @@ services:
     command: |
       echo hmm
     stop_signal: SIGINT
+
   # ===============
   # llcr packaging
-  #
   # ==============
+
   # crun
   qonq_crun:
     container_name: qonq_crun
@@ -505,7 +506,10 @@ services:
     command: |
       echo hmm
     stop_signal: SIGINT
+
+  # ===============
   # hlcr packaging
+  # ===============
 
   # podman
   qonq_podman:
@@ -547,6 +551,23 @@ services:
       dockerfile: "./scripts/packages/Dockerfile.crio.qonq"
       tags:
         - "localhost:5000/qonq_crio:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # ===============
+  # tracer packaging
+  # ===============
+  qonq_bpftrace:
+    container_name: qonq_bpftrace
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.bpftrace.qonq"
+      tags:
+        - "localhost:5000/qonq_bpftrace:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
       echo hmm
