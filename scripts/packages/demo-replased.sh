@@ -26,16 +26,16 @@ echo "|> Successfully redirected the filepath of [placeholder] dynamically linke
 echo "|> SCOPE: [DEMO_REPLASED]; check: 02"
 
 #
-if ! (
-    for f in /bin/* /usr/bin/* /usr/sbin/*; do
-        case $f in
-        */placeholder) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
-) then
-    echo "|> Error: could not find binaries of [placeholder] at [/bin, /usr/bin or /usr/sbin] to ldd (list dynamic dependencies). Exiting now..."
-    echo "|> SCOPE: [DEMO_REPLASED]; check: 03"
-    return 1
-fi
-echo "|> Error: could not find binaries of [placeholder] at [/bin, /usr/bin or /usr/sbin] to ldd (list dynamic dependencies). Exiting now..."
-echo "|> SCOPE: [DEMO_REPLASED]; check: 03"
+### if ! (
+###     for f in /bin/* /usr/bin/* /usr/sbin/*; do
+###         case $f in
+###         */placeholder) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
+###         esac
+###     done
+### ) then
+###     echo "|> Error: could not find binaries of [placeholder] at [/bin, /usr/bin or /usr/sbin] to ldd (list dynamic dependencies). Exiting now..."
+###     echo "|> SCOPE: [DEMO_REPLASED]; check: 03"
+###     return 1
+### fi
+### echo "|> Error: could not find binaries of [placeholder] at [/bin, /usr/bin or /usr/sbin] to ldd (list dynamic dependencies). Exiting now..."
+### echo "|> SCOPE: [DEMO_REPLASED]; check: 03"
