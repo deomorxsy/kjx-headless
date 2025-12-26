@@ -1,4 +1,4 @@
-name: hlcr-aio
+name: qonq_hlcr
 # builds and packages all high-level container runtimes
 on:
   push:

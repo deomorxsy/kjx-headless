@@ -1,4 +1,4 @@
-name: llcr-aio
+name: qonq_llcr
 # builds and packages all low-level container runtimes
 on:
   push:

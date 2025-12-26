@@ -42,4 +42,4 @@ jobs:
 
       - name: Build OCI image
         run: |
-          make microvms-aio
+          make qonq_microvm
