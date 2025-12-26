@@ -48,7 +48,9 @@ core_routine() {
     echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 02"
     echo
 
-    if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
+    #echo "BPFTRACE_PKGDEPS_LLVM20-LIBS" |
+    #if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
+    if ! (sed --in-place -E 's/([A-Z0-9])-([A-Z0-9])/\1_\2/g' /app/depslist-replaSED_*); then
         echo "|> Error: could not replace every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Exiting now..."
         echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 03"
         echo

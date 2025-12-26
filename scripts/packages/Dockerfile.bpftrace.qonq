@@ -7,18 +7,18 @@ WORKDIR /app
 # STEP 1
 RUN <<EOF
 apk upgrade && apk update && \
-    apk add bpftrace
-
-# (
-# cat <<HMM
-# http://dl-cdn.alpinelinux.org/alpine/edge/main
-# http://dl-cdn.alpinelinux.org/alpine/edge/community
-# http://dl-cdn.alpinelinux.org/alpine/edge/testing
-# HMM
-# ) > /etc/apk/repositories
-
-#apk upgrade && apk update && \
 #    apk add bpftrace
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+apk upgrade && apk update && \
+    apk add bpftrace
 
 if ! MODE="bpftrace-tarball" . /app/scripts/packages/bpftrace-setup.sh; then
     printf "\n|> Error: could not execute the bpftrace-tarball function from the bpftrace-setup.sh shellscript. Exiting now...\n\n"

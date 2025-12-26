@@ -53,8 +53,12 @@ core_routine() {
     echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 02"
     echo
 
+    # echo "BPFTRACE_PKGDEPS_LLVM20-LIBS" | sed -E 's/([A-Z0-9])-([A-Z0-9])/\1_\2/g'
+    # |> BPFTRACE_PKGDEPS_LLVM20_LIBS
+    # if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
+    #
     # now use the extended regex [-r/-E] to replace hyphen between uppecase characters
-    if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
+    if ! (sed --in-place -E 's/([A-Z0-9])-([A-Z0-9])/\1_\2/g' /app/depslist-replaSED_*); then
         echo "|> Error: could not replace every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Exiting now..."
         echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 03"
         return 1
