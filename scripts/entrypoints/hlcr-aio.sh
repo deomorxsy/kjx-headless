@@ -147,7 +147,7 @@ EOF
 
     # copy qonq_podman tarball into the ./artifacts/microvms directory.
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
-    if ! podman cp qonq_podman:/app/podman-so-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
+    if ! podman cp qonq_podman:/app/podman-tarball-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
         echo "|> Error: could not copy the podman shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 09"
         return 1
@@ -155,14 +155,22 @@ EOF
     echo "|> Copied the [qonq_podman] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
     echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 09"
 
-    mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
-    if ! podman cp qonq_podman:/app/podman-bin-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
-        echo "|> Error: could not copy the [qonq_podman] dynamically linked binaries tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
-        echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 10"
-        return 1
-    fi
-    echo "|> Copied the [qonq_podman] dynamically linked binaries tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
-    echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 10"
+    # if ! podman cp qonq_podman:/app/podman-so-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
+    #     echo "|> Error: could not copy the podman shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+    #     echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 09"
+    #     return 1
+    # fi
+    # echo "|> Copied the [qonq_podman] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    # echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 09"
+
+    # mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
+    # if ! podman cp qonq_podman:/app/podman-bin-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
+    #     echo "|> Error: could not copy the [qonq_podman] dynamically linked binaries tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+    #     echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 10"
+    #     return 1
+    # fi
+    # echo "|> Copied the [qonq_podman] dynamically linked binaries tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    # echo "|> SCOPE: [set_podman], file [./scripts/entrypoints/hlcr-aio.sh]; check: 10"
     # docker cp qonq_podman:/app/podman-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
     # docker cp qonq_podman:/app/podman-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
