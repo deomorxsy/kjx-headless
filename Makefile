@@ -440,20 +440,20 @@ libbpfgo:
 #
 # uses: qonq-qdb
 # ==============
-.PHONY: microvms-aio
-microvms-aio:
-	MODE="microvms-aio" . ./scripts/entrypoints/microvms.sh
+.PHONY: qonq_microvm
+qonq_microvm:
+	MODE="tarball" . ./scripts/entrypoints/microvms.sh
 
-.PHONY: mvm-kata
-mvm-kata:
+.PHONY: qonq_kata
+qonq_kata:
 	MODE="kata" . ./scripts/entrypoints/microvms.sh
 
-.PHONY: mvm-gvisor
-mvm-gvisor:
+.PHONY: qonq_gvisor
+qonq_gvisor:
 	MODE="gvisor" . ./scripts/entrypoints/microvms.sh
 
-.PHONY: mvm-firecracker
-mvm-firecracker:
+.PHONY: qonq_firecracker
+qonq_firecracker:
 	MODE="firecracker" . ./scripts/entrypoints/microvms.sh
 
 ###
