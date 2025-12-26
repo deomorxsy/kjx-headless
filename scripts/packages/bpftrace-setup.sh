@@ -4,9 +4,10 @@ core_routine() {
     # bpftrace_PKGDEPS_PLACEHOLDER=""
     # export bpftrace_PKGDEPS_PLACEHOLDER
     #
-    DEMO_REPLASED_PATH="./scripts/packaging/demo-replased.sh"
+    mkdir -p /app/scripts/packages
 
-    mkdir -p /app
+    DEPSLIST="/app/scripts/packages/demo-replased.sh"
+    export DEPSLIST
 
     CORE_BPFTRACE_DEPS="
     llvm20-libs
@@ -22,15 +23,19 @@ core_routine() {
     zlib
     bpftrace
     "
-    export CORE_BPFTRACE_DEPS DEMO_REPLASED_PATH
-    #escape awk $3 with a blackslash '\'
+    export CORE_BPFTRACE_DEPS
 
-    # check if demo file exist
-    if ! [ -f "${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}" ]; then
-        echo "|> Error: [DEMO_REPLASED_PATH=${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}] was not found. Exiting now..."
+    if ! [ -f "${DEPSLIST:-[EMPTY_VARIABLE]}" ]; then
+
+        # cp
+        echo "|> Error: it was not possible to resolve dependency list for [bpftrace]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+        echo
         return 1
     fi
-    echo "|> Successfully found [DEMO_REPLASED_PATH=${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}]. Proceeding..."
+    echo "|> Successfully resolved dependency list for [bpftrace]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
+    echo
 
     # copy demo file into the depslist to be replaced with sed later
     if ! (cp "${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}" /app/depslist.sh); then
@@ -63,6 +68,20 @@ core_routine() {
     fi
     echo "|> Successfully replaced every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Proceeding..."
     echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 03"
+
+    ls -allhtr /app
+
+    if ! (chmod +x -R /app/"depslist"*); then
+        echo "|> Error: it was not possible to change file bits of execution permission [recursively] under [/app]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 04"
+        echo
+        return 1
+    fi
+    echo "|> Sucessfully changed file bits of execution permission [recursively] under [/app]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 04"
+    echo
+
+    ls -allhtr /app
 
 }
 
