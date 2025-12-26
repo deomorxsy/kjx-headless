@@ -1,6 +1,6 @@
 FROM alpine:3.22 AS builder
 
-COPY ./scripts/packages/bpftrace-setup.sh /app/scripts/bpftrace-setup.sh
+COPY ./scripts/packages/bpftrace-setup.sh /app/scripts/packages/bpftrace-setup.sh
 COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
 
 WORKDIR /app
