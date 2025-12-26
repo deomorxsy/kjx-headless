@@ -1,8 +1,8 @@
 #!/bin/sh
 
 core_routine() {
-    # bpftrace_PKGDEPS_PLACEHOLDER=""
-    # export bpftrace_PKGDEPS_PLACEHOLDER
+    # BPFTRACE_PKGDEPS_PLACEHOLDER=""
+    # export BPFTRACE_PKGDEPS_PLACEHOLDER
     #
     mkdir -p /app/scripts/packages
 
@@ -37,28 +37,21 @@ core_routine() {
     echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
     echo
 
-    # copy demo file into the depslist to be replaced with sed later
-    if ! (cp "${DEMO_REPLASED_PATH:-[EMPTY_VARIABLE]}" /app/depslist.sh); then
-        echo "|> Error: could not create the filepath [/app/depslist.sh]. Exiting now..."
-        echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
-        return 1
-    fi
-    echo "|> Successfully created the filepath [/app/depslist.sh]. Proceeding..."
-    echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
-
     # generalize the install by replacing every placeholder with the desired dependency
     if ! (for f in $CORE_BPFTRACE_DEPS; do
         COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
         export COREUPPER
 
-        sed -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" /app/depslist.sh >"/app/depslist-replaSED_$f.sh"
+        sed -e "s/PKGNAME_PKGDEPS_PLACEHOLDER/BPFTRACE_PKGDEPS_PLACEHOLDER/g" -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" "${DEPSLIST:-[EMPTY_VARIABLE]}" >"/app/depslist-replaSED_$f.sh"
     done); then
         echo "|> Error: could not replace every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Exiting now..."
         echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 02"
+        echo
         return 1
     fi
     echo "|> Successfully replaced every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Proceeding..."
     echo "|> SCOPE: [core_routine], file [./scripts/packages/bpftrace-setup.sh]; check: 02"
+    echo
 
     # now use the extended regex [-r/-E] to replace hyphen between uppecase characters
     if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
