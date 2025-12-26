@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PODMAN_PKGDEPS_PLACEHOLDER="$(apk info -L placeholder | awk 'NR > 1')"
+PODMAN_PKGDEPS_PLACEHOLDER="$(apk info -L oci-runtime | awk 'NR > 1' | grep -v contains | grep -v -e "^$" | sed 's/^/\//')"
 export PODMAN_PKGDEPS_PLACEHOLDER
 
 # redirect the filepath of dotfiles for the [PLACEHOLDER] apk package
