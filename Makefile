@@ -533,15 +533,15 @@ qonq_crio:
 # ==============
 .PHONY: qonq_llcr
 qonq_llcr:
-	MODE="llcr-aio" . ./scripts/entrypoints/llcr-aio.sh
+	MODE="tarball" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: qonq_runc
 qonq_runc:
-	MODE="llcr-runc" . ./scripts/entrypoints/llcr-aio.sh
+	MODE="runc" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: qonq_crun
 qonq_crun:
-	MODE="llcr-crun" . ./scripts/entrypoints/llcr-aio.sh
+	MODE="crun" . ./scripts/entrypoints/llcr-aio.sh
 
 .PHONY: qonq_containerd
 qonq_containerd:
