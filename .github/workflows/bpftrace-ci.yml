@@ -24,19 +24,6 @@ jobs:
         with:
           submodules: false
 
-      - name: Build OCI image (cross-compile)
+      - name: Build OCI image
         run: |
-          make bpftrace
-
-    # - uses: xmake-io/github-action-setup-xmake@v1
-    #   with:
-    #     xmake-version: branch@master
-    # - name: Install Dependencies
-    #   run: |
-    #     sudo apt-get update -y && sudo apt-get install -yqq \
-    #       build-essential clang llvm zlib1g-dev libc++-dev libc++abi-dev \
-    #       sudo \
-    #       && sudo apt-get -y clean
-    # - name: Build xmake android examples/c
-    #   run: |
-    #     cd examples/c && xmake f -p android -a ${{ matrix.arch }} --require-bpftool=y -y && xmake -y
+          make qonq_bpftrace
