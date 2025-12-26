@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          submodules: true
+          submodules: false
       - name: Build OCI image
         run: |
           make fa-runit
