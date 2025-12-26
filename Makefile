@@ -551,7 +551,12 @@ qonq_containerd:
 qonq_youki:
 	MODE="youki" . ./scripts/entrypoints/llcr-aio.sh
 
-
+# ===========
+# tracers qonq
+# ==============
+.PHONY: qonq_bpftrace
+qonq_bpftrace:
+	MODE="tarball" . ./scripts/packages/bpftrace-setup.sh
 
 
 
