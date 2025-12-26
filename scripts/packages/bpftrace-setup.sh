@@ -202,7 +202,7 @@ set_bpftrace_deps() {
 }
 
 # single tarball
-set_bpftrace() {
+set_bpftrace_tarball() {
 
     if ! set_bpftrace_deps; then
         echo "|> Error: it was not possible to resolve bpftrace dependencies. Exiting now..."
@@ -230,78 +230,8 @@ set_bpftrace() {
     sort /foobar.txt | uniq >/quux.txt
 
     # generate a tarball of shared objects from filepaths on a text file
-    tar -czf /bpftrace-single-pkg.tar.gz -T /quux.txt
-
-}
-
-set_bpftrace_so() {
-
-    if ! set_bpftrace_deps; then
-        echo "|> Error: it was not possible to resolve bpftrace dependencies. Exiting now..."
-        echo "|> SCOPE: [set_bpftrace_so], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
-        return 1
-    fi
-    echo "|> Successfully resolved bpftrace dependencies. Proceeding..."
-    echo "|> SCOPE: [set_bpftrace_so], file [./scripts/packages/bpftrace-setup.sh]; check: 01"
-
-    # bpftrace commands
-    for f in /usr/sbin/*; do
-        case $f in
-        /usr/sbin/bpftrace) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        /usr/sbin/bpftracesh) ldd "$(readlink -f "$(which "$f")")" | awk '{print $3}' >>/foo.txt ;;
-        esac
-    done
-
-    # set IFS: input field separator
-    #IFS='\n\t'
-    IFS=$(printf '\n\t')
-
-    # read each line defining the input field separator,
-    # follow the soft link and append readlink output line to a new file
-    while IFS= read -r line; do
-        readlink -f "$line" >>/bar.txt
-    done </foo.txt
-
-    # remove new lines on the lists, then create new file
-    sed '/^$/d' /foo.txt >/foobar.txt
-    sed '/^$/d' /bar.txt >>/foobar.txt
-
-    # then remove duplicate shared objects
-    sort /foobar.txt | uniq >/quux.txt
-
-    # generate a tarball of shared objects from filepaths on a text file
-    tar -czf /bpftrace-so-pkg.tar.gz -T /quux.txt
-
-}
-
-set_bpftrace_bin() {
-
-    # set IFS: input field separator
-    IFS=$(printf '\n\t')
-
-    # read each line defining the input field separator,
-    # follow the soft link and append readlink output line to a new file
-    while IFS= read -r line; do
-        readlink -f "$(which "$line")" >>/bpftrace-bin-bar.txt
-    done </bpftrace-list.txt
-
-    # set the libpam-list alongside bpftrace-bin-bar just to leverage the others.
-    while IFS= read -r line; do
-        readlink -f "$(which "$line")" >>/bpftrace-bin-bar.txt
-    done </libpam-list.txt
-
-    # set IFS: input field separator
-    IFS=$(printf '\n\t')
-
-    # remove new lines on the lists, then create new file
-    sed '/^$/d' /bpftrace-bin-bar.txt >/bpftrace-bin-foobar.txt &&
-        #sed '/^$/d' /bar.txt >> /foobar.txt
-
-        # then remove duplicate shared objects
-        sort /bpftrace-bin-foobar.txt | uniq >/bpftrace-bin-quux.txt &&
-
-        # generate a tarball of shared objects from filepaths on a text file
-        tar -czf /bpftrace-bin-pkg.tar.gz -T /bpftrace-bin-quux.txt
+    # tar -czf /bpftrace-single-pkg.tar.gz -T /quux.txt
+    tar -czf /bpftrace-tarball-pkg.tar.gz -T /quux.txt
 
 }
 
@@ -328,12 +258,9 @@ END
 
 # Check the argument passed from the command line
 if ! [ -z "${MODE}" ] &&
-    [ "${MODE}" = "bpftrace-so" ] ||
-    [ "${MODE}" = "bpftrace-bin" ]; then
+    [ "${MODE}" = "bpftrace-tarball" ]; then
     case "${MODE}" in
-    "bpftrace-so") set_bpftrace_so ;;
-    "bpftrace-bin") set_bpftrace_bin ;;
-    "tarball") set_bpftrace ;;
+    "bpftrace-tarball") set_bpftrace_tarball ;;
     *)
         echo "Invalid option. Please specify one of: bpftrace-so, bpftrace-bin, tarball"
         print_usage
