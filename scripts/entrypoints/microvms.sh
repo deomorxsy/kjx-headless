@@ -338,12 +338,12 @@ END
 
 # Check the argument passed from the command line
 if ! [ -z "${MODE}" ] &&
-    [ "${MODE}" = "microvms-aio" ] ||
+    [ "${MODE}" = "tarball" ] ||
     [ "${MODE}" = "firecracker" ] ||
     [ "${MODE}" = "gvisor" ] ||
     [ "${MODE}" = "kata" ]; then
     case "${MODE}" in
-    "microvms-aio")
+    "tarball")
         mvm_aio
         ;;
     "firecracker")
