@@ -25,15 +25,48 @@ EOF
 
 set_podman() {
 
-    # CCR_MODE="-checker" . ./scripts/ccr.sh &&
-    #     docker compose -f ./compose.yml --progress=plain build --no-cache qonq_podman
-    #
+    ROOTLESS_REGISTRIES="./artifacts/rootless-oci/registries.conf"
+    export ROOTLESS_REGISTRIES
+    mkdir -p "$(dirname "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}")"
 
     # start OCI registry server
     if ! podman start registry; then
-        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
+        echo "|> WARNING: could not start OCI registry server. Attempting to run the image..."
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 01"
         echo && echo
         #return 1
+
+        #IS_ROOTLESS_REGISTRY_TOO_OLD="$(find "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}" -type f -mtime +7200)"
+
+        if ! [ -f "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}" ] || (find "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}" -type f -mtime +7200); then
+            echo "|> WARNING: [ROOTLESS_REGISTRIES=${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]} filepath does not exist. Attempting to create...]"
+            echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+
+            if ! ( (
+                cat <<EOF
+[[registry]]
+location = "localhost:5000"
+insecure = true
+EOF
+            ) | tee "${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}"); then
+                echo "|> Error: could not redirect the [insecure] configuration for OCI registries at localhost:5000 to [${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}]. Exiting now..."
+                return 1
+            fi
+            echo "|> Successfully redirected the [insecure] configuration for OCI registries at localhost:5000 to [${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}]. Proceeding..."
+
+        fi
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+
+        # grep for lines of registries.conf that are not the demonstration of insecure = true being set,
+        # i.e. those which do not have a "#" character.
+        if ! (cat /etc/containers/registries.conf | grep "insecure = true" | grep -v "#"); then
+            echo "|> WARNING: it seems there is no [insecure] configuration for registries running locally at localhost:5000. Attempting to use the rootless oci feature of Podman to set the [CONTAINERS_REGISTRIES_CONF] before running podman commands..."
+
+            CONTAINERS_REGISTRIES_CONF="${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}"
+            export CONTAINERS_REGISTRIES_CONF
+
+        fi
+        echo "|> Successfully set the [CONTAINERS_REGISTRIES_CONF] to point to a custom registries.conf [ROOTLESS_REGISTRIES=${ROOTLESS_REGISTRIES:-[EMPTY_VARIABLE]}]. Proceeding..."
 
         # run the registry:3.0 container image.
         if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
@@ -45,6 +78,7 @@ set_podman() {
         echo && echo
     fi
     echo "|> OCI registry server started with success"
+    echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 01"
 
     # check if the image already exists
 
@@ -53,51 +87,57 @@ set_podman() {
         export BUILT_PODMAN_ALREADY
 
         echo "|> WARNING: found a previously built [localhost:5000/qonq_podman]. Attempting to remove image to [REBUILD]..."
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 03"
         echo
 
         if ! (podman rmi "${BUILT_PODMAN_ALREADY:-[EMPTY_VARIABLE]}" --force); then
             echo "|> Error: YOU CAN (NOT) REDO the container image. Literally, it cannot be removed for some reason. No pun intended (or was it?). Exiting now... :)"
-            echo
+            echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 04"
             return 1
         fi
         echo "|> Error: YOU (CAN) REDO the container image. Proceeding..."
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 04"
     fi
     echo "|> WARNING: previously built [localhost:5000/qonq_podman] removed with sucess. ...[PASSED]"
+    echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 03"
     #
     if ! (podman images | grep "localhost:5000/qonq_podman"); then
         echo "|> Error: could not find the localhost:5000/qonq_podman image at the OCI registry:3.0 server. Attempting to build now..."
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 05"
         echo && echo
         # return 1
         # Build the podman container with ccr.sh to use  Podman Service as the compose tool
         if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache qonq_podman); then
             echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
+            echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 06"
             echo && echo
             return 1
-
         fi
         echo "|> Build the [qonq_podman] container with ccr.sh to use Podman Service as the compose tool with success. Proceeding..."
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 06"
         echo && echo
 
         # push built image into the registry:3.0 localhost:5000 server container.
         if ! (podman push localhost:5000/qonq_podman:latest); then
             echo "|> Error: could not push the built [qonq_podman] image into the OCI registry:3.0 localhost:5000 server container. Exiting now..."
-            echo && echo
+            echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 07"
             return 1
         fi
         echo "|> Pushed built image into the OCI registry:3.0 localhost:5000 server container. Proceeding..."
-        echo && echo
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 07"
     fi
     echo "|> [qonq_podman] image found at the localhost:5000/qonq_podman OCI registry:3.0 server. Proceeding..."
+    echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 05"
 
     # Create the built qonq_podman container
     # podman run -it --name qonq_podman -d localhost:5000/qonq_podman:latest
     if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create qonq_podman); then
         echo "|> Error: could not create the built [qonq_podman] container using the ccr.sh script to use Podman Service as the compose tool"
-        echo && echo
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 08"
         return 1
     fi
     echo "|> Created the built [qonq_podman] container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
-    echo && echo
+    echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 08"
 
     # check created containers
     CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
@@ -109,27 +149,31 @@ set_podman() {
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
     if ! podman cp qonq_podman:/app/podman-so-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
         echo "|> Error: could not copy the podman shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 09"
         return 1
     fi
     echo "|> Copied the [qonq_podman] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 09"
 
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
     if ! podman cp qonq_podman:/app/podman-bin-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
         echo "|> Error: could not copy the [qonq_podman] dynamically linked binaries tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 10"
         return 1
     fi
     echo "|> Copied the [qonq_podman] dynamically linked binaries tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 10"
     # docker cp qonq_podman:/app/podman-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
     # docker cp qonq_podman:/app/podman-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
     # Stop container registry
     if ! (podman stop registry); then
         echo "|> Error: could not stop the OCI registry server! Exiting now..."
-        echo && echo
+        echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 10"
         return 1
     fi
     echo "|> Successfully stopped the OCI registry server."
-    echo && echo
+    echo "|> SCOPE: [set_podman], file [./scripts/sandbox/run-qemu.sh]; check: 10"
 
 }
 
