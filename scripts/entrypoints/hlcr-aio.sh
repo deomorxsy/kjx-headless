@@ -5,7 +5,7 @@ export PACKAGING_ART_DIR
 
 # this will be called with [./scripts/entrypoints/hlcr-aio.sh] before copying to the VIRTFS_ART_PATH
 rootless_podman() {
-    PODMAN_PACKAGING_DIRECTORY="./artifacts/packaging/llcr-aio/podman"
+    PODMAN_PACKAGING_DIRECTORY="./artifacts/packaging/hlcr-aio/podman"
     export PODMAN_PACKAGING_DIRECTORY
     # avoid permission problems with crun
 
@@ -408,27 +408,27 @@ set_tarball() {
 
     if ! (set_docker); then
         echo "|> Error: it was not possible to create the docker tarball with [set_docker]. Exiting now..."
-        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 02"
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 02"
         return 1
     fi
     echo "|> Successfully created the docker tarball with [set_docker]. Proceeding..."
-    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 01"
+    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 01"
 
     if ! (set_crio); then
         echo "|> Error: it was not possible to create the crio tarball with [set_crio]. Exiting now..."
-        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 02"
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 02"
         return 1
     fi
     echo "|> Successfully created the crio tarball with [set_crio]. Proceeding..."
-    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 02"
+    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 02"
 
     if ! (set_podman); then
         echo "|> Error: it was not possible to create the podman tarball with [set_podman]. Exiting now..."
-        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 03"
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 03"
         return 1
     fi
     echo "|> Successfully created the podman tarball with [set_podman]. Proceeding..."
-    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 03"
+    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 03"
 
     if ! (
         tar -czf "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/hlcr-tarball.tar.gz" \
@@ -437,17 +437,17 @@ set_tarball() {
             "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/crio-tarball.tar.gz"
     ); then
         echo "|> Error: it was not possible to create all-in-one tarball with [set_tarball]. Exiting now..."
-        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 04"
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 04"
         return 1
     fi
     echo "|> Successfully created all-in-one tarball with [set_tarball]. Proceeding..."
-    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 04"
+    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/hlcr-aio.sh]; check: 04"
 
 }
 
 print_usage() {
     cat <<-END >&2
-USAGE: llcr-aio.sh [-options]
+USAGE: hlcr-aio.sh [-options]
                 - podman
                 - docker
                 - crio
