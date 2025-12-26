@@ -42,4 +42,4 @@ jobs:
 
       - name: Build OCI image
         run: |
-          make llcr-aio
+          make qonq_llcr
