@@ -305,10 +305,12 @@ END
 # Check the argument passed from the command line
 if ! [ -z "${MODE}" ] &&
     [ "${MODE}" = "podman-so" ] ||
-    [ "${MODE}" = "podman-bin" ]; then
+    [ "${MODE}" = "podman-bin" ] ||
+    [ "${MODE}" = "podman-tarball" ]; then
     case "${MODE}" in
     "podman-so") set_podman_so ;;
     "podman-bin") set_podman_bin ;;
+    "podman-tarball") set_podman_tarball ;;
     *)
         echo "Invalid microvm. Please specify one of: podman-so, podman-bin"
         print_usage

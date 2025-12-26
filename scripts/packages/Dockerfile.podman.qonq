@@ -63,10 +63,13 @@ EOF
 
 
 # copy podman shared objects
-COPY --from=builder "/podman-so-pkg.tar.gz" /app
+#COPY --from=builder "/podman-so-pkg.tar.gz" /app
 
 # copy podman  binaries
-COPY --from=builder "/podman-bin-pkg.tar.gz" /app
+#COPY --from=builder "/podman-bin-pkg.tar.gz" /app
+
+# copy podman full tarball (shared objects, binaries and dotfiles)
+COPY --from=builder "/podman-tarball-pkg.tar.gz" /app
 
 RUN <<EOF
 
