@@ -1,10 +1,10 @@
 #!/bin/sh
 
-PODMAN_PKGDEPS_PLACEHOLDER="$(apk info -L oci-runtime | awk 'NR > 1' | grep -v contains | grep -v -e "^$" | sed 's/^/\//')"
-export PODMAN_PKGDEPS_PLACEHOLDER
+PKGNAME_PKGDEPS_PLACEHOLDER="$(apk info -L placeholder | awk 'NR > 1' | grep -v contains | grep -v -e "^$" | sed 's/^/\//')"
+export PKGNAME_PKGDEPS_PLACEHOLDER
 
 # redirect the filepath of dotfiles for the [PLACEHOLDER] apk package
-if ! (for f in $PODMAN_PKGDEPS_PLACEHOLDER; do
+if ! (for f in $PKGNAME_PKGDEPS_PLACEHOLDER; do
     echo "$f" >>/foo.txt
 done); then
     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [PLACEHOLDER] apk package. Exiting now..."
