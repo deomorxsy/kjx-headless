@@ -37,7 +37,7 @@ core_routine() {
         COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
         export COREUPPER
 
-        sed -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" "${DEPSLIST:-[EMPTY_VARIABLE]}" >"/app/depslist-replaSED_$f.sh"
+        sed -e "s/PKGNAME_PKGDEPS_PLACEHOLDER/PODMAN_PKGDEPS_PLACEHOLDER/g" -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" "${DEPSLIST:-[EMPTY_VARIABLE]}" >"/app/depslist-replaSED_$f.sh"
     done); then
         echo "|> Error: could not replace every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Exiting now..."
         echo "|> SCOPE: [core_routine], file [./scripts/packages/podman-setup.sh]; check: 02"
