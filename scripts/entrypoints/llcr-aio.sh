@@ -443,6 +443,44 @@ set_youki() {
     echo && echo
 }
 
+set_tarball() {
+
+    if ! (set_runc); then
+        echo "|> Error: could not run [set_runc]. Exiting now..."
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 01"
+        echo
+        return 1
+    fi
+    echo "|> Sucessfully ran [set_runc]. Proceeding..."
+
+    if ! (set_crun); then
+        echo "|> Error: could not run [set_crun]. Exiting now..."
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 02"
+        echo
+        return 1
+    fi
+    echo "|> Sucessfully ran [set_crun]. Proceeding..."
+
+    if ! (set_containerd); then
+        echo "|> Error: could not run [set_containerd]. Exiting now..."
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 03"
+        echo
+        return 1
+    fi
+    echo "|> Sucessfully ran [set_containerd]. Proceeding..."
+    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 03"
+
+    if ! (set_youki); then
+        echo "|> Error: could not run [set_youki]. Exiting now..."
+        echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 04"
+        echo
+        return 1
+    fi
+    echo "|> Sucessfully ran [set_youki]. Proceeding..."
+    echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/llcr-aio.sh]; check: 04"
+
+}
+
 print_usage() {
     cat <<-END >&2
 USAGE: llcr-aio.sh [-options]
@@ -482,7 +520,7 @@ if ! [ -z "${MODE}" ] &&
     "youki") set_youki ;;
     "tarball") set_aio ;;
     *)
-        echo "Invalid option. Please specify one of: bpftrace-so, bpftrace-bin, tarball"
+        echo "|> Error: Invalid function name. Please specify one of the available functions: runc, crun, containerd, youki, tarball."
         print_usage
         ;;
     esac
@@ -492,6 +530,6 @@ elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ];
 elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
     printf "\n|> Version: llcr-aio 1.0.0"
 else
-    echo "Invalid function name. Please specify one of the available functions:"
+    echo "|> Error: Invalid function name. Please specify one of the available functions: runc, crun, containerd, youki, tarball."
     print_usage
 fi
