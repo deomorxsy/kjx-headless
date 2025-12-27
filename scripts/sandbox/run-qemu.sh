@@ -42,6 +42,10 @@ AIRGAP_RECORDING_PATH="./artifacts/run-qemu_airgap_${ASCII_DATE}.cast"
 # default recording state
 IS_RECORDING="NO"
 
+# ======================
+# Packaging or INFRA artifacts
+# ======================
+#
 # Artifacts variables
 ANODA_INITRAMFS="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
 MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
@@ -53,6 +57,14 @@ MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
 
 # Tracers artifact variables
 TRACERS_BPFTRACE_TARBALL="./artifacts/packaging/bpftrace-tarball-pkg.tar.gz"
+
+# User Management artifacts
+PACKAGING_IPTABLES_TARBALL="./artifacts/packaging/iptables-tarball-pkg.tar.gz"
+PACKAGING_SHADOW_TARBALL="./artifacts/packaging/shadow-tarball-pkg.tar.gz"
+
+# ======================
+# BOOTSCRIPTS
+# ======================
 
 # poc-bootscript filepath
 POC_BOOTSCRIPT="./scripts/isogen/poc-bootscript.sh"
@@ -1632,10 +1644,10 @@ airgap_k3s() {
         echo && echo
         ;;
     esac
-    echo "|> Successfully created the [MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+    echo "|> Successfully created the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] filepath."
 
     if ! (cp "${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: it was not possible to copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. Exiting now... "
+        echo "|> Error: it was not possible to copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
         echo && echo
         return 1
     fi
@@ -1647,7 +1659,48 @@ airgap_k3s() {
         echo && echo
         ;;
     esac
-    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo "|> Successfully copied the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
+    # =======================
+    # PACKAGING: IPTABLES
+    #
+    # returns if the [PACKAGING_IPTABLES_TARBALL] filepath does not exist
+    if ! [ -f ${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
+            echo "|> Error: could not run the [usgp-man.sh] script to build [iptables] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [usgp-man.sh] script to build [iptables] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
+        echo "|> create the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 14\n"
+        echo "|> copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
     echo && echo
 
     # Copy the POC_BOOTSCRIPT to the VIRTFS_ART_PATH so it becomes available on the guest vm
