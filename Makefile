@@ -351,30 +351,6 @@ hpota:
 hpota_runner:
 	MODE="runner" . ./scripts/tracers/hpota.sh
 
-# =========
-# qemu builder runtime
-
-.PHONY: qemu_builder
-qemu_builder:
-	MODE="-d" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
-
-# airgap k3s inside QEMU
-.PHONY: airgap
-airgap:
-	MODE="-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
-
-# airgap k3s inside QEMU
-.PHONY: airgap_clean
-airgap_clean:
-	MODE="-airgap_clean" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
-
-
-
-# generate k3s dependencies
-.PHONY: squash
-squash:
-	MODE="-squash" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
-
 
 # ======== boot related
 
@@ -402,15 +378,6 @@ itoeltor:
 	CCR_MODE="-checker" . ./scripts/ccr.sh && \
 	docker compose -f ./compose.yml --progress=plain build grub
 
-# GOTO: airgap instead
-.PHONY: runiso
-runiso:
-	MODE="-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
-
-.PHONY: record-runiso
-record-runiso:
-	MODE="-record-runiso" . ./scripts/sandbox/run-qemu.sh
-	# MODE="-record-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 # zig-wasm-typescript-deno-bpf
 .PHONY: zwtd-bpf
@@ -558,15 +525,108 @@ qonq_bpftrace:
 
 
 # ==============
-# Isogen
+# QEMUKJX: build the environment to run
+# the ISOGEN scripts
 # ==============
 .PHONY: qonq_qemukjx
 qonq_qemukjx:
 	MODE="qemukjx" . ./scripts/entrypoints/poc-aio.sh
 
+# qemu builder runtime
+# .PHONY: qemu_builder
+# qemu_builder:
+# 	MODE="-d" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+# =============
+# ISOGEN environment: the one
+# created by [qemukjx],
+# that will create the
+# [ISO9660] image
+#
+
+.PHONY: isogen_setvars
+isogen_setvars:
+	MODE="-isogen_setvars" . ./scripts/isogen/set-vars.sh
+
+.PHONY: isogen_scaff
+isogen_scaff:
+	MODE="-isogen_scaff" . ./scripts/isogen/scaffolding.sh
+
+.PHONY: isogen_rootafail
+isogen_rootafail:
+	MODE="-isogen_rootafail" . ./scripts/isogen/rootfs.sh
+
+.PHONY: isogen_squasha
+isogen_squasha:
+	MODE="-isogen_squasha" . ./scripts/isogen/squasha.sh
+
+.PHONY: isogen_packaja
+isogen_packaja:
+	MODE="-isogen_packaja" . ./scripts/isogen/packaging.sh
+
+.PHONY: isogen_itarun
+isogen_itarun:
+	MODE="-isogen_itarun" . ./scripts/isogen/runit.sh
+
+.PHONY: isogen_setacontainers
+isogen_setacontainers:
+	MODE="-isogen_setacontainers" . ./scripts/isogen/oci-cri.sh
+
+.PHONY: isogen_buildakernel
+isogen_buildakernel:
+	MODE="-isogen_buildakernel" . ./scripts/isogen/bzImage.sh
+
+.PHONY: isogen_inita
+isogen_inita:
+	MODE="-isogen_inita" . ./scripts/isogen/initramfs.sh
+
+.PHONY: isogen_sting
+isogen_sting:
+	MODE="-isogen_sting" . ./scripts/isogen/beetor.sh
+
+.PHONY: isogen_bootaeloada
+isogen_bootaeloada:
+	MODE="-isogen_bootaeloada" . ./scripts/isogen/bootloaders.sh
+
+.PHONY: isogen_isaisa
+isogen_isaisa:
+	MODE="-isogen_isaisa" . ./scripts/isogen/iso9660.sh
+
+# ===========
+# RUNISO environment: the one that will run
+# the [ISO9660] image created by [isogen].
+# Tied to ./scripts/sandbox/run-qemu.sh
+
+# GOTO: airgap instead
+.PHONY: runiso
+runiso:
+	MODE="-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+.PHONY: record-runiso
+record-runiso:
+	MODE="-record-runiso" . ./scripts/sandbox/run-qemu.sh
+	# MODE="-record-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+# airgap k3s inside QEMU
+.PHONY: airgap
+airgap:
+	MODE="-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+.PHONY: record-airgap
+record-runiso:
+	MODE="-record-airgap" . ./scripts/sandbox/run-qemu.sh
+	# MODE="-record-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+# airgap k3s inside QEMU
+.PHONY: airgap_clean
+airgap_clean:
+	MODE="-airgap_clean" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 
-
+# generate k3s dependencies
+.PHONY: squash
+squash:
+	MODE="-squash" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 
 
