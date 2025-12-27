@@ -39,10 +39,10 @@ jobs:
           make qonq_qemukjx
           #docker push localhost:5000/qemu-kjx:latest
 
-      - name: Retrieve artifact from docker image
+      - name: Retrieve artifact from OCI image
         run: |
-          docker run -it --name qonq_qemukjx -d localhost:5000/qonq_qemukjx:latest
-          mkdir -p ./artifacts/qemu-builder/
+          docker compose -f ./compose.yml create qonq_qemukjx
+          mkdir -p "${{ github.workspace }}"/artifacts/packaging/
           docker cp qonq_qemukjx:/qemukjx-tarball-pkg.tar.gz ./artifacts/packaging
           ls -allhtr ./artifacts/packaging/
 
