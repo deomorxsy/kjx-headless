@@ -43,47 +43,68 @@ apk add \
 
 EOF
 
-# create the iptables musl-based shared objects tarball
+# setup iptables, conntrack and netfilter options
+# (linked with musl) shared objects,
+# dynamic linked binaries and dotfiles/config-files
 RUN <<EOF
 
-if ! (MODE="iptables-so" . /app/scripts/iptables-setup.sh); then
-    printf "\n|> Error: could not execute the iptables-so function from the iptables-setup.sh shellscript. Exiting now...\n\n"
+if ! (MODE="iptables-tarball" . /app/scripts/iptables-setup.sh); then
+    printf "\n|> Error: could not execute the [iptables-tarball] function from the iptables-setup.sh shellscript. Exiting now...\n\n"
     return 1
 fi
-printf "\n|> Succesfully run iptables-so from iptables-setup.sh. Proceeding..."
+printf "\n|> Succesfully run [iptables-tarball] from iptables-setup.sh. Proceeding..."
 
-if ! (ls -allhtr "/app/iptables-so-pkg.tar.gz"); then
-    echo "|> SO TARBALL NOT FOUND. EXITING..."
+if ! (ls -allhtr "/iptables-tarball-pkg.tar.gz"); then
+    echo "|> IPTABLES-TARBALL NOT FOUND. EXITING..."
     return 1
 fi
 echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
 
 EOF
 
-# create the iptables musl-based dynamically linked tarball
-RUN <<EOF
-
-mkdir -p /app
-
-if ! (MODE="iptables-bin" . /app/scripts/iptables-setup.sh); then
-    printf "\n|> Error: could not execute the iptables-bin function from the iptables-setup.sh shellscript. Exiting now...\n\n"
-    return 1
-fi
-printf "\n|> Succesfully run iptables-bin from iptables-setup.sh. Proceeding..."
-
-if ! (ls -allhtr "/app/iptables-bin-pkg.tar.gz"); then
-    echo "|> BIN TARBALL NOT FOUND. EXITING..."
-    return 1
-fi
-echo "|> FOUND THE BIN TARBALL \O/ ...[PASSED]"
-
-EOF
+### # create the iptables musl-based shared objects tarball
+### RUN <<EOF
+###
+### if ! (MODE="iptables-so" . /app/scripts/iptables-setup.sh); then
+###     printf "\n|> Error: could not execute the iptables-so function from the iptables-setup.sh shellscript. Exiting now...\n\n"
+###     return 1
+### fi
+### printf "\n|> Succesfully run iptables-so from iptables-setup.sh. Proceeding..."
+###
+### if ! (ls -allhtr "/app/iptables-so-pkg.tar.gz"); then
+###     echo "|> SO TARBALL NOT FOUND. EXITING..."
+###     return 1
+### fi
+### echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
+###
+### EOF
+###
+### # create the iptables musl-based dynamically linked tarball
+### RUN <<EOF
+###
+### mkdir -p /app
+###
+### if ! (MODE="iptables-bin" . /app/scripts/iptables-setup.sh); then
+###     printf "\n|> Error: could not execute the iptables-bin function from the iptables-setup.sh shellscript. Exiting now...\n\n"
+###     return 1
+### fi
+### printf "\n|> Succesfully run iptables-bin from iptables-setup.sh. Proceeding..."
+###
+### if ! (ls -allhtr "/app/iptables-bin-pkg.tar.gz"); then
+###     echo "|> BIN TARBALL NOT FOUND. EXITING..."
+###     return 1
+### fi
+### echo "|> FOUND THE BIN TARBALL \O/ ...[PASSED]"
+###
+### EOF
 
 
 FROM alpine:3.22 AS relay
 
 WORKDIR /app/
-COPY --from=builder "/app/iptables-so-pkg.tar.gz" .
-COPY --from=builder "/app/iptables-bin-pkg.tar.gz" .
+## COPY --from=builder "/app/iptables-so-pkg.tar.gz" .
+## COPY --from=builder "/app/iptables-bin-pkg.tar.gz" .
+
+COPY --from=builder "/iptables-tarball-pkg.tar.gz"" .
 
 ENTRYPOINT ["/bin/sh"]
