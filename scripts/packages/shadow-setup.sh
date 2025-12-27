@@ -329,10 +329,12 @@ END
 # Check the argument passed from the command line
 if ! [ -z "${MODE}" ] &&
     [ "${MODE}" = "shadow-so" ] ||
-    [ "${MODE}" = "shadow-bin" ]; then
+    [ "${MODE}" = "shadow-bin" ] ||
+    [ "${MODE}" = "shadow-tarball" ]; then
     case "${MODE}" in
     "shadow-so") set_shadow_so ;;
     "shadow-bin") set_shadow_bin ;;
+    "shadow-tarball") set_shadow_tarball ;;
     *)
         echo "Invalid microvm. Please specify one of: shadow-so, shadow-bin"
         print_usage
