@@ -46,11 +46,11 @@ jobs:
           docker cp qonq_qemukjx:/qemukjx-tarball-pkg.tar.gz ./artifacts/packaging
           ls -allhtr ./artifacts/packaging/
 
-      ### - name: Archive the build artifact
-      ###   uses: actions/upload-artifact@v4
-      ###   with:
-      ###     name: iptables-tarball
-      ###     path: ${{ github.workspace }}/artifacts/packaging/qemukjx-tarball-pkg.tar.gz
+      - name: Archive the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iptables-tarball
+          path: ${{ github.workspace }}/artifacts/packaging/qemukjx-tarball-pkg.tar.gz
       # - name: Archive the build artifact
       #   uses: actions/upload-artifact@v4
       #   with:
