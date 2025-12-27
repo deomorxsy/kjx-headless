@@ -37,6 +37,7 @@ VIRTFS_ART_PATH="./artifacts/qemu-sink"
 ASCII_DATE="$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-")"
 #RUNISO_RECORDING_PATH="./artifacts/run-qemu_runiso_$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-").cast"
 RUNISO_RECORDING_PATH="./artifacts/run-qemu_runiso_${ASCII_DATE}.cast"
+AIRGAP_RECORDING_PATH="./artifacts/run-qemu_airgap_${ASCII_DATE}.cast"
 
 # default recording state
 IS_RECORDING="NO"
@@ -49,6 +50,9 @@ MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
 MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
 MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
 MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
+
+# Tracers artifact variables
+TRACERS_BPFTRACE_TARBALL="./artifacts/packaging/bpftrace-tarball-pkg.tar.gz"
 
 # poc-bootscript filepath
 POC_BOOTSCRIPT="./scripts/isogen/poc-bootscript.sh"
@@ -119,6 +123,7 @@ airgap_clean() {
     CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT="/tmp/k3s-tarball.squashfs"
     CLEAN_K3S_TARBALL_IMAGE="./utils/storage/k3s-tarball-squashfs.img"
     CLEAN_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
+    #CLEAN_BPFTRACE_TARBALL="./artifacts/packaging/bpftrace-tarball-pkg.tar.gz"
 
     if [ -f "${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}" ]; then
         echo "|> Artifact found. Attempting to remove now..."
@@ -171,6 +176,24 @@ airgap_clean() {
         return
 
     fi
+
+    ### if [ -f "${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}" ]; then
+    ###     echo "|> Artifact found. Attempting to remove now..."
+    ###     echo && echo
+
+    ###     if ! (rm "${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}"); then
+    ###         echo "|> Error: could not remove [${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
+    ###         echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
+    ###         echo && echo
+    ###         return 1
+    ###     fi
+    ###     echo "|> Sucessfully removed [${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
+    ###     echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
+    ###     echo && echo
+
+    ###     return
+
+    ### fi
 
 }
 
@@ -1586,6 +1609,47 @@ airgap_k3s() {
     echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
     echo && echo
 
+    # =======================
+    # TRACERS: BPFTRACE
+    #
+    # returns if the [TRACERS_BPFTRACE_TARBALL] filepath does not exist
+    if ! [ -f ${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="bpftrace" . ./scripts/entrypoints/tracers-aio.sh); then
+            echo "|> Error: could not run the [tracers-aio.sh] script to build [bpftrace] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [tracers-aio.sh] script to build [bpftrace] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 12\n"
+        echo "|> create the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
+        echo "|> copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo && echo
+
     # Copy the POC_BOOTSCRIPT to the VIRTFS_ART_PATH so it becomes available on the guest vm
     if ! cp "${POC_BOOTSCRIPT}" "${VIRTFS_ART_PATH}"; then
         echo "|> Error: it was not possible to copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-EMPTY_VARIABLE}. Exiting now... "
@@ -1595,7 +1659,7 @@ airgap_k3s() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 12\n"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 14\n"
         echo "|> copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
         echo && echo
         ;;
@@ -1807,6 +1871,29 @@ runiso() {
 
 }
 
+record_airgap() {
+    # creates a file at "${AIRGAP_RECORDING_PATH}"
+    IS_RECORDING="YES"
+
+    if [ "${IS_RECORDING}" = "YES" ]; then
+        if ! command -v asciinema; then
+            printf "\n|> Error: asciinema was not found. Nothing to be done.\n|> Exiting now...\n\n" &&
+                return 1
+        fi
+        printf "\n|> Recording section is in course. Invoking asciinema...\n\n" &&
+            asciinema rec "${AIRGAP_RECORDING_PATH}" --command="make airgap" &&
+
+            #if [ "${IS_RECORDING}" = "YES" ]; then
+            # asciinema stop && \
+            exec <&- &&
+            printf "\n|> Stop recording the asciinema section. Exiting now...\n\n"
+        #fi
+    fi
+
+    # runiso
+
+}
+
 record_runiso() {
     # creates a file at "${RUNISO_RECORDING_PATH}"
     IS_RECORDING="YES"
@@ -1873,6 +1960,8 @@ elif [ "${MODE}" = "--runiso" ] || [ "${MODE}" = "-runiso" ] || [ "${MODE}" = "r
     runiso
 elif [ "${MODE}" = "--record-runiso" ] || [ "${MODE}" = "-record-runiso" ] || [ "${MODE}" = "record-runiso" ]; then
     record_runiso
+elif [ "${MODE}" = "--record-airgap" ] || [ "${MODE}" = "-record-airgap" ] || [ "${MODE}" = "record-airgap" ]; then
+    record_airgap
 elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
     print_usage
 elif [ "${MODE}" = "debug" ]; then
