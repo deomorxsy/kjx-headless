@@ -118,8 +118,35 @@ core_routine() {
 
 }
 
-iptables_tarball() {
-    echo
+set_iptables_tarball() {
+    if ! set_iptables_deps; then
+        echo "|> Error: it was not possible to resolve iptables dependencies. Exiting now..."
+        echo "|> SCOPE: [set_iptables], file [./scripts/packages/iptables-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully resolved iptables dependencies. Proceeding..."
+    echo "|> SCOPE: [set_iptables], file [./scripts/packages/iptables-setup.sh]; check: 01"
+
+    # set IFS: input field separator
+    #IFS='\n\t'
+    IFS=$(printf '\n\t')
+
+    # read each line defining the input field separator,
+    # follow the soft link and append readlink output line to a new file
+    while IFS= read -r line; do
+        readlink -f "$line" >>/bar.txt
+    done </foo.txt
+
+    # remove new lines on the lists, then create new file
+    sed '/^$/d' /foo.txt >/foobar.txt
+    sed '/^$/d' /bar.txt >>/foobar.txt
+
+    # then remove duplicate shared objects
+    sort /foobar.txt | uniq >/quux.txt
+
+    # generate a tarball of shared objects from filepaths on a text file
+    # tar -czf /iptables-single-pkg.tar.gz -T /quux.txt
+    tar -czf /iptables-tarball-pkg.tar.gz -T /quux.txt
 
 }
 
