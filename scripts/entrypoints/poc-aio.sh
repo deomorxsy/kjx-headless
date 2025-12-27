@@ -1,5 +1,8 @@
 #!/bin/sh
 
+PACKAGING_ART_DIR="./artifacts/packaging"
+export PACKAGING_ART_DIR
+
 set_qemukjx() {
 
     ROOTLESS_REGISTRIES="./artifacts/rootless-oci/registries.conf"
