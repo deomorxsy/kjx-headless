@@ -118,6 +118,32 @@ core_routine() {
 
 }
 
+set_iptables_deps() {
+
+    if ! core_routine; then
+        echo "|> Error: could not run the function [core_routine]. Exiting now..."
+        echo "|> SCOPE: [set_iptables_deps], file [./scripts/packages/iptables-setup.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Successfully ran the function [core_routine]. Proceeding..."
+    echo "|> SCOPE: [set_iptables_deps], file [./scripts/packages/iptables-setup.sh]; check: 01"
+
+    #ls -allhtr /app | awk '{print $10}'
+    find /app \( -iname '*depslist-replaSED_*.sh' \)
+
+    ALL_SCRIPTS="$(find /app \( -iname '*depslist-replaSED_*.sh' \))"
+    for jooj in $ALL_SCRIPTS; do
+        if ! (/bin/sh -c "$jooj"); then
+            echo "|> Error: it was not possible to resolve dependency list for [$jooj]. Exiting now..."
+            echo "|> SCOPE: [set_iptables_deps], file [./scripts/packages/iptables-setup.sh]; "
+            return 1
+        fi
+        echo "|> Sucessfully resolved dependency list for [$jooj]. Proceeding..."
+    done
+
+    #### CORE_SCRIPTS="$(ls /app)"
+}
+
 set_iptables_tarball() {
     if ! set_iptables_deps; then
         echo "|> Error: it was not possible to resolve iptables dependencies. Exiting now..."
