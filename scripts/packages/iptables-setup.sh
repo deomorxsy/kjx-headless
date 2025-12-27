@@ -522,6 +522,7 @@ USAGE: iptables-setup.sh [-options]
 eg,
 MODE="iptables-so"    ./iptables.sh   # setup iptables (linked with musl) shared objects
 MODE="iptables-bin"   ./iptables.sh   # setup iptables (linked with musl) dynamically linked binaries
+MODE="iptables-tarball"    ./iptables.sh   # setup iptables, conntrack and netfilter options (linked with musl) shared objects, dynamic linked binaries and dotfiles/config-files
 MODE="version"      ./iptables-setup.sh   # shows script version
 MODE="help"         ./iptables-setup.sh   # shows this help message
 
@@ -534,10 +535,12 @@ END
 # Check the argument passed from the command line
 if ! [ -z "${MODE}" ] &&
     [ "${MODE}" = "iptables-so" ] ||
-    [ "${MODE}" = "iptables-bin" ]; then
+    [ "${MODE}" = "iptables-bin" ] ||
+    [ "${MODE}" = "iptables-tarball" ]; then
     case "${MODE}" in
     "iptables-so") set_iptables_so ;;
     "iptables-bin") set_iptables_bin ;;
+    "iptables-tarball") set_iptables_tarball ;;
     *)
         echo "Invalid microvm. Please specify one of: iptables-so, iptables-bin"
         print_usage
