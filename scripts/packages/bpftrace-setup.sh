@@ -173,7 +173,7 @@ set_bpftrace_deps() {
         if ! (/bin/sh -c "$jooj"); then
             echo "|> Error: it was not possible to resolve dependency list for [$jooj]. Exiting now..."
             echo "|> SCOPE: [set_bpftrace_deps], file [./scripts/packages/bpftrace-setup.sh]; "
-            #return 1
+            return 1
         fi
         echo "|> Sucessfully resolved dependency list for [$jooj]. Proceeding..."
     done
