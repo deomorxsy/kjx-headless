@@ -43,7 +43,7 @@ jobs:
         run: |
           docker compose -f ./compose.yml create qonq_qemukjx
           mkdir -p "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq_qemukjx:/qemukjx-tarball-pkg.tar.gz ./artifacts/packaging
+          docker cp qonq_qemukjx:/app/qemukjx-tarball-pkg.tar.gz ./artifacts/packaging
           ls -allhtr ./artifacts/packaging/
 
       - name: Archive the build artifact
