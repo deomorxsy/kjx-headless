@@ -47,15 +47,20 @@ jobs:
       #    mkdir -p "${{ github.workspace }}"/artifacts/packaging/
       #    docker cp qonq_iptables:/app/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
       #    docker cp qonq_iptables:/app/iptables-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
-
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: iptables-so-pkg
-          path: ${{ github.workspace }}/artifacts/packaging/iptables-so-pkg.tar.gz
+          name: iptables-tarball
+          path: ${{ github.workspace }}/artifacts/packaging/iptables-tarball-pkg.tar.gz
 
-      - name: Archive the build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: iptables-bin-pkg
-          path: ${{ github.workspace }}/artifacts/packaging/iptables-bin-pkg.tar.gz
+      ### - name: Archive the build artifact
+      ###   uses: actions/upload-artifact@v4
+      ###   with:
+      ###     name: iptables-so-pkg
+      ###     path: ${{ github.workspace }}/artifacts/packaging/iptables-so-pkg.tar.gz
+
+      ### - name: Archive the build artifact
+      ###   uses: actions/upload-artifact@v4
+      ###   with:
+      ###     name: iptables-bin-pkg
+      ###     path: ${{ github.workspace }}/artifacts/packaging/iptables-bin-pkg.tar.gz
