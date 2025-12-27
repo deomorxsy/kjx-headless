@@ -562,7 +562,7 @@ qonq_bpftrace:
 # ==============
 .PHONY: qonq_qemukjx
 qonq_qemukjx:
-	MODE="qonqkjx" . ./scripts/entrypoints/poc-aio.sh
+	MODE="qemukjx" . ./scripts/entrypoints/poc-aio.sh
 
 
 
