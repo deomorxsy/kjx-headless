@@ -1,4 +1,4 @@
-name: qemu-kjx
+name: qonq_qemukjx
 
 # This rule triggers when the workflow will run
 on:
