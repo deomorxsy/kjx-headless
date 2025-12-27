@@ -164,18 +164,26 @@ EOF
     # copy qonq_iptables tarball into the ./artifacts/microvms directory.
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
     if ! podman cp qonq_iptables:/app/iptables-tarball-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
-        echo "|> Error: could not copy the iptables shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+        echo "|> Error: could not copy the full iptables tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         return 1
     fi
-    echo "|> Copied the [qonq_iptables] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    echo "|> Copied the [qonq_iptables] full iptables tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
 
-    mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
-    if ! podman cp qonq_iptables:/app/iptables-bin-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
-        echo "|> Error: could not copy the [qonq_iptables] dynamically linked binaries tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
-        return 1
-    fi
-    echo "|> Copied the [qonq_iptables] dynamically linked binaries tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
-    # docker cp qonq_iptables:/app/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+    ### # copy qonq_iptables tarball into the ./artifacts/microvms directory.
+    ### mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
+    ### if ! podman cp qonq_iptables:/app/iptables-so-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
+    ###     echo "|> Error: could not copy the iptables shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Copied the [qonq_iptables] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+
+    ### mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
+    ### if ! podman cp qonq_iptables:/app/iptables-bin-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
+    ###     echo "|> Error: could not copy the [qonq_iptables] dynamically linked binaries tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Copied the [qonq_iptables] dynamically linked binaries tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    ### # docker cp qonq_iptables:/app/iptables-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
     # docker cp qonq_iptables:/app/iptables-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
     # Stop container registry
