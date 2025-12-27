@@ -1,0 +1,54 @@
+#!/bin/sh
+FROM alpine:3.22 AS builder
+
+COPY ./scripts/packages/qemukjx-setup.sh /app/scripts/qemukjx-setup.sh
+COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
+
+WORKDIR /app
+# STEP 1
+
+# bash for lwrap
+RUN <<EOF
+apk upgrade && apk update && \
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+
+apk add libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
+            file multipath-tools e2fsprogs xorriso expect libseccomp libcgroup \
+            squashfs-tools setxkbmap losetup fuse3
+
+EOF
+
+# setup qemukjx, conntrack and netfilter options
+# (linked with musl) shared objects,
+# dynamic linked binaries and dotfiles/config-files
+RUN <<EOF
+
+if ! (MODE="tarball" . /app/scripts/qemukjx-setup.sh); then
+    printf "\n|> Error: could not execute the [qemukjx-tarball] function from the qemukjx-setup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run [qemukjx-tarball] from qemukjx-setup.sh. Proceeding..."
+
+if ! (ls -allhtr "/qemukjx-tarball-pkg.tar.gz"); then
+    echo "|> qemukjx-TARBALL NOT FOUND. EXITING..."
+    return 1
+fi
+echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
+
+EOF
+
+
+FROM alpine:3.22 AS relay
+
+WORKDIR /app/
+COPY --from=builder "/qemukjx-tarball-pkg.tar.gz" .
+
+ENTRYPOINT ["/bin/sh"]
