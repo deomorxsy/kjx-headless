@@ -2,6 +2,7 @@
 FROM alpine:3.22 AS builder
 
 COPY ./scripts/packages/iptables-setup.sh /app/scripts/iptables-setup.sh
+COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
 
 WORKDIR /app
 # STEP 1
