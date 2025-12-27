@@ -41,9 +41,9 @@ jobs:
 
       - name: Retrieve artifact from docker image
         run: |
-          docker run -it --name qemu-kjx -d localhost:5000/qonq_qemukjx:latest
+          docker run -it --name qonq_qemukjx -d localhost:5000/qonq_qemukjx:latest
           mkdir -p ./artifacts/qemu-builder/
-          docker cp qemu-kjx:/qemukjx-tarball-pkg.tar.gz ./artifacts/packaging
+          docker cp qonq_qemukjx:/qemukjx-tarball-pkg.tar.gz ./artifacts/packaging
           ls -allhtr ./artifacts/packaging/
 
       - name: Archive the build artifact
