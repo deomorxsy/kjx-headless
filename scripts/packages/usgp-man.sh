@@ -161,7 +161,7 @@ EOF
     # check for the qonq_iptables image at localhost:5000/qonq_iptables
     podman images | grep "localhost:5000/qonq_iptables" | awk '{print $1}'
 
-    # copy qonq_iptables tarball into the ./artifacts/microvms directory.
+    # copy qonq_iptables tarball into the ./artifacts/packaging directory.
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
     if ! podman cp qonq_iptables:/app/iptables-tarball-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
         echo "|> Error: could not copy the full iptables tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
