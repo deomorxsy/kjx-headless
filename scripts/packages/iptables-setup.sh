@@ -13,6 +13,116 @@ LIBNETFILTER_CONNTRACK_GIT_URI="https://git.netfilter.org/libnetfilter_conntrack
 LIBNFTNL_GIT_URI="git://git.netfilter.org/libnftnl"
 NFTABLES_TARBALL=""
 
+core_routine() {
+    mkdir -p /app/scripts/packages
+
+    DEPSLIST="/app/scripts/packages/demo-replased.sh"
+    export DEPSLIST
+
+    CORE_IPTABLES_DEPS="$(
+        # apk dot iptables --installed | grep -v "shape=box" | grep -v "rankdir=LR" | grep -v "digraph" | awk '{print $1}' | sed -E 's/-[0-9].*$//' | tr -d '"' | tr -d "}" | sort -u
+
+        apk dot libmnl libnftnl libxtables \
+            ip6tables iptables conntrack-tools \
+            libnetfilter_conntrack libnetfilter_cthelper \
+            libnetfilter_cttimeout libnetfilter_queue \
+            --installed |
+            grep -v "shape=box" |
+            grep -v "rankdir=LR" |
+            grep -v "digraph" |
+            awk '{print $1}' |
+            sed -E 's/-[0-9].*$//' |
+            tr -d '"' |
+            tr -d "}" |
+            sort -u
+
+    )"
+    export CORE_IPTABLES_DEPS
+
+    ### CORE_IPTABLES_DEPS="
+    # busybox
+    ### busybox-binsh
+    ### conntrack-tools
+    ### iptables
+    ### libmnl
+    ### libnetfilter_conntrack
+    ### libnetfilter_cthelper
+    ### libnetfilter_cttimeout
+    ### libnetfilter_queue
+    ### libnfnetlink
+    ### libnftnl
+    ### libxtables
+    ### "
+
+    if ! [ -f "${DEPSLIST:-[EMPTY_VARIABLE]}" ]; then
+
+        # cp
+        echo "|> Error: it was not possible to resolve dependency list for [iptables-setup]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 01"
+        echo
+        return 1
+    fi
+    echo "|> Successfully resolved dependency list for [iptables-setup]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 01"
+    echo
+
+    # generalize the install by replacing every placeholder with the desired dependency
+    if ! (for f in $CORE_IPTABLES_DEPS; do
+        COREUPPER="$(echo "$f" | tr '[:lower:]' '[:upper:]')"
+        export COREUPPER
+
+        sed -e "s/PKGNAME_PKGDEPS_PLACEHOLDER/IPTABLES_PKGDEPS_PLACEHOLDER/g" -e "s/PLACEHOLDER/$COREUPPER/g" -e "s/placeholder/$f/g" "${DEPSLIST:-[EMPTY_VARIABLE]}" >"/app/depslist-replaSED_$f.sh"
+    done); then
+        echo "|> Error: could not replace every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 02"
+        echo
+        return 1
+    fi
+    echo "|> Successfully replaced every PLACEHOLDER with the uppercase string of the name of the dependency and every lowercase with its counterpart. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 02"
+    echo
+
+    # echo "IPTABLES_PKGDEPS_LLVM20-LIBS" | sed -E 's/([A-Z0-9])-([A-Z0-9])/\1_\2/g'
+    # |> IPTABLES_PKGDEPS_LLVM20_LIBS
+    # if ! (sed -i -E 's/([A-Z])-([A-Z])/\1_\2/g' /app/depslist-replaSED_*); then
+    #
+    # now use the extended regex [-r/-E] to replace hyphen between uppecase characters
+    if ! (sed --in-place -E 's/([A-Z0-9])-([A-Z0-9])/\1_\2/g' /app/depslist-replaSED_*); then
+        echo "|> Error: could not replace every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 03"
+        return 1
+    fi
+    echo "|> Successfully replaced every hyphen between uppercase characters into an underscore with sed and extended regex [-r/-E]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 03"
+
+    #cat /app/plus.sh  | sed -e 's/[A-Z0-9]++/\1PP\2/g'
+    if ! (sed -i -e 's/[A-Z0-9]++/\1PP\2/g' /app/depslist-replaSED_*); then
+        echo "|> Error: could not replace every uppercase, followed by numbers, followed by plus sign, by PP"
+        return 1
+    fi
+    echo "|> Error: Successfully replaced [--in-place] every uppercase, followed by numbers, followed by plus sign [++], by PP"
+
+    ls -allhtr /app
+
+    if ! (chmod +x -R /app/"depslist"*); then
+        echo "|> Error: it was not possible to change file bits of execution permission [recursively] under [/app]. Exiting now..."
+        echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 04"
+        echo
+        return 1
+    fi
+    echo "|> Sucessfully changed file bits of execution permission [recursively] under [/app]. Proceeding..."
+    echo "|> SCOPE: [core_routine], file [./scripts/packages/iptables-setup.sh]; check: 04"
+    echo
+
+    ls -allhtr /app
+
+}
+
+iptables_tarball() {
+    echo
+
+}
+
 set_iptables_so() {
 
     # iptables
