@@ -163,7 +163,7 @@ EOF
 
     # copy qonq_iptables tarball into the ./artifacts/microvms directory.
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
-    if ! podman cp qonq_iptables:/app/iptables-so-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
+    if ! podman cp qonq_iptables:/app/iptables-tarball-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
         echo "|> Error: could not copy the iptables shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         return 1
     fi
