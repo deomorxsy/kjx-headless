@@ -33,11 +33,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          #docker run -d -p 5000:5000 --name registry registry:3.0
-          # env git_hash env goes into the compose.yml
-          # docker compose -f ./compose.yml --progress=plain build --no-cache qemu_kjx
           make qonq_qemukjx
-          #docker push localhost:5000/qemu-kjx:latest
 
       - name: Retrieve artifact from OCI image
         run: |
@@ -49,10 +45,5 @@ jobs:
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: iptables-tarball
+          name: qemukjx-tarball
           path: ${{ github.workspace }}/artifacts/packaging/qemukjx-tarball-pkg.tar.gz
-      # - name: Archive the build artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: qemu-kjx
-      #     path: ${{ github.workspace }}/artifacts/qemu-builder/qemu-kjx.img
