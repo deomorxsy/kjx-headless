@@ -105,6 +105,6 @@ WORKDIR /app/
 ## COPY --from=builder "/app/iptables-so-pkg.tar.gz" .
 ## COPY --from=builder "/app/iptables-bin-pkg.tar.gz" .
 
-COPY --from=builder "/iptables-tarball-pkg.tar.gz"" .
+COPY --from=builder "/iptables-tarball-pkg.tar.gz" .
 
 ENTRYPOINT ["/bin/sh"]
