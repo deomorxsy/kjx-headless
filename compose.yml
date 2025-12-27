@@ -71,17 +71,7 @@ services:
       printf "\n|> List of environment variables:\n\n"
       env
     stop_signal: SIGINT
-  qemu_kjx:
-    container_name: qemu_kjx
-    volumes:
-      - qemu_kjx:/app/qemu-kjx/:ro
-    build:
-      context: "."
-      dockerfile: "./Dockerfile"
-      tags:
-        - "localhost:5000/qemu_kjx:latest"
-    entrypoint: ["/bin/sh", "-c"]
-    command: /scripts/bq-entrypoint.sh
+
   isogen_new:
     build:
       context: "."
@@ -445,6 +435,18 @@ services:
     command: |
       echo hmm
     stop_signal: SIGINT
+  qonq_qemukjx:
+    container_name: qemu_kjx
+    volumes:
+      - qemu_kjx:/app/qemu-kjx/:ro
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.qemukjx.qonq"
+      tags:
+        - "localhost:5000/qonq_qemukjx:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmmm
 
   # ===============
   # llcr packaging
