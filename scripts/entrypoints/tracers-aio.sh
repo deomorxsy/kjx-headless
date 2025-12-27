@@ -64,11 +64,11 @@ EOF
 
     # check if the image already exists
 
-    if (podman images | grep "localhost:5000/qonq_podman"); then
-        BUILT_PODMAN_ALREADY=$(podman images | grep "localhost:5000/qonq_podman" | awk '{print $3}')
+    if (podman images | grep "localhost:5000/qonq_bpftrace"); then
+        BUILT_PODMAN_ALREADY=$(podman images | grep "localhost:5000/qonq_bpftrace" | awk '{print $3}')
         export BUILT_PODMAN_ALREADY
 
-        echo "|> WARNING: found a previously built [localhost:5000/qonq_podman]. Attempting to remove image to [REBUILD]..."
+        echo "|> WARNING: found a previously built [localhost:5000/qonq_bpftrace]. Attempting to remove image to [REBUILD]..."
         echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 03"
         echo
 
@@ -80,61 +80,61 @@ EOF
         echo "|> Error: YOU (CAN) REDO the container image. Proceeding..."
         echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 04"
     fi
-    echo "|> WARNING: previously built [localhost:5000/qonq_podman] removed with sucess. ...[PASSED]"
+    echo "|> WARNING: previously built [localhost:5000/qonq_bpftrace] removed with sucess. ...[PASSED]"
     echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 03"
     #
-    if ! (podman images | grep "localhost:5000/qonq_podman"); then
-        echo "|> Error: could not find the localhost:5000/qonq_podman image at the OCI registry:3.0 server. Attempting to build now..."
+    if ! (podman images | grep "localhost:5000/qonq_bpftrace"); then
+        echo "|> Error: could not find the localhost:5000/qonq_bpftrace image at the OCI registry:3.0 server. Attempting to build now..."
         echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 05"
         echo && echo
         # return 1
         # Build the podman container with ccr.sh to use  Podman Service as the compose tool
-        if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache qonq_podman); then
+        if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache qonq_bpftrace); then
             echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
             echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 06"
             echo && echo
             return 1
         fi
-        echo "|> Build the [qonq_podman] container with ccr.sh to use Podman Service as the compose tool with success. Proceeding..."
+        echo "|> Build the [qonq_bpftrace] container with ccr.sh to use Podman Service as the compose tool with success. Proceeding..."
         echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 06"
         echo && echo
 
         # push built image into the registry:3.0 localhost:5000 server container.
-        if ! (podman push localhost:5000/qonq_podman:latest); then
-            echo "|> Error: could not push the built [qonq_podman] image into the OCI registry:3.0 localhost:5000 server container. Exiting now..."
+        if ! (podman push localhost:5000/qonq_bpftrace:latest); then
+            echo "|> Error: could not push the built [qonq_bpftrace] image into the OCI registry:3.0 localhost:5000 server container. Exiting now..."
             echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 07"
             return 1
         fi
         echo "|> Pushed built image into the OCI registry:3.0 localhost:5000 server container. Proceeding..."
         echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 07"
     fi
-    echo "|> [qonq_podman] image found at the localhost:5000/qonq_podman OCI registry:3.0 server. Proceeding..."
+    echo "|> [qonq_bpftrace] image found at the localhost:5000/qonq_bpftrace OCI registry:3.0 server. Proceeding..."
     echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 05"
 
-    # Create the built qonq_podman container
-    # podman run -it --name qonq_podman -d localhost:5000/qonq_podman:latest
-    if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create qonq_podman); then
-        echo "|> Error: could not create the built [qonq_podman] container using the ccr.sh script to use Podman Service as the compose tool"
+    # Create the built qonq_bpftrace container
+    # podman run -it --name qonq_bpftrace -d localhost:5000/qonq_bpftrace:latest
+    if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create qonq_bpftrace); then
+        echo "|> Error: could not create the built [qonq_bpftrace] container using the ccr.sh script to use Podman Service as the compose tool"
         echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 08"
         return 1
     fi
-    echo "|> Created the built [qonq_podman] container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
+    echo "|> Created the built [qonq_bpftrace] container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
     echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 08"
 
     # check created containers
     CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
 
-    # check for the qonq_podman image at localhost:5000/qonq_podman
-    podman images | grep "localhost:5000/qonq_podman" | awk '{print $1}'
+    # check for the qonq_bpftrace image at localhost:5000/qonq_bpftrace
+    podman images | grep "localhost:5000/qonq_bpftrace" | awk '{print $1}'
 
-    # copy qonq_podman tarball into the ./artifacts/microvms directory.
+    # copy qonq_bpftrace tarball into the ./artifacts/microvms directory.
     mkdir -p "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"
-    if ! podman cp qonq_podman:/app/podman-tarball-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
+    if ! podman cp qonq_bpftrace:/app/bpftrace-tarball-pkg.tar.gz "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}"; then
         echo "|> Error: could not copy the podman shared objects tarball to the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 09"
         return 1
     fi
-    echo "|> Copied the [qonq_podman] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    echo "|> Copied the [qonq_bpftrace] shared objects tarball into the PACKAGING_ART_DIR=${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
     echo "|> SCOPE: [set_bpftrace], file [./scripts/entrypoints/tracers-aio.sh]; check: 09"
 
     # Stop container registry
@@ -175,11 +175,11 @@ set_tarball() {
     echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/tracers-aio.sh]; check: 03"
 
     if ! (
-        tar -czf "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/hlcr-tarball.tar.gz" \
-            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/bpftrace-tarball.tar.gz"
-        # "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/podman-tarball.tar.gz" \
-        # "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/docker-tarball.tar.gz" \
-        # "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/crio-tarball.tar.gz"
+        tar -czf "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/tracers-tarball.tar.gz" \
+            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/bpftrace-tarball.tar.gz" \
+            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/ftrace-tarball.tar.gz" \
+            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/libbpf-tarball.tar.gz" \
+            "${PACKAGING_ART_DIR:-[EMPTY_VARIABLE]}/aya-tarball.tar.gz"
     ); then
         echo "|> Error: it was not possible to create all-in-one tarball with [set_tarball]. Exiting now..."
         echo "|> SCOPE: [set_tarball], file [./scripts/entrypoints/tracers-aio.sh]; check: 04"
@@ -193,9 +193,9 @@ set_tarball() {
 print_usage() {
     cat <<-END >&2
 USAGE: tracers-aio.sh [-options]
-                - podman
-                - docker
-                - crio
+                - bpftrace
+                - ftrace
+                - libbpf
                 - tarball
                 - version
                 - help
@@ -218,12 +218,14 @@ if ! [ -z "${MODE}" ] &&
     [ "${MODE:-[EMPTY_VARIABLE]}" = "bpftrace" ] ||
     [ "${MODE:-[EMPTY_VARIABLE]}" = "ftrace" ] ||
     [ "${MODE:-[EMPTY_VARIABLE]}" = "libbpf" ] ||
-    [ "${MODE:-[EMPTY_VARIABLE]}" = "aya" ]; then
+    [ "${MODE:-[EMPTY_VARIABLE]}" = "aya" ] ||
+    [ "${MODE:-[EMPTY_VARIABLE]}" = "tarball" ]; then
     case "${MODE:-[EMPTY_VARIABLE]}" in
     "bpftrace") set_bpftrace ;;
     "ftrace") set_ftrace ;;
     "libbpf") set_libbpf ;;
     "aya") set_aya ;;
+    "tarball") set_tarball ;;
     *)
         echo "Invalid option. Please specify one of: bpftrace-so, bpftrace-bin, tarball"
         print_usage
