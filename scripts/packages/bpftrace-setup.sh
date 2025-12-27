@@ -114,9 +114,11 @@ core_routine() {
 
     #cat /app/plus.sh  | sed -e 's/[A-Z0-9]++/\1PP\2/g'
     if ! (sed -i -e 's/[A-Z0-9]++/\1PP\2/g' /app/depslist-replaSED_*); then
-        echo "|> Error: could not replace every plus sign by "
-        #return 1
+        #echo "|> Error: could not replace every plus sign by "
+        echo "|> Error: could not replace every uppercase, followed by numbers, followed by plus sign, by PP"
+        return 1
     fi
+    echo "|> Error: Successfully replaced [--in-place] every uppercase, followed by numbers, followed by plus sign [++], by PP"
 
     ls -allhtr /app
 
