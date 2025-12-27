@@ -96,9 +96,10 @@ prepare_packaging() {
     echo && echo
 
     # setup podman shared objects
-    if ! [ -f "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/podman-archive.tar.gz"]; then
+    if ! [ -f "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/podman-archive.tar.gz" ]; then
 
-        MODE="podman-deps" . ./scripts/isogen/qonq-qdb.sh
+        # MODE="podman-deps" . ./scripts/isogen/qonq-qdb.sh
+        MODE="podman-deps" . ./scripts/qonq-qdb.sh
 
     fi
 
