@@ -10,17 +10,24 @@ if ! (for f in $PKGNAME_PKGDEPS_PLACEHOLDER; do
     echo "$f" >>/foo.txt
 done); then
     echo "|> Error: it was not possible to redirect the filepath of dotfiles for the [PLACEHOLDER] apk package. Exiting now..."
-    echo "|> SCOPE: [DEMO_REPLASED]; check: 01"
+    #echo "|> SCOPE: [DEMO_REPLASED]; check: 01"
     return 1
 fi
 echo "|> Successfully redirected the filepath of dotfiles for the [PLACEHOLDER] apk package. Proceeding..."
-echo "|> SCOPE: [DEMO_REPLASED]; check: 01"
+#echo "|> SCOPE: [DEMO_REPLASED]; check: 01"
+
+ls -allhtr /foo.txt
 
 # redirect filepath of dynamically linked binary dependencies (shared objects)
-#
+
 #
 if ! (
-    ldd "$(readlink -f "$(apk info -L placeholder | awk 'NR > 1' | grep -v contains | grep -v -e "^$" | sed 's/^/\//')")" | awk '{print $3}' >>foo.txt
+
+    for j in $PKGNAME_PKGDEPS_PLACEHOLDER; do
+        ldd "$j" | awk '{print $3}' >>foo.txt
+    done
+
+    #ldd "$(readlink -f "$(apk info -L libstdc++ | awk 'NR > 1' | grep -v contains | grep -v -e "^$" | sed 's/^/\//')")" | awk '{print $3}' >>foo.txt
 ); then
     echo "|> Error: it was not possible to redirect the filepath of [PLACEHOLDER] dynamically linked binary dependencies (shared objects). Exiting now..."
     echo "|> SCOPE: [DEMO_REPLASED]; check: 02"
@@ -28,6 +35,8 @@ if ! (
 fi
 echo "|> Successfully redirected the filepath of [placeholder] dynamically linked binary dependencies (shared objects). Proceeding..."
 echo "|> SCOPE: [DEMO_REPLASED]; check: 02"
+
+ls -allhtr /foo.txt
 
 #### PKGNAME_PKGDEPS_PLACEHOLDER="$(apk info -L placeholder | awk 'NR > 1' | grep -v contains | grep -v -e "^$" | sed 's/^/\//')"
 #### export PKGNAME_PKGDEPS_PLACEHOLDER
