@@ -89,9 +89,7 @@ dropbear:
 # =============================
 # isogen/iso9660
 # =============================
-.PHONY: qemu_kjx
-qemu_kjx:
-	MODE="-b" . ./scripts/qemu-kjx.sh
+
 
 # builds the project and fetch binaries for qemu-storage-daemon on qemu automation for the builder
 .PHONY: qonq
@@ -551,7 +549,7 @@ qonq_containerd:
 qonq_youki:
 	MODE="youki" . ./scripts/entrypoints/llcr-aio.sh
 
-# ===========
+# ==============
 # tracers qonq
 # ==============
 .PHONY: qonq_bpftrace
@@ -559,5 +557,9 @@ qonq_bpftrace:
 	MODE="bpftrace" . ./scripts/entrypoints/tracers-aio.sh
 
 
-
-
+# ==============
+# Isogen
+# ==============
+.PHONY: qonq_qemukjx
+qonq_qemukjx:
+	MODE="qonqkjx" . ./scripts/entrypoints/pocbuilda.sh
