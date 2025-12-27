@@ -7,11 +7,7 @@ core_routine() {
     export DEPSLIST
 
     CORE_SHADOW_DEPS="$(
-
-        apk dot libcap parted device-mapper fuse-overlayfs qemu qemu-img qemu-system-x86_64 \
-            file multipath-tools e2fsprogs xorriso expect libseccomp libcgroup \
-            squashfs-tools setxkbmap losetup fuse3 \
-            perl \
+        apk dot busybox-binsh libbsd musl linux-pam shadow doas \
             --installed |
             grep -v "shape=box" |
             grep -v "rankdir=LR" |
