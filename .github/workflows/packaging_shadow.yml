@@ -44,16 +44,23 @@ jobs:
           # docker create qonq_shadow -d localhost:5000/qonq_shadow:latest
           docker compose -f ./compose.yml create qonq_shadow
           mkdir -p "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq_shadow:/app/shadow-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
-          docker cp qonq_shadow:/app/shadow-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          docker cp qonq_shadow:/app/shadow-tarball-pkg.tar.gz ./artifacts/packaging
+          ## docker cp qonq_shadow:/app/shadow-so-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
+          ## docker cp qonq_shadow:/app/shadow-bin-pkg.tar.gz "${{ github.workspace }}"/artifacts/packaging/
 
       - name: Archive the build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qonq-shadow_shared-objects
-          path: ${{ github.workspace }}/artifacts/packaging/shadow-so-pkg.tar.gz
-      - name: Archive the build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: qonq-shadow_bin
-          path: ${{ github.workspace }}/artifacts/packaging/shadow-bin-pkg.tar.gz
+          name: qonq-shadow
+          path: ${{ github.workspace }}/artifacts/packaging/shadow-tarball-pkg.tar.gz
+
+      ### - name: Archive the build artifact
+      ###   uses: actions/upload-artifact@v4
+      ###   with:
+      ###     name: qonq-shadow_shared-objects
+      ###     path: ${{ github.workspace }}/artifacts/packaging/shadow-so-pkg.tar.gz
+      ### - name: Archive the build artifact
+      ###   uses: actions/upload-artifact@v4
+      ###   with:
+      ###     name: qonq-shadow_bin
+      ###     path: ${{ github.workspace }}/artifacts/packaging/shadow-bin-pkg.tar.gz
