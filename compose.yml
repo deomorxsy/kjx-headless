@@ -436,7 +436,7 @@ services:
       echo hmm
     stop_signal: SIGINT
   qonq_qemukjx:
-    container_name: qemu_kjx
+    container_name: qonq_qemukjx
     volumes:
       - qemu_kjx:/app/qemu-kjx/:ro
     build:
