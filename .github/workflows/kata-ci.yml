@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kata-bin
-          path: ${{ github.workspace }}/artifacts/packaging/kata-bin-pkg.tar.gz
+          path: ${{ github.workspace }}/artifacts/microvms/kata-bin-pkg.tar.gz
       # - name: Build OCI image
       #   run: |
       #     #docker run -d -p 5000:5000 --name registry registry:3.0
