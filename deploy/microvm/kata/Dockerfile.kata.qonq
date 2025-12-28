@@ -2,7 +2,7 @@ FROM golang:1.24-alpine3.22 AS builder
 
 COPY ./scripts/sandbox/kata-startup.sh /app/scripts/sandbox/kata-startup.sh
 COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
-COPY ./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst /helper
+COPY ./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst /helper/kata-static-3.24.0-amd64.tar.zst
 
 ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
