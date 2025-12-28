@@ -370,7 +370,7 @@ kjx() {
         -nographic \
         -no-reboot \
         -drive file="./utils/storage/eulab-hd",format=raw \
-        -net nic,model=virtio,macaddr="$macaddr" \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
         -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
         -s -S
 
@@ -393,7 +393,7 @@ debug() {
         -nographic \
         -no-reboot \
         -drive file="./utils/storage/eulab-hd",format=raw \
-        -net nic,model=virtio,macaddr="$macaddr" \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
         -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
         -s -S
 }
@@ -418,7 +418,7 @@ thirdver() {
         -nographic \
         -no-reboot \
         -drive file="./utils/storage/eulab-hd",format=raw \
-        -net nic,model=virtio,macaddr="$macaddr" \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
         -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0
     #-serial pty
     #-s -S
@@ -495,7 +495,7 @@ dropbear() {
         -nographic \
         -no-reboot \
         -drive file="./utils/storage/eulab-hd",format=raw \
-        -net nic,model=virtio,macaddr="$macaddr" \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
         -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0
     #-serial pty
     #-s -S
