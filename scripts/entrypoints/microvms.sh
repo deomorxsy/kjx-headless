@@ -1,8 +1,10 @@
 #!/bin/sh
 # Microvm artifact variables
-MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
-MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
-MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
+MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-tarball-pkg.tar.gz"
+MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-tarball-pkg.tar.gz"
+
+MICROVM_KATA_TARBALL="./artifacts/microvms/kata-tarball-pkg.tar.gz"
+MICROVM_KATA_BIN="./artifacts/microvms/kata-bin-pkg.tar.gz"
 
 MICROVM_ART_DIR="./artifacts/microvms"
 
@@ -87,7 +89,7 @@ mvm_firecracker() {
 
     # copy firecracker tarball into the ./artifacts/microvms directory.
     mkdir -p ./artifacts/microvms/
-    if ! podman cp firecracker:/firecracker-core.tar.gz ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}; then
+    if ! podman cp firecracker:/firecracker-tarball-pkg.tar.gz ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}; then
         echo "|> Error: could not copy the firecracker tarball to the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         return 1
     fi
@@ -269,11 +271,18 @@ mvm_kata() {
 
     # copy kata tarball into the ./artifacts/microvms directory.
     mkdir -p ./artifacts/microvms/
-    if ! podman cp kata:/kata-core.tar.gz ${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}; then
+    if ! podman cp kata:/app/kata-tarball-pkg.tar.gz "${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}"; then
         echo "|> Error: could not copy the kata tarball to the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         return 1
     fi
     echo "|> Copied kata tarball into the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+
+    mkdir -p ./artifacts/microvms/
+    if ! podman cp kata:/app/kata-bin-pkg.tar.gz "${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}"; then
+        echo "|> Error: could not copy the [kata-bin-pkg.tar.gz] from kata:/app to the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied the [kata-bin-pkg.tar.gz] from kata:/app to the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath. Proceeding...
 
     # Stop container registry
     if ! (podman stop registry); then
