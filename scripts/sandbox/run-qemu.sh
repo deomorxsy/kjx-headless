@@ -1423,7 +1423,7 @@ airgap_k3s() {
         echo && echo
         ;;
     esac
-    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
     echo && echo
 
     # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
@@ -1463,6 +1463,65 @@ airgap_k3s() {
         ;;
     esac
     echo "|> Successfully copied the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo && echo
+
+    # =================
+    # Kata-Containers
+    #
+    # returns if the [MICROVM_KATA_TARBALL] filepath does not exist
+    if ! [ -f ${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} ] || ! [ -f ${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: either [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] or [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! microvm_poc_kata; then
+            echo "|> Error: could not run the [microvm_poc_kata] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        echo "|> Does the the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] and [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy MICROVM_KATA_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_KATA_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+
+    # Copy MICROVM_KATA_BIN to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_KATA_BIN}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]."
     echo && echo
 
     # =======================
