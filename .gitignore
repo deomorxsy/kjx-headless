@@ -241,4 +241,17 @@ trace/libbpf-core/vmlinux.h
 
 # other artifacts
 artifacts/packaging/
+artifacts/Dockerfile-dummy.txt
+artifacts/foobartest/
+artifacts/rootless-oci/
+device-mapper_log1.txt
+idk-edited.txt
+sample-proj.c
+beetor.cg.out
+busybox-basecont
+
+
+# KATA DUMMY Dockerfile
+# AUTOMATICALLY GENERATED AT [./scripts/entrypoints/microvms.sh]
+deploy/microvm/kata/Dockerfile.kata.dummy
 

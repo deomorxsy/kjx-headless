@@ -1,0 +1,9 @@
+(
+cat <<EOF
+
+https://github.com/shadow-maint/shadow/releases/download/4.17.3/shadow-4.17.3.tar.xz
+https://github.com/linux-pam/linux-pam/releases/download/v1.7.0/Linux-PAM-1.7.0.tar.xz
+https://www.netfilter.org/projects/iptables/files/iptables-1.8.11.tar.xz
+EOF
+) | tee /wget-list.txt
+
