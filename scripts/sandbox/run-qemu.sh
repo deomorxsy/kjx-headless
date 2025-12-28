@@ -1724,6 +1724,47 @@ airgap_k3s() {
     echo "|> Successfully copied the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
     echo && echo
 
+    # =====================
+    # PACKAGING: SHADOW
+
+    # returns if the [PACKAGING_SHADOW_TARBALL] filepath does not exist
+    if ! [ -f ${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
+            echo "|> Error: could not run the [usgp-man.sh] script to build [shadow] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [usgp-man.sh] script to build [shadow] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 15\n"
+        echo "|> create the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 16\n"
+        echo "|> copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
     # Copy the POC_BOOTSCRIPT to the VIRTFS_ART_PATH so it becomes available on the guest vm
     if ! cp "${POC_BOOTSCRIPT}" "${VIRTFS_ART_PATH}"; then
         echo "|> Error: it was not possible to copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-EMPTY_VARIABLE}. Exiting now... "
