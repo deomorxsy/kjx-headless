@@ -1,6 +1,6 @@
 #!/bin/sh
 UPPER_MOUNTPOINT="./artifacts/qcow2-rootfs"
-KJX="/mnt/kjx"
+# KJX="/mnt/kjx"
 ROOTFS_PATH="$UPPER_MOUNTPOINT/rootfs"
 
 core_routine() {
@@ -148,40 +148,62 @@ set_kata_tarball() {
 
 set_kata_bin() {
 
-    KATA_TARBALL_ZST="./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst"
-    KATA_TARBALL_FILE="./artifacts/microvms/kata-static-3.24.0-amd64.tar"
+    KATA_ZST_NAME="kata-static-3.24.0-amd64.tar.zst"
+    KATA_TAR_NAME="kata-static-3.24.0-amd64.tar"
+
+    KATA_TARBALL_ZST="/app/artifacts/microvms/${KATA_ZST_NAME:-[EMPTY_VARIABLE]}"
+    KATA_DECOMPRESSED_TARBALL="/app/artifacts/microvms/${KATA_TAR_NAME}"
     FETCH_KATA_URI="https://github.com/kata-containers/kata-containers/releases/download/3.24.0/kata-static-3.24.0-amd64.tar.zst"
     export FETCH_KATA_URI
-    export KATA_TARBALL_FILE
+    export KATA_DECOMPRESSED_TARBALL
     export KATA_TARBALL_ZST
 
-    KATABINS_DIR="./artifacts/microvms/katabins/opt/kata/bin"
-    export KATABINS_DIR
-    mkdir -p "${KATABINS_DIR:-[EMPTY_VARIABLE]}"
+    KATABIN_DIR="./artifacts/microvms/katabin/opt/kata/bin"
+    export KATABIN_DIR
+    mkdir -p "${KATABIN_DIR:-[EMPTY_VARIABLE]}"
 
-    if ! [ -f ${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]} ]; then
-        echo "|> WARNING: the [kata built tarball] not found. Attempting to download..."
+    # here comes the shared volume defined in ./compose.yml for the kata container
+    if [ -f "/helper/${KATA_ZST_NAME:-[EMPTY_VARIABLE]}" ]; then
+
+        if ! (cp "/helper/${KATA_ZST_NAME:-[EMPTY_VARIABLE]}" "${KATA_DECOMPRESSED_TARBALL:-[EMPTY_VARIABLE]}"); then
+            echo "Error: could not copy the helper KATA_ZST_NAME to the KATA_DECOMPRESSED_TARBALL path. EXiting now..."
+            return 1
+        fi
+        echo "Sucessfully copied the helper KATA_ZST_NAME to the KATA_DECOMPRESSED_TARBALL path. Proceeding..."
+
+        echo "|> WARNING: the [/helper/${KATA_ZST_NAME:-[EMPTY_VARIABLE]}] was not found. Proceeding..."
+    fi
+    echo "|> Sucessfully found the [/helper/${KATA_ZST_NAME:-[EMPTY_VARIABLE]}] filepath. Leveraging local artifact to the [KATA_DECOMPRESSED_TARBALL=${KATA_DECOMPRESSED_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
+
+    if ! [ -f ${KATA_DECOMPRESSED_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> WARNING: the [KATA_DECOMPRESSED_TARBALL] not found. Attempting to download..."
         if ! (wget -P ./artifacts/microvms "${FETCH_KATA_URI:-[EMPTY_VARIABLE]}"); then
             echo "|> Error: could not download [FETCH_KATA_URI=${FETCH_KATA_URI:-[EMPTY_VARIABLE]}]. Exiting now..."
             return 1
         fi
         echo "|> Sucessfully downloaded [FETCH_KATA_URI=${FETCH_KATA_URI:-[EMPTY_VARIABLE]}]. Proceeding..."
+
+        if ! (zstd -d "${KATA_TARBALL_ZST}" && rm "${KATA_TARBALL_ZST}"); then
+            echo "|> Error: could not decompress and remove the [KATA_TARBALL_ZSTD=${KATA_TARBALL_ZST:-[EMPTY_VARIABLE]}]. Exiting now..."
+            return 1
+        fi
+        echo "|> Sucessfully decompressed and removed the [KATA_TARBALL_ZSTD=${KATA_TARBALL_ZST:-[EMPTY_VARIABLE]}]. Proceeding..."
         #return 1
     fi
-    echo "|> Sucessfully found the [kata built tarball]. Proceeding..."
+    echo "|> Sucessfully found the [KATA_DECOMPRESSED_TARBALL]. Proceeding..."
 
     #ls -allhtr /app | awk '{print $10}'
     #     find /app \( -iname '*depslist-replaSED_*.sh' \)
 
     #KATABIN="$(find /app \( -iname '*depslist-replaSED_*.sh' \))"
 
-    tar -tvf "${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]}" | grep "opt/kata/bin/" | grep -v "qemu"
+    tar -tvf "${KATA_DECOMPRESSED_TARBALL:-[EMPTY_VARIABLE]}" | grep "opt/kata/bin/" | grep -v "qemu"
 
     # grep -v "/$" excludes any entry that ends with a slash.
     # That would be a directory and significally increase the size
     # of the tarball ;)
     LIST_KATA=$(
-        tar -tvf "${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]}" |
+        tar -tvf "${KATA_DECOMPRESSED_TARBALL:-[EMPTY_VARIABLE]}" |
             grep "opt/kata/bin/" |
             grep -v "/$" |
             grep -v "qemu" |
@@ -189,51 +211,57 @@ set_kata_bin() {
     )
 
     if ! (for item in $LIST_KATA; do
-        tar -O -xf "${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]}" \
-            "$item" >"${KATABINS_DIR:-[EMPTY_VARIABLE]}/$(basename "$item")"
+        tar -O -xf "${KATA_DECOMPRESSED_TARBALL:-[EMPTY_VARIABLE]}" \
+            "$item" >"${KATABIN_DIR:-[EMPTY_VARIABLE]}/$(basename "$item")"
     done); then
         echo "|> Error: could not traverse the contents of [LIST_KATA=${LIST_KATA:-[EMPTY_VARIABLE]}]"
         return 1
     fi
+    echo "|> Sucessfully traversed the contents of [LIST_KATA=${LIST_KATA:-[EMPTY_VARIABLE]}]. Proceeding..."
 
-    if ! (chmod -R +x ./katabins/); then
+    if ! (chmod -R +x ./katabin/); then
         echo "|> Error: could not change file bits for execution permissions. Exiting now..."
         return 1
     fi
     echo "|> Sucessfully changed file bits for execution permissions. Proceeding..."
 
-    tar -czf /app/kata-bins-pkg.tar.gz ./katabins
+    if ! (tar -czf /kata-bin-pkg.tar.gz "${KATABIN_DIR:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to create a [/app/kata-bins-pkg.tar.gz] tarball. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [/app/kata-bins-pkg.tar.gz] tarball. Proceeding..."
 
     # tar -O -xf pkg.tar.gz ./opt/kata/bin/kata-runtime
 
-    ln -s /opt/kata/bin/kata-runtime /usr/local/bin/kata-runtime
-    ln -s /opt/kata/bin/containerd-shim-kata-v2 /usr/local/bin/containerd-shim-kata-v2
-    ln -s /opt/kata/bin/kata-monitor /usr/local/bin/kata-monitor
-    ln -s /opt/kata/bin/kata-collect-data.sh /usr/local/bin/kata-collect-data.sh
-    ln -s /opt/kata/bin/qemu-system-x86_64 /usr/local/bin/qemu-system-x86_64
+    # to the poc-bootstrap
+    # ln -s /opt/kata/bin/kata-runtime /usr/local/bin/kata-runtime
+    # ln -s /opt/kata/bin/containerd-shim-kata-v2 /usr/local/bin/containerd-shim-kata-v2
+    # ln -s /opt/kata/bin/kata-monitor /usr/local/bin/kata-monitor
+    # ln -s /opt/kata/bin/kata-collect-data.sh /usr/local/bin/kata-collect-data.sh
+    # ln -s /opt/kata/bin/qemu-system-x86_64 /usr/local/bin/qemu-system-x86_64
 
 }
 
-fetch_kata() {
-    FETCH_KATA_URI="https://github.com/kata-containers/kata-containers/releases/download/3.24.0/kata-static-3.24.0-amd64.tar.zst"
-    export FETCH_KATA_URI
-
-    wget -P /app/artifacts/microvms "${FETCH_KATA_URI}"
-
-    find /app \( -iname '*kata*' \)
-
-    ALL_SCRIPTS="$(find /app \( -iname '*depslist-replaSED_*.sh' \))"
-
-    for jooj in $ALL_SCRIPTS; do
-        if ! (/bin/sh -c "$jooj"); then
-            echo "|> Error: it was not possible to resolve dependency list for [$jooj]. Exiting now..."
-            echo "|> SCOPE: [set_kata_deps], file [./scripts/packages/kata-startup.sh]; "
-            return 1
-        fi
-        echo "|> Sucessfully resolved dependency list for [$jooj]. Proceeding..."
-    done
-
-}
+### fetch_kata() {
+###     FETCH_KATA_URI="https://github.com/kata-containers/kata-containers/releases/download/3.24.0/kata-static-3.24.0-amd64.tar.zst"
+###     export FETCH_KATA_URI
+###
+###     wget -P /app/artifacts/microvms "${FETCH_KATA_URI}"
+###
+###     find /app \( -iname '*kata*' \)
+###
+###     ALL_SCRIPTS="$(find /app \( -iname '*depslist-replaSED_*.sh' \))"
+###
+###     for jooj in $ALL_SCRIPTS; do
+###         if ! (/bin/sh -c "$jooj"); then
+###             echo "|> Error: it was not possible to resolve dependency list for [$jooj]. Exiting now..."
+###             echo "|> SCOPE: [set_kata_deps], file [./scripts/packages/kata-startup.sh]; "
+###             return 1
+###         fi
+###         echo "|> Sucessfully resolved dependency list for [$jooj]. Proceeding..."
+###     done
+###
+### }
 
 kata_rc_containerd() {
     # Context: isogen (it sets )
