@@ -613,7 +613,7 @@ airgap:
 	MODE="-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
 .PHONY: record-airgap
-record-runiso:
+record-airgap:
 	MODE="-record-airgap" . ./scripts/sandbox/run-qemu.sh
 	# MODE="-record-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
 
