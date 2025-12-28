@@ -385,8 +385,8 @@ services:
       - git_hash
     build:
       context: "."
-      dockerfile: "./deploy/microvm/kata/Dockerfile.kata.qonq"
-      #dockerfile: "./deploy/microvm/kata/Dockerfile"
+      dockerfile: "./deploy/microvm/kata/Dockerfile.kata.dummy"
+      #dockerfile: "./deploy/microvm/kata/Dockerfile.kata.qonq"
       tags:
         - "localhost:5000/kata:latest"
     entrypoint: ["/bin/sh", "-c"]
