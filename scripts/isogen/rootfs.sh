@@ -100,111 +100,111 @@ asciiart
 # copy initramfs to the artifacts qcow2 directory, then copy the latter to the squashfs directory
 # tryout.sh
 # set_rootfs() {
-    #MODE="-setvars" . ./scripts/isogen/set-vars.sh
+#MODE="-setvars" . ./scripts/isogen/set-vars.sh
 
-echo $ROOTFS_PATH
+echo "$ROOTFS_PATH"
 
-    if [ -d "$ROOTFS_PATH" ]; then
-        rm -rf "${ROOTFS_PATH:?}/"*
-    else
-        mkdir -p "${ROOTFS_PATH}"
-    fi
+if [ -d "$ROOTFS_PATH" ]; then
+    rm -rf "${ROOTFS_PATH:?}/"*
+else
+    mkdir -p "${ROOTFS_PATH}"
+fi
 
-    # decompress and extract initramfs into rootfs_path // sudo
-    busybox gzip -dc "$RAMDISK_PATH" | (cd "$ROOTFS_PATH" || return && busybox cpio -idmv && cd - || return)
+# decompress and extract initramfs into rootfs_path // sudo
+busybox gzip -dc "$RAMDISK_PATH" | (cd "$ROOTFS_PATH" || return && busybox cpio -idmv && cd - || return)
 
-    printf '##                     (30%%)\r'
-    sleep 1
+printf '##                     (30%%)\r'
+sleep 1
 
-    # newfrdir
-    #
-    # cp ./newfrdir/* $ROOTFS_PATH
+# newfrdir
+#
+# cp ./newfrdir/* $ROOTFS_PATH
 
-    if [ -d "$SQ_ROOTFS" ]; then
-        rm -rf "${SQ_ROOTFS:?}/"*
-    else
-        mkdir -p "$SQ_ROOTFS"
-    fi
+if [ -d "$SQ_ROOTFS" ]; then
+    rm -rf "${SQ_ROOTFS:?}/"*
+else
+    mkdir -p "$SQ_ROOTFS"
+fi
 
-    # copy rootfs_path contents to the squashed_rootfs
-    # cp -r "$ROOTFS_PATH/" "$SQ_ROOTFS"
+# copy rootfs_path contents to the squashed_rootfs
+# cp -r "$ROOTFS_PATH/" "$SQ_ROOTFS"
 
-    #}
+#}
 
-    # mount the loop device into the rootfs
-    #mount_loopdev() {
-    printf "=============|> [STEP 6]: mount the loop device into the rootfs.\n=============\n\n"
-    mkdir -p "$UPPER_MOUNTPOINT"/rootfs # mkdir a directory for the rootfs
+# mount the loop device into the rootfs
+#mount_loopdev() {
+printf "=============|> [STEP 6]: mount the loop device into the rootfs.\n=============\n\n"
+mkdir -p "$UPPER_MOUNTPOINT"/rootfs # mkdir a directory for the rootfs
 
-    # busybox-sh based
-    # mountns_sasquatch() {
+# busybox-sh based
+# mountns_sasquatch() {
 
-    # sink to the mount namespace
-    #mkdir -p /tmp/host_dir
+# sink to the mount namespace
+#mkdir -p /tmp/host_dir
 
-    #KJX="/mnt/kjx"
+#KJX="/mnt/kjx"
 
-    # these are idempotent
-    mkdir -pv "$KJX/dev"
-    mkdir -pv "$KJX/tmp"
-    mkdir -pv "$KJX/proc"
-    mkdir -pv "$KJX/sys"
-    mkdir -pv "$KJX/run"
-    # chapter 5 - fake the cross-compiler toolchain
-    mkdir -pv "$KJX/tools"
+# these are idempotent
+mkdir -pv "$KJX/dev"
+mkdir -pv "$KJX/tmp"
+mkdir -pv "$KJX/proc"
+mkdir -pv "$KJX/sys"
+mkdir -pv "$KJX/run"
+# chapter 5 - fake the cross-compiler toolchain
+mkdir -pv "$KJX/tools"
 
-    printf '##                     (32%%)\r'
-    sleep 1
+printf '##                     (32%%)\r'
+sleep 1
 
-    # mounts are for compiled LFS step
-    ## populating /dev for the kjx mount (before chroot), all sudo
-    sudo mount -t devtmpfs devtmpfs "$KJX/dev/" #
-    sudo mount -t tmpfs tmpfs "$KJX/tmp/"
+# mounts are for compiled LFS step
+## populating /dev for the kjx mount (before chroot), all sudo
+sudo mount -t devtmpfs devtmpfs "$KJX/dev/" #
+sudo mount -t tmpfs tmpfs "$KJX/tmp/"
 
-    ## mounting virtual kernel filesystems (before chroot), all sudo
-    sudo mount -vt devpts devpts -o gid=5,mode=0620 "$KJX/dev/pts"
-    sudo mount -vt proc proc "$KJX/proc"
-    sudo mount -vt sysfs sysfs "$KJX/sys"
-    sudo mount -vt tmpfs tmpfs "$KJX/run"
+## mounting virtual kernel filesystems (before chroot), all sudo
+sudo mount -vt devpts devpts -o gid=5,mode=0620 "$KJX/dev/pts"
+sudo mount -vt proc proc "$KJX/proc"
+sudo mount -vt sysfs sysfs "$KJX/sys"
+sudo mount -vt tmpfs tmpfs "$KJX/run"
 
-    # setting up the bind mount
-    TMPDIR=$(/bin/busybox mktemp -d)
-    mkdir -p "$KJX/sources/release"
-    sudo mount --bind "$KJX/sources/release" "$TMPDIR"
+# setting up the bind mount
+TMPDIR=$(/bin/busybox mktemp -d)
+mkdir -p "$KJX/sources/release"
+sudo mount --bind "$KJX/sources/release" "$TMPDIR"
 
-    # squashfs
-    mkdir -pv "$SQ_ROOTFS"
-    mkdir -pv "$SQ_SQUASHFS"
-    mkdir -pv "$SQ_OVERLAY/upperdir/usr/local/bin/"
+# squashfs
+mkdir -pv "$SQ_ROOTFS"
+mkdir -pv "$SQ_SQUASHFS"
+mkdir -pv "$SQ_OVERLAY/upperdir/usr/local/bin/"
 
-    mkdir -pv "$SQ_OVERLAY/upperdir"
-    mkdir -pv "$SQ_OVERLAY/workdir"
-    mkdir -pv "$SQ_OVERLAY/merged"
+mkdir -pv "$SQ_OVERLAY/upperdir"
+mkdir -pv "$SQ_OVERLAY/workdir"
+mkdir -pv "$SQ_OVERLAY/merged"
 
-    # =============
-    # populate rootfs directory using the busybox directory tree from the initramfs
-    # =============
-    #BACK_HERE
-    mkdir -pv "$ROOTFS_PATH"
+# =============
+# populate rootfs directory using the busybox directory tree from the initramfs
+# =============
+#BACK_HERE
+mkdir -pv "$ROOTFS_PATH"
 
-    # sudo
-    # sudo mount "$UPPER_LOOPDEV" "$ROOTFS_PATH"
+# sudo
+# sudo mount "$UPPER_LOOPDEV" "$ROOTFS_PATH"
 
-    sudo mount "$UPPER_LOOPDEV" "$UPPER_MOUNTPOINT"/rootfs # mount loop device into the generic dir
-    # sudo mount
-    #}
+sudo mount "$UPPER_LOOPDEV" "$UPPER_MOUNTPOINT"/rootfs # mount loop device into the generic dir
+# sudo mount
+#}
 
-    # verify_check_loop()
-    #
-    #runit_directories() {
-    # runit/runsv/runsvdir setup
-    mkdir -p "$ROOTFS_PATH/etc/runit"
-    mkdir -p "$ROOTFS_PATH/etc/runit/runsvdir/default"
-    mkdir -p "$ROOTFS_PATH/etc/sv"
-    mkdir -p "$ROOTFS_PATH/var/service"
-    mkdir -p "$ROOTFS_PATH/usr/local/bin"
+# verify_check_loop()
+#
+#runit_directories() {
+# runit/runsv/runsvdir setup
+mkdir -p "$ROOTFS_PATH/etc/runit"
+mkdir -p "$ROOTFS_PATH/etc/runit/runsvdir/default"
+mkdir -p "$ROOTFS_PATH/etc/sv"
+mkdir -p "$ROOTFS_PATH/var/service"
+mkdir -p "$ROOTFS_PATH/usr/local/bin"
 
-    # runit: service scripts, get a shell
-    mkdir -p "$ROOTFS_PATH/etc/sv/getty-tty1"
+# runit: service scripts, get a shell
+mkdir -p "$ROOTFS_PATH/etc/sv/getty-tty1"
 
 # }
