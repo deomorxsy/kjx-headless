@@ -1,6 +1,17 @@
-FROM alpine:3.22 AS builder
-# FROM rust:1.90.0-alpine3.20 AS builder
+# FROM alpine:3.22 AS builder
+# FROM golang:1.24-alpine3.22 AS builder
+FROM rust:1.92.0-alpine3.20 AS builder
 
+WORKDIR /app
+
+RUN <<EOF
+
+
+EOF
+
+
+
+FROM golang:1.24-alpine3.22 AS builder
 COPY ./scripts/sandbox/kata-startup.sh /app/scripts/sandbox/kata-startup.sh
 COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
 
@@ -12,7 +23,10 @@ WORKDIR /app/
 RUN <<EOF
 
 apk upgrade && apk update && \
-    apk add git
+    apk add git containerd
+
+go get github.com/containernetworking/plugins
+go get github.com/kubernetes-incubator/cri-tools
 
 ls -allhtr
 
