@@ -63,7 +63,9 @@ WORKDIR /app/
 RUN <<EOF
 
 apk upgrade && apk update && \
-    apk add git cni-plugins cri-tools containerd gcompat
+    apk add cni-plugins cri-tools containerd \
+    gcompat \
+    git zstd
 
 #go get github.com/containernetworking/plugins
 #go get github.com/kubernetes-incubator/cri-tools
