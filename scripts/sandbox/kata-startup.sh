@@ -219,7 +219,7 @@ set_kata_bin() {
     fi
     echo "|> Sucessfully traversed the contents of [LIST_KATA=${LIST_KATA:-[EMPTY_VARIABLE]}]. Proceeding..."
 
-    if ! (chmod -R +x ./katabin/); then
+    if ! (chmod -R +x "${KATABIN_DIR:-[EMPTY_VARIABLE]}"); then
         echo "|> Error: could not change file bits for execution permissions. Exiting now..."
         return 1
     fi
