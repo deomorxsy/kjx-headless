@@ -12,6 +12,8 @@ export VIRTIO_PASSTHRU_DIR
 # adapted from ./scripts/sandbox/run-qemu.sh
 #
 
+ROOTFS_PATH="./artifacts/burn/rootfs"
+
 # Microvm artifact variables
 MICROVM_GVISOR_POCPACKA="/mnt/virtio-test/gvisor-core.tar.gz"
 MICROVM_FIRECRACKER_POCPACKA="/mnt/virtio-test/firecracker-containerd.tar.gz"
@@ -21,7 +23,6 @@ export MICROVM_FIRECRACKER_POCPACKA
 export MICROVM_KATA_POCPACKA
 
 # Tracers artifact variables
-
 TRACERS_BPFTRACE_POCPACKA="/mnt/virtio-test/bpftrace-tarball-pkg.tar.gz"
 export TRACERS_BPFTRACE_POCPACKA
 
@@ -32,6 +33,90 @@ PACKAGING_QEMUKJX_POCPACKA="/mnt/virtio-test/qemukjx-tarball-pkg.tar.gz"
 export PACKAGING_IPTABLES_POCPACKA
 export PACKAGING_SHADOW_POCPACKA
 export PACKAGING_QEMUKJX_POCPACKA
+
+poc_pack_gvisor() {
+    mkdir -p /outro/gvisor
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-tarball-pkg.tar.gz" -C /outro/gvisor/); then
+        echo "|> Error: could not decompress the [gvisor-tarball-pkg.tar.gz]. Exiting now...  "
+        return 1
+    fi
+    echo "|> Sucessfully decompressed the [gvisor-tarball-pkg.tar.gz]. Proceeding..."
+    ls -l /outro/gvisor/
+    # if ! (cp -r /outro/gvisor/bin/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/bin/); then
+    #     echo "|> Error: could not copy [/outro/gvisor/bin/*] into  [/bin/]. Exiting now..."
+    #     return 1
+    # fi
+    if ! (cp -r /outro/gvisor/etc/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/etc/); then
+        echo "|> Error: could not copy [/outro/gvisor/etc/*] into  [/etc/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [/outro/gvisor/etc/*] into  [/etc/]. Proceeding..."
+    if ! (cp -r /outro/gvisor/usr/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/); then
+        echo "|> Error: could not copy [/outro/gvisor/usr/*] into  [/usr/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [/outro/gvisor/usr/*] into  [/usr/]. Proceeding..."
+}
+
+poc_pack_firecracker() {
+    mkdir -p /outro/firecracker
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-tarball-pkg.tar.gz" -C /outro/firecracker/); then
+        echo "|> Error: could not decompress the [firecracker-tarball-pkg.tar.gz]. Exiting now...  "
+        return 1
+    fi
+    echo "|> Sucessfully decompressed the [firecracker-tarball-pkg.tar.gz]. Proceeding..."
+    ls -l /outro/firecracker/
+    # if ! (cp -r /outro/firecracker/bin/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/bin/); then
+    #     echo "|> Error: could not copy [/outro/firecracker/bin/*] into  [/bin/]. Exiting now..."
+    #     return 1
+    # fi
+    if ! (cp -r /outro/firecracker/home/firecontainerd/fireart/bin/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/bin/); then
+        echo "|> Error: could not copy [/outro/firecracker/etc/*] into  [/etc/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [/outro/firecracker/home/firecontainerd/fireart/bin/*] into  [/bin/]. Proceeding..."
+    if ! (cp -r /outro/firecracker/home/firecontainerd/fireart/containerd-shim-aws-firecracker ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/bin/); then
+        echo "|> Error: could not copy [/outro/firecracker/home/firecontainerd/fireart/containerd-shim-aws-firecracker] into  [/usr/bin/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [containerd-shim-aws-firecracker] into  [/usr/bin/]. Proceeding..."
+
+    if ! (cp -r /outro/firecracker/home/firecontainerd/fireart/firecracker-containerd ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/bin/); then
+        echo "|> Error: could not copy [containerd-shim-aws-firecracker] into  [/usr/bin/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [containerd-shim-aws-firecracker] into  [/usr/bin/]. Proceeding..."
+
+    if ! (cp -r /outro/firecracker/home/firecontainerd/fireart/firecracker-ctr ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/bin/); then
+        echo "|> Error: could not copy [containerd-shim-aws-firecracker] into  [/usr/bin/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [containerd-shim-aws-firecracker] into  [/usr/bin/]. Proceeding..."
+
+}
+poc_pack_kata() {
+    mkdir -p /outro/kata
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-tarball-pkg.tar.gz" -C /outro/kata/); then
+        echo "|> Error: could not decompress the [kata-tarball-pkg.tar.gz]. Exiting now...  "
+        return 1
+    fi
+    echo "|> Sucessfully decompressed the [kata-tarball-pkg.tar.gz]. Proceeding..."
+    ls -l /outro/kata/
+    # if ! (cp -r /outro/kata/bin/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/bin/); then
+    #     echo "|> Error: could not copy [/outro/kata/bin/*] into  [/bin/]. Exiting now..."
+    #     return 1
+    # fi
+    if ! (cp -r /outro/kata/etc/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/etc/); then
+        echo "|> Error: could not copy [/outro/kata/etc/*] into  [/etc/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [/outro/kata/etc/*] into  [/etc/]. Proceeding..."
+    if ! (cp -r /outro/kata/usr/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/); then
+        echo "|> Error: could not copy [/outro/kata/usr/*] into  [/usr/]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully copied [/outro/kata/usr/*] into  [/usr/]. Proceeding..."
+}
 
 poc_pack_bpftrace() {
     #    ;, [27/12/2025 08:41]
@@ -44,7 +129,7 @@ poc_pack_bpftrace() {
     echo "|> Sucessfully decompressed the [bpftrace-tarball-pkg.tar.gz]. Proceeding..."
     echo
     ls -l /outro/bpftrace/
-    if ! (cp -r /outro/bpftrace/usr/* /usr/); then
+    if ! (cp -r /outro/bpftrace/usr/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/); then
         echo "|> Error: could not copy [/outro/bpftrace/usr/*] into  [/usr/]. Exiting now..."
         return 1
     fi
@@ -63,16 +148,16 @@ poc_pack_iptables() {
     fi
     echo "|> Sucessfully decompressed the [iptables-tarball-pkg.tar.gz]. Proceeding..."
     ls -l /outro/iptables/
-    # if ! (cp -r /outro/iptables/bin/* /bin/); then
+    # if ! (cp -r /outro/iptables/bin/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/bin/); then
     #     echo "|> Error: could not copy [/outro/iptables/bin/*] into  [/bin/]. Exiting now..."
     #     return 1
     # fi
-    if ! (cp -r /outro/iptables/etc/* /etc/); then
+    if ! (cp -r /outro/iptables/etc/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/etc/); then
         echo "|> Error: could not copy [/outro/iptables/etc/*] into  [/etc/]. Exiting now..."
         return 1
     fi
     echo "|> Sucessfully copied [/outro/iptables/etc/*] into  [/etc/]. Proceeding..."
-    if ! (cp -r /outro/iptables/usr/* /usr/); then
+    if ! (cp -r /outro/iptables/usr/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/); then
         echo "|> Error: could not copy [/outro/iptables/usr/*] into  [/usr/]. Exiting now..."
         return 1
     fi
@@ -90,28 +175,28 @@ poc_pack_qemukjx() {
     fi
     echo "|> Sucessfully decompressed the [qemukjx-tarball-pkg.tar.gz]. Proceeding..."
     ls -l /outro/qemukjx/
-    # if ! (cp -r /outro/iptables/bin/* /bin/); then
+    # if ! (cp -r /outro/iptables/bin/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/bin/); then
     #     echo "|> Error: could not copy [/outro/iptables/bin/*] into  [/bin/]. Exiting now..."
     #     return 1
     # fi
-    if ! (cp -r /outro/qemukjx/etc/* /etc/); then
+    if ! (cp -r /outro/qemukjx/etc/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/etc/); then
         echo "|> Error: could not copy [/outro/iptables/etc/*] into  [/etc/]. Exiting now..."
         return 1
     fi
     echo "|> Sucessfully copied [/outro/qemukjx/etc/*] into  [/etc/]. Proceeding..."
-    if ! (cp -r /outro/qemukjx/usr/* /usr/); then
+    if ! (cp -r /outro/qemukjx/usr/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/); then
         echo "|> Error: could not copy [/outro/qemukjx/usr/*] into  [/usr/]. Exiting now..."
         return 1
     fi
     echo "|> Sucessfully copied [/outro/qemukjx/usr/*] into  [/usr/]. Proceeding..."
 
-    if ! (cp -r /outro/qemukjx/bin/udevadm /bin/); then
+    if ! (cp -r /outro/qemukjx/bin/udevadm ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/bin/); then
         echo "|> Error: could not copy [/outro/qemukjx/bin/udevadm] into  [/bin/]. Exiting now..."
         return 1
     fi
     echo "|> Sucessfully copied [/outro/qemukjx/bin/udevadm] into  [/bin/udevadm]. Proceeding..."
 
-    if ! (cp -r /outro/qemukjx/sbin/* /sbin/); then
+    if ! (cp -r /outro/qemukjx/sbin/* ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/sbin/); then
         echo "|> Error: could not copy [/outro/qemukjx/sbin/*] into  [/sbin/]. Exiting now..."
         return 1
     fi
