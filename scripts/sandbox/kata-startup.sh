@@ -10,7 +10,7 @@ core_routine() {
     export DEPSLIST
 
     CORE_KATA_DEPS="$(
-        apk dot busybox-binsh libbsd musl linux-pam shadow doas \
+        apk dot cni-plugins cri-tools containerd gcompat \
             --installed |
             grep -v "shape=box" |
             grep -v "rankdir=LR" |
@@ -146,6 +146,95 @@ set_kata_tarball() {
 
 }
 
+set_kata_bin() {
+
+    KATA_TARBALL_ZST="./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst"
+    KATA_TARBALL_FILE="./artifacts/microvms/kata-static-3.24.0-amd64.tar"
+    FETCH_KATA_URI="https://github.com/kata-containers/kata-containers/releases/download/3.24.0/kata-static-3.24.0-amd64.tar.zst"
+    export FETCH_KATA_URI
+    export KATA_TARBALL_FILE
+    export KATA_TARBALL_ZST
+
+    KATABINS_DIR="./artifacts/microvms/katabins/opt/kata/bin"
+    export KATABINS_DIR
+    mkdir -p "${KATABINS_DIR:-[EMPTY_VARIABLE]}"
+
+    if ! [ -f ${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]} ]; then
+        echo "|> WARNING: the [kata built tarball] not found. Attempting to download..."
+        if ! (wget -P ./artifacts/microvms "${FETCH_KATA_URI:-[EMPTY_VARIABLE]}"); then
+            echo "|> Error: could not download [FETCH_KATA_URI=${FETCH_KATA_URI:-[EMPTY_VARIABLE]}]. Exiting now..."
+            return 1
+        fi
+        echo "|> Sucessfully downloaded [FETCH_KATA_URI=${FETCH_KATA_URI:-[EMPTY_VARIABLE]}]. Proceeding..."
+        #return 1
+    fi
+    echo "|> Sucessfully found the [kata built tarball]. Proceeding..."
+
+    #ls -allhtr /app | awk '{print $10}'
+    #     find /app \( -iname '*depslist-replaSED_*.sh' \)
+
+    #KATABIN="$(find /app \( -iname '*depslist-replaSED_*.sh' \))"
+
+    tar -tvf "${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]}" | grep "opt/kata/bin/" | grep -v "qemu"
+
+    # grep -v "/$" excludes any entry that ends with a slash.
+    # That would be a directory and significally increase the size
+    # of the tarball ;)
+    LIST_KATA=$(
+        tar -tvf "${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]}" |
+            grep "opt/kata/bin/" |
+            grep -v "/$" |
+            grep -v "qemu" |
+            awk '{print $6}'
+    )
+
+    if ! (for item in $LIST_KATA; do
+        tar -O -xf "${KATA_TARBALL_FILE:-[EMPTY_VARIABLE]}" \
+            "$item" >"${KATABINS_DIR:-[EMPTY_VARIABLE]}/$(basename "$item")"
+    done); then
+        echo "|> Error: could not traverse the contents of [LIST_KATA=${LIST_KATA:-[EMPTY_VARIABLE]}]"
+        return 1
+    fi
+
+    if ! (chmod -R +x ./katabins/); then
+        echo "|> Error: could not change file bits for execution permissions. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully changed file bits for execution permissions. Proceeding..."
+
+    tar -czf /app/kata-bins-pkg.tar.gz ./katabins
+
+    # tar -O -xf pkg.tar.gz ./opt/kata/bin/kata-runtime
+
+    ln -s /opt/kata/bin/kata-runtime /usr/local/bin/kata-runtime
+    ln -s /opt/kata/bin/containerd-shim-kata-v2 /usr/local/bin/containerd-shim-kata-v2
+    ln -s /opt/kata/bin/kata-monitor /usr/local/bin/kata-monitor
+    ln -s /opt/kata/bin/kata-collect-data.sh /usr/local/bin/kata-collect-data.sh
+    ln -s /opt/kata/bin/qemu-system-x86_64 /usr/local/bin/qemu-system-x86_64
+
+}
+
+fetch_kata() {
+    FETCH_KATA_URI="https://github.com/kata-containers/kata-containers/releases/download/3.24.0/kata-static-3.24.0-amd64.tar.zst"
+    export FETCH_KATA_URI
+
+    wget -P /app/artifacts/microvms "${FETCH_KATA_URI}"
+
+    find /app \( -iname '*kata*' \)
+
+    ALL_SCRIPTS="$(find /app \( -iname '*depslist-replaSED_*.sh' \))"
+
+    for jooj in $ALL_SCRIPTS; do
+        if ! (/bin/sh -c "$jooj"); then
+            echo "|> Error: it was not possible to resolve dependency list for [$jooj]. Exiting now..."
+            echo "|> SCOPE: [set_kata_deps], file [./scripts/packages/kata-startup.sh]; "
+            return 1
+        fi
+        echo "|> Sucessfully resolved dependency list for [$jooj]. Proceeding..."
+    done
+
+}
+
 kata_rc_containerd() {
     # Context: isogen (it sets )
 
@@ -243,13 +332,11 @@ END
 
 # Check the argument passed from the command line
 if ! [ -z "${MODE}" ] &&
-    [ "${MODE}" = "kata-so" ] ||
     [ "${MODE}" = "kata-bin" ] ||
     [ "${MODE}" = "kata-tarball" ]; then
     case "${MODE}" in
-    "kata-so") set_kata_so ;;
-    "kata-bin") set_kata_bin ;;
     "kata-tarball") set_kata_tarball ;;
+    "kata-bin") set_kata_bin ;;
     *)
         echo "Invalid microvm. Please specify one of: kata-so, kata-bin"
         print_usage
