@@ -88,7 +88,7 @@ mvm_firecracker() {
 
     # copy firecracker tarball into the ./artifacts/microvms directory.
     mkdir -p ./artifacts/microvms/
-    if ! podman cp firecracker:/firecracker-tarball-pkg.tar.gz ${MICROVM_FIRECRACKER_TARBALL_ENTRYPOINT:-[EMPTY_VARIABLE]}; then
+    if ! podman cp firecracker:/app/firecracker-tarball-pkg.tar.gz ${MICROVM_FIRECRACKER_TARBALL_ENTRYPOINT:-[EMPTY_VARIABLE]}; then
         echo "|> Error: could not copy the firecracker tarball to the MICROVM_FIRECRACKER_TARBALL_ENTRYPOINT=${MICROVM_FIRECRACKER_TARBALL_ENTRYPOINT:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         return 1
     fi

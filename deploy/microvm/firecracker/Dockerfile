@@ -189,7 +189,7 @@ ARG FIREART="/home/${SANDBOX_USER}/fireart"
 ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
 
-
+WORKDIR /app
 COPY --from=builder "/home/${SANDBOX_USER}/firecracker-tarball-pkg.tar.gz" .
 
 RUN echo "done!!!"
