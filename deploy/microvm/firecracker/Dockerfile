@@ -129,7 +129,7 @@ if [ -f ./firecracker-control/cmd/containerd/firecracker-ctr ] && [ -f ./firecra
 
         return 1
     fi
-    echo "|> Sucessfully copiedthe [./firecracker-control/cmd/containerd/firecracker-containerd] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
+    echo "|> Sucessfully copied the [./firecracker-control/cmd/containerd/firecracker-containerd] binary directory to [/home/firecontainerd/fireart/]. Proceeding..."
 fi
 
 # just to make...sure...
@@ -168,11 +168,11 @@ fi
 #
 
 
-if ! (tar -czf "/home/${SANDBOX_USER}/firecracker-core.tar.gz" "${FIREART}"); then
-    echo "|> Error: could not create a tarball from [FIREART=${FIREART}] at [/home/${SANDBOX_USER}/firecracker-core.tar.gz]. Exiting now..."
+if ! (tar -czf "/home/${SANDBOX_USER}/firecracker-tarball-pkg.tar.gz" "${FIREART}"); then
+    echo "|> Error: could not create a tarball from [FIREART=${FIREART}] at [/home/${SANDBOX_USER}/firecracker-tarball-pkg.tar.gz]. Exiting now..."
     return 1
     fi
-    echo "|> Sucessfully created a tarball from [FIREART=${FIREART}] at [/home/${SANDBOX_USER}/firecracker-core.tar.gz]. Proceeding..."
+    echo "|> Sucessfully created a tarball from [FIREART=${FIREART}] at [/home/${SANDBOX_USER}/firecracker-tarball-pkg.tar.gz]. Proceeding..."
 
 EOF
 
@@ -190,7 +190,7 @@ ARG GIT_CONTAINERFILE_HASH
 ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
 
 
-COPY --from=builder "/home/${SANDBOX_USER}/firecracker-core.tar.gz" .
+COPY --from=builder "/home/${SANDBOX_USER}/firecracker-tarball-pkg.tar.gz" .
 
 RUN echo "done!!!"
 
