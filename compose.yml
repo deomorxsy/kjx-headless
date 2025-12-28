@@ -379,8 +379,8 @@ services:
 
   kata:
     container_name: kata
-    volumes:
-      - ./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst:/helper/:ro
+    # volumes:
+    #   - ./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst:/helper/:ro
     environment:
       - git_hash
     build:
@@ -390,7 +390,6 @@ services:
       tags:
         - "localhost:5000/kata:latest"
     entrypoint: ["/bin/sh", "-c"]
-
     command: |
       echo hmm
     stop_signal: SIGINT
