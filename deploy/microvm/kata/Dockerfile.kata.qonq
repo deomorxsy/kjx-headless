@@ -1,0 +1,117 @@
+# FROM alpine:3.22 AS builder
+# FROM golang:1.24-alpine3.22 AS builder
+# FROM golang:1.25.5-alpine3.22 AS builder
+# FROM rust:1.88.0-alpine3.20 AS builder
+
+FROM rust:1.88.0-alpine3.20 AS core
+
+WORKDIR /app
+
+RUN <<EOF
+
+# apk add curl git musl make
+apk upgrade && apk update && \
+    apk add musl curl go git vim cargo make
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# source $HOME/.cargo/env
+# rustup install ${RUST_VERSION}
+# rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu
+rustup target add x86_64-unknown-linux-musl
+
+# install musl from source
+## curl -O https://git.musl-libc.org/cgit/musl/snapshot/musl-1.2.3.tar.gz
+## tar vxf musl-1.2.3.tar.gz
+## cd musl-1.2.3/
+## ./configure --prefix=/usr/local/
+## make && make install
+
+
+#git clone --depth 1 https://github.com/kata-containers/kata-containers.git
+#cd kata-containers/src/runtime-rs
+
+# install the containerd-shim-v2 and the Dragonball VMM.
+#make && sudo make install
+
+# Install the containerd-shim-v2 without the Dragonball VMM.
+make USE_BUILDIN_DB=false
+#make install HYPERVISOR=qemu
+
+# build the kata-agent from source with musl
+arch=$(uname -m)
+rustup target add "${arch}-unknown-linux-musl"
+ln -s /usr/bin/g++ /bin/musl-g++
+
+GOPATH="${GOPATH:-$HOME/go}"
+dir="app/src/github.com/kata-containers"
+git -C ${dir} clone --depth 1 https://github.com/kata-containers/kata-containers
+make -C ${dir}/kata-containers/src/agent
+
+
+EOF
+
+
+
+FROM golang:1.24-alpine3.22 AS builder
+COPY ./scripts/sandbox/kata-startup.sh /app/scripts/sandbox/kata-startup.sh
+COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
+
+ARG GIT_CONTAINERFILE_HASH
+ENV GIT_CONTAINERFILE_HASH=${GIT_COMPOSE_SHA}
+
+WORKDIR /app/
+
+RUN <<EOF
+
+apk upgrade && apk update && \
+    apk add git cni-plugins cri-tools containerd gcompat
+
+#go get github.com/containernetworking/plugins
+#go get github.com/kubernetes-incubator/cri-tools
+
+ls -allhtr
+
+#MODE="build" . ./scripts/sandbox/kata-startup.sh
+EOF
+
+RUN <<EOF
+
+if ! (MODE="kata-tarball" . /app/scripts/sandbox/kata-startup.sh); then
+    printf "\n|> Error: could not execute the [kata-tarball] function from the kata-startup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run [kata-tarball] from kata-startup.sh. Proceeding..."
+
+if ! (ls -allhtr "/kata-tarball-pkg.tar.gz"); then
+    echo "|> kata-tarball NOT FOUND. EXITING..."
+    return 1
+fi
+echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
+
+EOF
+
+RUN <<EOF
+
+if ! (MODE="kata-bins" . /app/scripts/sandbox/kata-startup.sh); then
+    printf "\n|> Error: could not execute the [kata-tarball] function from the kata-startup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run [kata-tarball] from kata-startup.sh. Proceeding..."
+
+if ! (ls -allhtr "/kata-tarball-pkg.tar.gz"); then
+    echo "|> kata-tarball NOT FOUND. EXITING..."
+    return 1
+fi
+echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
+
+EOF
+
+
+FROM alpine:3.22 AS relay
+
+WORKDIR /app
+COPY --from=builder /kata-bin-pkg.tar.gz .
+COPY --from=builder /kata-tarball-pkg.tar.gz .
+
+RUN echo "done!!!"
+
+ENTRYPOINT ["/bin/sh"]
