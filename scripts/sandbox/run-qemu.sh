@@ -220,82 +220,89 @@ prepare_tracers() {
 }
 
 microvm_poc_gvisor() {
-
-    # start OCI registry server
-    if ! podman start registry; then
-        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
-        echo && echo
-        #return 1
-
-        # run the registry:3.0 container image.
-        if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
-            echo "|> Error: could not run the registry:3.0 container image. Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Ran the OCI registry server with success. Proceeding..."
-        echo && echo
-    fi
-    echo "|> OCI registry server started with success"
-
-    # check if the image already exists
-    if ! (podman images | grep "localhost:5000/gvisor" | awk '{print $1}'); then
-        echo "|> Error: could not find the localhost:5000/gvisor image at the OCI registry:3.0 server. Attempting to build now..."
-        echo && echo
-        # return 1
-        # Build the gvisor container with ccr.sh to use  Podman Service as the compose tool
-        if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache gvisor; then
-            echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
-            echo && echo
-            return 1
-
-        fi
-        echo "|> Build the gvisor container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
-        echo && echo
-
-        # push built image into the registry:3.0 localhost:5000 server container.
-        if ! podman push localhost:5000/gvisor:latest; then
-            echo "|> Error: could not push the built gvisor image into the registry:3.0 localhost:5000 server container. Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
-        echo && echo
-    fi
-    echo "|> gvisor image found at the localhost:5000/gvisor OCI registry:3.0 server. Proceeding..."
-
-    # Create the built gvisor container
-    # podman run -it --name gvisor -d localhost:5000/gvisor:latest
-    if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create gvisor); then
-        echo "|> Error: could not create the built gvisor container using the ccr.sh script to use Podman Service as the compose tool"
-        echo && echo
+    if ! (MODE="gvisor" . ./scripts/entrypoints/microvms.sh); then
+        echo "|> Error: could not invoke the function [mvm_gvisor] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+        echo "|> Sucessfully invoked the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Proceeding..."
         return 1
     fi
-    echo "|> Created the built gvisor container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
-    echo && echo
+    echo "|> SCOPE: [microvm_poc_gvisor], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+    echo "|> Sucessfully invoked the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Proceeding..."
 
-    # check created containers
-    CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
+    #### # start OCI registry server
+    #### if ! podman start registry; then
+    ####     echo "|> Error: could not start OCI registry server. Attempting to run the image..."
+    ####     echo && echo
+    ####     #return 1
 
-    # check for the gvisor image at localhost:5000/gvisor
-    podman images | grep "localhost:5000/gvisor" | awk '{print $1}'
+    ####     # run the registry:3.0 container image.
+    ####     if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
+    ####         echo "|> Error: could not run the registry:3.0 container image. Exiting now..."
+    ####         echo && echo
+    ####         return 1
+    ####     fi
+    ####     echo "|> Ran the OCI registry server with success. Proceeding..."
+    ####     echo && echo
+    #### fi
+    #### echo "|> OCI registry server started with success"
 
-    # copy gvisor tarball into the ./artifacts/microvms directory.
-    mkdir -p ./artifacts/microvms/
-    if ! podman cp gvisor:/gvisor-core.tar.gz ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}; then
-        echo "|> Error: could not copy the gvisor tarball to the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
-        return 1
-    fi
-    echo "|> Copied gvisor tarball into the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    #### # check if the image already exists
+    #### if ! (podman images | grep "localhost:5000/gvisor" | awk '{print $1}'); then
+    ####     echo "|> Error: could not find the localhost:5000/gvisor image at the OCI registry:3.0 server. Attempting to build now..."
+    ####     echo && echo
+    ####     # return 1
+    ####     # Build the gvisor container with ccr.sh to use  Podman Service as the compose tool
+    ####     if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache gvisor; then
+    ####         echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
+    ####         echo && echo
+    ####         return 1
 
-    # Stop container registry
-    if ! (podman stop registry); then
-        echo "|> Error: could not stop the OCI registry server! Exiting now..."
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully stopped the OCI registry server."
-    echo && echo
+    ####     fi
+    ####     echo "|> Build the gvisor container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
+    ####     echo && echo
+
+    ####     # push built image into the registry:3.0 localhost:5000 server container.
+    ####     if ! podman push localhost:5000/gvisor:latest; then
+    ####         echo "|> Error: could not push the built gvisor image into the registry:3.0 localhost:5000 server container. Exiting now..."
+    ####         echo && echo
+    ####         return 1
+    ####     fi
+    ####     echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
+    ####     echo && echo
+    #### fi
+    #### echo "|> gvisor image found at the localhost:5000/gvisor OCI registry:3.0 server. Proceeding..."
+
+    #### # Create the built gvisor container
+    #### # podman run -it --name gvisor -d localhost:5000/gvisor:latest
+    #### if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create gvisor); then
+    ####     echo "|> Error: could not create the built gvisor container using the ccr.sh script to use Podman Service as the compose tool"
+    ####     echo && echo
+    ####     return 1
+    #### fi
+    #### echo "|> Created the built gvisor container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
+    #### echo && echo
+
+    #### # check created containers
+    #### CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
+
+    #### # check for the gvisor image at localhost:5000/gvisor
+    #### podman images | grep "localhost:5000/gvisor" | awk '{print $1}'
+
+    #### # copy gvisor tarball into the ./artifacts/microvms directory.
+    #### mkdir -p ./artifacts/microvms/
+    #### if ! podman cp gvisor:/gvisor-core.tar.gz ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}; then
+    ####     echo "|> Error: could not copy the gvisor tarball to the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+    ####     return 1
+    #### fi
+    #### echo "|> Copied gvisor tarball into the [MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}] filepath with success. Proceeding... "
+
+    #### # Stop container registry
+    #### if ! (podman stop registry); then
+    ####     echo "|> Error: could not stop the OCI registry server! Exiting now..."
+    ####     echo && echo
+    ####     return 1
+    #### fi
+    #### echo "|> Successfully stopped the OCI registry server."
+    #### echo && echo
 
 }
 
@@ -1604,7 +1611,7 @@ airgap_k3s() {
     ### echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
 
     # returns if the [MICROVM_GVISOR_TARBALL] filepath does not exist
-    if ! [ -f ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} ]; then
+    if ! [ -f "${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}" ]; then
         echo "|> Warning: MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL does not exist in this filepath. Attempting to generate it:"
         echo && echo
         #return 1
@@ -1774,7 +1781,7 @@ airgap_k3s() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 14\n"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 17\n"
         echo "|> copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
         echo && echo
         ;;
