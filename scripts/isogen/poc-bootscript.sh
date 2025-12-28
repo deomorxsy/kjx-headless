@@ -121,7 +121,10 @@ isogen_initramfs_adapter_starter() {
         echo "|> SCOPE: global, file: [./scripts/isogen/poc-bootscript.sh], check: 02"
         echo && echo
 
-        cp /mnt/virtio-test/poc-bootscript.sh /app
+        if ! (cp /mnt/virtio-test/poc-bootscript.sh /app); then
+            echo "|> Error: [/app/poc-bootscript.sh] does NOT exist. Exiting now..."
+        fi
+        echo "|> Sucessfully found the [/app/poc-bootscript.sh] filepath. Proceeding..."
         MODE="-main" . /app/poc-bootscript.sh
 
     fi
@@ -167,6 +170,40 @@ export K3S_CRICTL_CONF_FILE
 
 K3S_AGENT_CONF_FILE="/etc/rancher/k3s/agent-config.yaml"
 export K3S_AGENT_CONF_FILE
+
+kata_linkage() {
+    if ! (ln -s /opt/kata/bin/kata-runtime /usr/local/bin/kata-runtime); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to [/usr/local/bin/kata-runtime]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to [/usr/local/bin/kata-runtime]. Proceeding..."
+
+    if ! (ln -s /opt/kata/bin/containerd-shim-kata-v2 /usr/local/bin/containerd-shim-kata-v2); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] t/usr/local/bin/containerd-shim-kata-v2o []. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] t/usr/local/bin/containerd-shim-kata-v2o []. Proceeding..."
+
+    if ! (ln -s /opt/kata/bin/kata-monitor /usr/local/bin/kata-monitor); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to [/usr/local/bin/kata-monitor]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to [/usr/local/bin/kata-monitor]. Proceeding..."
+
+    if ! (ln -s /opt/kata/bin/kata-collect-data.sh /usr/local/bin/kata-collect-data.sh); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to [/usr/local/bin/kata-collect-data.sh]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to [/usr/local/bin/kata-collect-data.sh]. Proceeding..."
+
+    # will be made available through [qonq_qemukjx]
+    ### if ! (ln -s /opt/kata/bin/qemu-system-x86_64 /usr/local/bin/qemu-system-x86_64); then
+    ###     echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to [/usr/local/bin/qemu-system-x86_64]. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to [/usr/local/bin/qemu-system-x86_64]. Proceeding..."
+
+}
 
 load_modules() {
 
@@ -1904,18 +1941,22 @@ END
 
 }
 
-if [ "${MODE}" = "--main" ] || [ "${MODE}" = "-m" ] || [ "${MODE}" = "-main" ]; then
-    if ! _main_scope; then
-        echo && echo "|> Error: could not run the [_main_scope] function of [poc-bootscript] shellscript. Exiting now..."
+# Check the argument passed from the command line
+if ! [ -z "${MODE}" ] &&
+    [ "${MODE}" = "-main" ]; then
+    case "${MODE}" in
+    "-main") _main_scope ;;
+    *)
+        echo "Invalid [poc-bootscript] option. Please specify one of: -main"
         print_usage
-        echo && echo
-        return 1
-    fi
-    echo
-    echo "|> Sucessfully ran the [_main_scope] function of [poc-bootscript] shellscript. Proceeding..."
-    echo && echo
+        ;;
+    esac
+
+elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
+    print_usage
+elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
+    printf "\n|> Version: kata-setup 1.0.0"
 else
-    echo && echo "|> Error: could not run the [_main_scope], probably no option was oferred. Exiting now..."
-    echo
-    return 1
+    echo "Invalid function name. Please specify one of the available functions:"
+    print_usage
 fi
