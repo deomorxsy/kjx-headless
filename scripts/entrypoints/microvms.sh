@@ -282,7 +282,7 @@ mvm_kata() {
         echo "|> Error: could not copy the [kata-bin-pkg.tar.gz] from kata:/app to the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath. Exiting now..."
         return 1
     fi
-    echo "|> Sucessfully copied the [kata-bin-pkg.tar.gz] from kata:/app to the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath. Proceeding...
+    echo "|> Sucessfully copied the [kata-bin-pkg.tar.gz] from kata:/app to the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath. Proceeding..."
 
     # Stop container registry
     if ! (podman stop registry); then
@@ -373,7 +373,7 @@ if ! [ -z "${MODE}" ] &&
 elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
     print_usage
 elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
-    printf "\n|> Version: microvms 1.0.0"
+    echo "|> Version: microvms 1.0.0"
 else
     echo "Invalid function name. Please specify one of the available functions:"
     print_usage
