@@ -1388,8 +1388,8 @@ airgap_k3s() {
     ### echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
 
     # returns if the [MICROVM_GVISOR_TARBALL] filepath does not exist
-    if ! [ -f $MICROVM_GVISOR_TARBALL ]; then
-        echo "|> Warning: MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL does not exist in this filepath. Attempting to generate it:"
+    if ! [ -f ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
         echo && echo
         #return 1
         if ! microvm_poc_gvisor; then
@@ -1402,7 +1402,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
-        echo "|> create the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL filepath. ...[PASSED]"
+        echo "|> create the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
     esac
@@ -1411,7 +1411,7 @@ airgap_k3s() {
     # Will only run if the previous work.
     # Copy MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH
     if ! cp "${MICROVM_GVISOR_TARBALL}" "${VIRTFS_ART_PATH}"; then
-        echo "|> Error: it was not possible to copy the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. Exiting now... "
+        echo "|> Error: it was not possible to copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
         echo && echo
         return 1
     fi
@@ -1419,11 +1419,11 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
-        echo "|> copy the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. ...[PASSED]"
+        echo "|> copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
         echo && echo
         ;;
     esac
-    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=$MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
     echo && echo
 
     # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
@@ -1441,7 +1441,7 @@ airgap_k3s() {
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
         printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
-        echo "|> create the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL filepath. ...[PASSED]"
+        echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
     esac
@@ -1450,7 +1450,7 @@ airgap_k3s() {
     # Will only run if the previous work.
     # Copy MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH
     if ! cp "${MICROVM_FIRECRACKER_TARBALL}" "${VIRTFS_ART_PATH}"; then
-        echo "|> Error: it was not possible to copy the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. Exiting now... "
+        echo "|> Error: it was not possible to copy the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
         echo && echo
         return 1
     fi
