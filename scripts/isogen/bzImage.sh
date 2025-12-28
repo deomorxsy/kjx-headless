@@ -43,3 +43,33 @@ buildakernel() {
     fi
     echo "|> copied the kernel bzImage modules into the artifacts dir with success."
 }
+
+old_ko_fetch() {
+    # from tryout.sh
+    if [ -z "${PAT_KJX_ARTIFACT}" ] || ! [ "${PAT_KJX_ARTIFACT}" = "github_pat*" ]; then
+        #
+        # from ssh-enabled-rootfs to rootfs-with-ssh
+        KO_TARBALL_LINK=$(curl -H "Authorization: token $PAT_KJX_ARTIFACT" https://api.github.com/repos/deomorxsy/kjx-headless/actions/artifacts | jq -C -r '.artifacts[] | select(.name == "ko_tarball") | .archive_download_url' | awk 'NR==1 {print $1}')
+
+        # wget --header="Authorization: token $PAT_KJX_ARTIFACT" -P ./artifacts/ "$KO_TARBALL_LINK"
+
+        mkdir -p "$ISO_DIR"/kernel/tmp_modules/
+        curl -L -H "Authorization: token $PAT_KJX_ARTIFACT" \
+            --output-dir "$ISO_DIR/kernel/tmp_modules/" -O "$KO_TARBALL_LINK"
+
+        cd "$ISO_DIR"/kernel/tmp_modules || return
+        unzip ./"$(basename "$KO_TARBALL_LINK")"
+
+        for f in ./*; do
+            case $f in
+            *.tar.gz) tar -xvf "$f" ;;
+            esac
+        done
+
+        cd - || return
+
+    fi
+    #cp ./artifacts/ko_tarball.zip "$ISO_DIR"/kernel/
+    #unzip ./ko_tarball.zip
+
+}
