@@ -51,9 +51,14 @@ ANODA_INITRAMFS="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz
 MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
 
 # Microvm artifact variables
-MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
-MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
-MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
+#MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
+#MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
+#MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
+
+MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-tarball-pkg.tar.gz"
+MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-tarball-pkg.tar.gz"
+MICROVM_KATA_TARBALL="./artifacts/microvms/kata-tarball-pkg.tar.gz"
+MICROVM_KATA_BIN="./artifacts/microvms/kata-bin-pkg.tar.gz"
 
 # Tracers artifact variables
 TRACERS_BPFTRACE_TARBALL="./artifacts/packaging/bpftrace-tarball-pkg.tar.gz"
@@ -295,160 +300,175 @@ microvm_poc_gvisor() {
 }
 
 microvm_poc_firecracker() {
-    # start OCI registry server
-    if ! podman start registry; then
-        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
-        echo && echo
-        #return 1
-
-        # run the registry:3.0 container image.
-        if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
-            echo "|> Error: could not run the registry:3.0 container image. Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Ran the OCI registry server with success. Proceeding..."
-        echo && echo
-    fi
-    echo "|> OCI registry server started with success"
-
-    # check if the image already exists
-    if ! (podman images | grep "localhost:5000/firecracker" | awk '{print $1}'); then
-        echo "|> Error: could not find the localhost:5000/firecracker image at the OCI registry:3.0 server. Attempting to build now..."
-        echo && echo
-        # return 1
-        # Build the firecracker container with ccr.sh to use  Podman Service as the compose tool
-        if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache firecracker; then
-            echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
-            echo && echo
-            return 1
-
-        fi
-        echo "|> Build the firecracker container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
-        echo && echo
-
-        # push built image into the registry:3.0 localhost:5000 server container.
-        if ! podman push localhost:5000/firecracker:latest; then
-            echo "|> Error: could not push the built firecracker image into the registry:3.0 localhost:5000 server container. Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
-        echo && echo
-    fi
-    echo "|> firecracker image found at the localhost:5000/firecracker OCI registry:3.0 server. Proceeding..."
-
-    # Create the built firecracker container
-    # podman run -it --name firecracker -d localhost:5000/firecracker:latest
-    if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create firecracker); then
-        echo "|> Error: could not create the built firecracker container using the ccr.sh script to use Podman Service as the compose tool"
-        echo && echo
+    if ! (MODE="firecracker" . ./scripts/entrypoints/microvms.sh); then
+        echo "|> Error: could not invoke the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+        echo "|> SCOPE: [microvm_poc_firecracker], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
         return 1
     fi
-    echo "|> Created the built firecracker container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
-    echo && echo
+    echo "|> Sucessfully invoked the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Proceeding..."
+    echo "|> SCOPE: [microvm_poc_firecracker], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
 
-    # check created containers
-    CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
+    #### # start OCI registry server
+    #### if ! podman start registry; then
+    ####     echo "|> Error: could not start OCI registry server. Attempting to run the image..."
+    ####     echo && echo
+    ####     #return 1
 
-    # check for the firecracker image at localhost:5000/firecracker
-    podman images | grep "localhost:5000/firecracker" | awk '{print $1}'
+    ####     # run the registry:3.0 container image.
+    ####     if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
+    ####         echo "|> Error: could not run the registry:3.0 container image. Exiting now..."
+    ####         echo && echo
+    ####         return 1
+    ####     fi
+    ####     echo "|> Ran the OCI registry server with success. Proceeding..."
+    ####     echo && echo
+    #### fi
+    #### echo "|> OCI registry server started with success"
 
-    # copy firecracker tarball into the ./artifacts/microvms directory.
-    mkdir -p ./artifacts/microvms/
-    if ! podman cp firecracker:/firecracker-core.tar.gz ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}; then
-        echo "|> Error: could not copy the firecracker tarball to the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
-        return 1
-    fi
-    echo "|> Copied firecracker tarball into the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    #### # check if the image already exists
+    #### if ! (podman images | grep "localhost:5000/firecracker" | awk '{print $1}'); then
+    ####     echo "|> Error: could not find the localhost:5000/firecracker image at the OCI registry:3.0 server. Attempting to build now..."
+    ####     echo && echo
+    ####     # return 1
+    ####     # Build the firecracker container with ccr.sh to use  Podman Service as the compose tool
+    ####     if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache firecracker; then
+    ####         echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
+    ####         echo && echo
+    ####         return 1
 
-    # Stop container registry
-    if ! (podman stop registry); then
-        echo "|> Error: could not stop the OCI registry server! Exiting now..."
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully stopped the OCI registry server."
-    echo && echo
+    ####     fi
+    ####     echo "|> Build the firecracker container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
+    ####     echo && echo
+
+    ####     # push built image into the registry:3.0 localhost:5000 server container.
+    ####     if ! podman push localhost:5000/firecracker:latest; then
+    ####         echo "|> Error: could not push the built firecracker image into the registry:3.0 localhost:5000 server container. Exiting now..."
+    ####         echo && echo
+    ####         return 1
+    ####     fi
+    ####     echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
+    ####     echo && echo
+    #### fi
+    #### echo "|> firecracker image found at the localhost:5000/firecracker OCI registry:3.0 server. Proceeding..."
+
+    #### # Create the built firecracker container
+    #### # podman run -it --name firecracker -d localhost:5000/firecracker:latest
+    #### if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create firecracker); then
+    ####     echo "|> Error: could not create the built firecracker container using the ccr.sh script to use Podman Service as the compose tool"
+    ####     echo && echo
+    ####     return 1
+    #### fi
+    #### echo "|> Created the built firecracker container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
+    #### echo && echo
+
+    #### # check created containers
+    #### CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
+
+    #### # check for the firecracker image at localhost:5000/firecracker
+    #### podman images | grep "localhost:5000/firecracker" | awk '{print $1}'
+
+    #### # copy firecracker tarball into the ./artifacts/microvms directory.
+    #### mkdir -p ./artifacts/microvms/
+    #### if ! podman cp firecracker:/firecracker-core.tar.gz ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}; then
+    ####     echo "|> Error: could not copy the firecracker tarball to the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+    ####     return 1
+    #### fi
+    #### echo "|> Copied firecracker tarball into the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+
+    #### # Stop container registry
+    #### if ! (podman stop registry); then
+    ####     echo "|> Error: could not stop the OCI registry server! Exiting now..."
+    ####     echo && echo
+    ####     return 1
+    #### fi
+    #### echo "|> Successfully stopped the OCI registry server."
+    #### echo && echo
 
 }
 
 microvm_poc_kata() {
-    # start OCI registry server
-    if ! podman start registry; then
-        echo "|> Error: could not start OCI registry server. Attempting to run the image..."
-        echo && echo
-        #return 1
-
-        # run the registry:3.0 container image.
-        if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
-            echo "|> Error: could not run the registry:3.0 container image. Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Ran the OCI registry server with success. Proceeding..."
-        echo && echo
-    fi
-    echo "|> OCI registry server started with success"
-
-    # check if the image already exists
-    if ! (podman images | grep "localhost:5000/kata" | awk '{print $1}'); then
-        echo "|> Error: could not find the localhost:5000/kata image at the OCI registry:3.0 server. Attempting to build now..."
-        echo && echo
-        # return 1
-        # Build the kata container with ccr.sh to use  Podman Service as the compose tool
-        if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache kata; then
-            echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
-            echo && echo
-            return 1
-
-        fi
-        echo "|> Build the kata container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
-        echo && echo
-
-        # push built image into the registry:3.0 localhost:5000 server container.
-        if ! podman push localhost:5000/kata:latest; then
-            echo "|> Error: could not push the built kata image into the registry:3.0 localhost:5000 server container. Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
-        echo && echo
-    fi
-    echo "|> kata image found at the localhost:5000/kata OCI registry:3.0 server. Proceeding..."
-
-    # Create the built kata container
-    # podman run -it --name kata -d localhost:5000/kata:latest
-    if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create kata); then
-        echo "|> Error: could not create the built kata container using the ccr.sh script to use Podman Service as the compose tool"
-        echo && echo
+    if ! (MODE="kata" . ./scripts/entrypoints/microvms.sh); then
+        echo "|> Error: could not invoke the function [mvm_kata] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+        echo "|> SCOPE: [microvm_poc_kata], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
         return 1
     fi
-    echo "|> Created the built kata container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
-    echo && echo
+    echo "|> Sucessfully invoked the function [mvm_kata] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+    echo "|> SCOPE: [microvm_poc_kata], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+    #### # start OCI registry server
+    #### if ! podman start registry; then
+    ####     echo "|> Error: could not start OCI registry server. Attempting to run the image..."
+    ####     echo && echo
+    ####     #return 1
 
-    # check created containers
-    CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
+    ####     # run the registry:3.0 container image.
+    ####     if ! (podman run -d -p 5000:5000 --name registry registry:3.0); then
+    ####         echo "|> Error: could not run the registry:3.0 container image. Exiting now..."
+    ####         echo && echo
+    ####         return 1
+    ####     fi
+    ####     echo "|> Ran the OCI registry server with success. Proceeding..."
+    ####     echo && echo
+    #### fi
+    #### echo "|> OCI registry server started with success"
 
-    # check for the kata image at localhost:5000/kata
-    podman images | grep "localhost:5000/kata" | awk '{print $1}'
+    #### # check if the image already exists
+    #### if ! (podman images | grep "localhost:5000/kata" | awk '{print $1}'); then
+    ####     echo "|> Error: could not find the localhost:5000/kata image at the OCI registry:3.0 server. Attempting to build now..."
+    ####     echo && echo
+    ####     # return 1
+    ####     # Build the kata container with ccr.sh to use  Podman Service as the compose tool
+    ####     if ! CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache kata; then
+    ####         echo "|> Error: could not run the ccr.sh script for Podman Service as the compose tool. Exiting now..."
+    ####         echo && echo
+    ####         return 1
 
-    # copy kata tarball into the ./artifacts/microvms directory.
-    mkdir -p ./artifacts/microvms/
-    if ! podman cp kata:/kata-core.tar.gz ${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}; then
-        echo "|> Error: could not copy the kata tarball to the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
-        return 1
-    fi
-    echo "|> Copied kata tarball into the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+    ####     fi
+    ####     echo "|> Build the kata container with ccr.sh to use  Podman Service as the compose tool with success. Proceeding..."
+    ####     echo && echo
 
-    # Stop container registry
-    if ! (podman stop registry); then
-        echo "|> Error: could not stop the OCI registry server! Exiting now..."
-        echo && echo
-        return 1
-    fi
-    echo "|> Successfully stopped the OCI registry server."
-    echo && echo
+    ####     # push built image into the registry:3.0 localhost:5000 server container.
+    ####     if ! podman push localhost:5000/kata:latest; then
+    ####         echo "|> Error: could not push the built kata image into the registry:3.0 localhost:5000 server container. Exiting now..."
+    ####         echo && echo
+    ####         return 1
+    ####     fi
+    ####     echo "|> Pushed built image into the registry:3.0 localhost:5000 server container. Proceeding..."
+    ####     echo && echo
+    #### fi
+    #### echo "|> kata image found at the localhost:5000/kata OCI registry:3.0 server. Proceeding..."
+
+    #### # Create the built kata container
+    #### # podman run -it --name kata -d localhost:5000/kata:latest
+    #### if ! (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml create kata); then
+    ####     echo "|> Error: could not create the built kata container using the ccr.sh script to use Podman Service as the compose tool"
+    ####     echo && echo
+    ####     return 1
+    #### fi
+    #### echo "|> Created the built kata container using the ccr.sh script to use Podman Service as the compose tool with success. Proceeding..."
+    #### echo && echo
+
+    #### # check created containers
+    #### CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose ps --all
+
+    #### # check for the kata image at localhost:5000/kata
+    #### podman images | grep "localhost:5000/kata" | awk '{print $1}'
+
+    #### # copy kata tarball into the ./artifacts/microvms directory.
+    #### mkdir -p ./artifacts/microvms/
+    #### if ! podman cp kata:/kata-core.tar.gz ${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}; then
+    ####     echo "|> Error: could not copy the kata tarball to the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+    ####     return 1
+    #### fi
+    #### echo "|> Copied kata tarball into the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} filepath with success. Proceeding... "
+
+    #### # Stop container registry
+    #### if ! (podman stop registry); then
+    ####     echo "|> Error: could not stop the OCI registry server! Exiting now..."
+    ####     echo && echo
+    ####     return 1
+    #### fi
+    #### echo "|> Successfully stopped the OCI registry server."
+    #### echo && echo
 }
 
 artifacts_builder() {
