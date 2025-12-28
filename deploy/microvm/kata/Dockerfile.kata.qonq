@@ -1,53 +1,53 @@
-# FROM alpine:3.22 AS builder
-# FROM golang:1.24-alpine3.22 AS builder
-# FROM golang:1.25.5-alpine3.22 AS builder
-# FROM rust:1.88.0-alpine3.20 AS builder
-
-FROM rust:1.88.0-alpine3.20 AS core
-
-WORKDIR /app
-
-RUN <<EOF
-
-# apk add curl git musl make
-apk upgrade && apk update && \
-    apk add musl curl go git vim cargo make
-# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-# source $HOME/.cargo/env
-# rustup install ${RUST_VERSION}
-# rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu
-rustup target add x86_64-unknown-linux-musl
-
-# install musl from source
-## curl -O https://git.musl-libc.org/cgit/musl/snapshot/musl-1.2.3.tar.gz
-## tar vxf musl-1.2.3.tar.gz
-## cd musl-1.2.3/
-## ./configure --prefix=/usr/local/
-## make && make install
-
-
-#git clone --depth 1 https://github.com/kata-containers/kata-containers.git
-#cd kata-containers/src/runtime-rs
-
-# install the containerd-shim-v2 and the Dragonball VMM.
-#make && sudo make install
-
-# Install the containerd-shim-v2 without the Dragonball VMM.
-make USE_BUILDIN_DB=false
-#make install HYPERVISOR=qemu
-
-# build the kata-agent from source with musl
-arch=$(uname -m)
-rustup target add "${arch}-unknown-linux-musl"
-ln -s /usr/bin/g++ /bin/musl-g++
-
-GOPATH="${GOPATH:-$HOME/go}"
-dir="app/src/github.com/kata-containers"
-git -C ${dir} clone --depth 1 https://github.com/kata-containers/kata-containers
-make -C ${dir}/kata-containers/src/agent
-
-
-EOF
+#### # FROM alpine:3.22 AS builder
+#### # FROM golang:1.24-alpine3.22 AS builder
+#### # FROM golang:1.25.5-alpine3.22 AS builder
+#### # FROM rust:1.88.0-alpine3.20 AS builder
+####
+#### FROM rust:1.88.0-alpine3.20 AS core
+####
+#### WORKDIR /app
+####
+#### RUN <<EOF
+####
+#### # apk add curl git musl make
+#### apk upgrade && apk update && \
+####     apk add musl curl go git vim cargo make
+#### # curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+#### # source $HOME/.cargo/env
+#### # rustup install ${RUST_VERSION}
+#### # rustup default ${RUST_VERSION}-x86_64-unknown-linux-gnu
+#### rustup target add x86_64-unknown-linux-musl
+####
+#### # install musl from source
+#### ## curl -O https://git.musl-libc.org/cgit/musl/snapshot/musl-1.2.3.tar.gz
+#### ## tar vxf musl-1.2.3.tar.gz
+#### ## cd musl-1.2.3/
+#### ## ./configure --prefix=/usr/local/
+#### ## make && make install
+####
+####
+#### #git clone --depth 1 https://github.com/kata-containers/kata-containers.git
+#### #cd kata-containers/src/runtime-rs
+####
+#### # install the containerd-shim-v2 and the Dragonball VMM.
+#### #make && sudo make install
+####
+#### # Install the containerd-shim-v2 without the Dragonball VMM.
+#### make USE_BUILDIN_DB=false
+#### #make install HYPERVISOR=qemu
+####
+#### # build the kata-agent from source with musl
+#### arch=$(uname -m)
+#### rustup target add "${arch}-unknown-linux-musl"
+#### ln -s /usr/bin/g++ /bin/musl-g++
+####
+#### GOPATH="${GOPATH:-$HOME/go}"
+#### dir="app/src/github.com/kata-containers"
+#### git -C ${dir} clone --depth 1 https://github.com/kata-containers/kata-containers
+#### make -C ${dir}/kata-containers/src/agent
+####
+####
+#### EOF
 
 
 
@@ -91,11 +91,11 @@ EOF
 
 RUN <<EOF
 
-if ! (MODE="kata-bins" . /app/scripts/sandbox/kata-startup.sh); then
-    printf "\n|> Error: could not execute the [kata-tarball] function from the kata-startup.sh shellscript. Exiting now...\n\n"
+if ! (MODE="kata-bin" . /app/scripts/sandbox/kata-startup.sh); then
+    echo "|> Error: could not run the [set_kata_bin] function from the [kata-startup.sh] shellscript. Exiting now..."
     return 1
 fi
-printf "\n|> Succesfully run [kata-tarball] from kata-startup.sh. Proceeding..."
+    echo "|> Sucessfully ran the [set_kata_bin] function from the [kata-startup.sh] shellscript. Proceeding..."
 
 if ! (ls -allhtr "/kata-tarball-pkg.tar.gz"); then
     echo "|> kata-tarball NOT FOUND. EXITING..."
