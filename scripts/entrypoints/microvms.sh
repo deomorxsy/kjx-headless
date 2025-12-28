@@ -209,7 +209,35 @@ mvm_kata() {
 
     # CCR_MODE="-checker" . ./scripts/ccr.sh &&
     #     docker compose -f ./compose.yml --progress=plain build --no-cache kata
+
+    KATA_QONQ_DOCKERFILE="./deploy/microvm/kata/Dockerfile.kata.qonq"
+    KATA_DUMMY_DOCKERFILE="./deploy/microvm/kata/Dockerfile.kata.dummy"
+    # edit path of the TAR.ZST tarball if it exists on place at the Dockerfile
     #
+    KATA_STATIC_ZST_FILE="./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst"
+
+    # head ./artifacts/Dockerfile-dummy.txt | sed '/COPY .\/artifacts\/microvms\/kata-static/s/^/#/' - | sed '/^#COPY .\/artifacts\/microvms\/kata-static/s/^#//' -
+
+    if ! (cp "${KATA_QONQ_DOCKERFILE:-[EMPTY_VARIABLE]}" "${KATA_DUMMY_DOCKERFILE:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to synchronize kata Dockerfiles. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully synchronized the kata Dockerfiles. Proceeding..."
+
+    # if file [DOES NOT] exist, add a comment hashtag [#] at the start of the line
+    # if the COPY was left without something to be copied, the build [WILL FAIL].
+    if ! [ -f "${KATA_STATIC_ZST_FILE:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> WARNING: it was not possible to found local [KATA_STATIC_ZST_FILE=${KATA_STATIC_ZST_FILE:-[EMPTY_VARIABLE]} filepath. Attempting to COMMENT [#] the [COPY] instruction from the [Dockerfile.kata.dummy]..."
+
+        if ! (sed -i '/COPY .\/artifacts\/microvms\/kata-static/s/^/#/' ./deploy/microvm/kata/Dockerfile.kata.dummy); then
+            echo "Error: it was not possible to COMMENT the line to [COPY] the [KATA_STATIC_ZST_FILE=${KATA_STATIC_ZST_FILE:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+            return 1
+        fi
+        echo "Sucessfully COMMENTED the line to [COPY] the [KATA_STATIC_ZST_FILE=${KATA_STATIC_ZST_FILE:-[EMPTY_VARIABLE]} filepath. Exiting now..."
+
+    fi
+    echo "|> Sucessfully found the [KATA_STATIC_ZST_FILE] filepath. Leveraging local artifact to the kata dir. Proceeding..."
+
     # start OCI registry server
     if ! podman start registry; then
         echo "|> Error: could not start OCI registry server. Attempting to run the image..."
@@ -292,6 +320,22 @@ mvm_kata() {
     fi
     echo "|> Successfully stopped the OCI registry server."
     echo && echo
+
+    # head ./artifacts/Dockerfile-dummy.txt | sed '/COPY .\/artifacts\/microvms\/kata-static/s/^/#/' - | sed '/^#COPY .\/artifacts\/microvms\/kata-static/s/^#//' -
+
+    # since the hashtag [#] was added because the file did not exist
+    # at the start of the function, in build time, remove the hashtagn [#]
+    # to void having to send a commit
+    if ! [ -f "${KATA_STATIC_ZST_FILE:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> WARNING: it was not possible to found local [KATA_STATIC_ZST_FILE=${KATA_STATIC_ZST_FILE:-[EMPTY_VARIABLE]} filepath. Attempting to remove the COMMENT [#] of the [COPY] instruction from the [Dockerfile.kata.dummy]..."
+
+        if ! (sed -i '/^#COPY .\/artifacts\/microvms\/kata-static/s/^#//' "${KATA_DUMMY_DOCKERFILE}"); then
+            echo "|> Error: it was not possible to remove the hashtag [#] at the start of the line and comment the Dockerfile. Exiting now..."
+            return 1
+        fi
+        echo "|> Sucessfully removed the hashtag [#] at the start of the line and comment the Dockerfile. Exiting now..."
+
+    fi
 
 }
 
