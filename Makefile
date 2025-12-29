@@ -79,9 +79,14 @@ kernel:
 bzImage:
 	. ./scripts/gen-bzimage.sh
 
-.PHONY: dropbear
-dropbear:
-	MODE="-builder" . ./scripts/entrypoints/build-dropbear.sh
+# Adjust to qonq-packaging later
+.PHONY: rootfs
+rootfs:
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
+	docker compose -f ./compose.yml --progress=plain build rootfs
+# .PHONY: dropbear
+# dropbear:
+# 	MODE="-builder" . ./scripts/entrypoints/build-dropbear.sh
 	#CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	#docker compose -f ./compose.yml --progress=plain build dropbear
 	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
