@@ -228,14 +228,22 @@ poc_packaging() {
 
 # =======================
 #  user, groups and shadow password management
+
 packaja_dotfiles() {
     # Configure passwd management
-    (
-        cat <<EOF
+    if ! (
+
+        (
+            cat <<EOF
 root:x:0:0:root:/root:/bin/ash
 kjx:x:1000:1000:kjx:/home/kjx:/bin/ash
 EOF
-    ) | tee "${ROOTFS_PATH:-[EMPTY_STR]}"/etc/passwd
+        ) | tee "${ROOTFS_PATH:-[EMPTY_STR]}"/etc/passwd
+    ); then
+        echo "|> Error: it was not possible to create [ROOTFS_PATH/etc/passwd]"
+        return 1
+    fi
+    echo "|> Sucessfully created [ROOTFS_PATH/etc/passwd]"
 
     # Configure groups management
     (
@@ -281,3 +289,176 @@ packaja() {
     fi
 
 }
+
+# ======================
+# UNPACK MICROVMS
+#
+
+unpack_gvisor() {
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-tarball-pkg.tar.gz" ]; then
+        echo && echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the gvisor tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    # decompress the gvisor-tarball-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-tarball-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+}
+
+unpack_firecracker() {
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-tarball-pkg.tar.gz" ]; then
+        echo && echo "|> Error: it was not possible to find the firecracker tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the firecracker tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    # decompress the firecracker-tarball-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-tarball-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+}
+
+unpack_kata() {
+    # ==============
+    # KATA-TARBALL: dependencies
+    #
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-tarball-pkg.tar.gz" ]; then
+        echo && echo "|> Error: it was not possible to find the kata tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the kata tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    # decompress the kata-tarball-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-tarball-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+
+    # ==============
+    # KATA-BIN:
+    #
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-bin-pkg.tar.gz" ]; then
+        echo && echo "|> Error: it was not possible to find the [KATA-BIN] tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the [KATA-BIN] tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    # decompress the kata-bin-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-bin-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-bin-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-bin-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+}
+
+unpack_microvms() {
+
+    mkdir -p /app/microvms
+
+    if ! unpack_gvisor; then
+        echo && echo "|> Error: could not unpack gvisor. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked gvisor. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    if ! unpack_firecracker; then
+        echo && echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked firecracker-containerd with the [unpack_firecracker] function. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+
+    if ! unpack_kata; then
+        echo && echo "|> Error: could not unpack kata. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked kata. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+    echo && echo
+
+}
+
+print_usage() {
+    cat <<-END >&2
+USAGE: packaging.sh [-options]
+                - microvms
+                - version
+                - help
+eg,
+MODE="unpack_microvms"  ./packaging.sh   # unpack the microvms
+MODE="version"          ./packaging.sh   # shows script version
+MODE="help"             ./packaging.sh   # shows this help message
+
+See the man page and example file for more info.
+
+END
+
+}
+
+# Check the argument passed from the command line
+if ! [ -z "${MODE}" ] &&
+    [ "${MODE}" = "microvms" ]; then
+    case "${MODE}" in
+    "microvms") unpack_microvms ;;
+    *)
+        echo "Invalid microvm. Please specify one of: unpack_microvms"
+        print_usage
+        ;;
+    esac
+
+elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
+    print_usage
+elif [ "${MODE}" = "version" ] || [ "${MODE}" = "-v" ] || [ "${MODE}" = "--version" ]; then
+    printf "\n|> Version: packaging 1.0.0"
+else
+    echo "Invalid function name. Please specify one of the available functions: microvms"
+    print_usage
+fi
