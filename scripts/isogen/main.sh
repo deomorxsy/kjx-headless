@@ -95,3 +95,9 @@ if ! (MODE="-isogen_isaisa" . ./scripts/isogen/iso9660.sh); then
     return 1
 fi
 echo "|> Successfully ran the build the iso9660 shellscript."
+
+#kernel_config() {
+# Copy kernel and initramfs
+cp "$KERNEL_PATH" "$ISO_DIR/kernel"
+cp "$RAMDISK_PATH" "$ISO_DIR/kernel"
+#}
