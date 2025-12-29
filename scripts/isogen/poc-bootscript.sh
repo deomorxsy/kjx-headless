@@ -1048,7 +1048,10 @@ unpack_firecracker() {
 }
 
 unpack_kata() {
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-core.tar.gz" ]; then
+    # ==============
+    # KATA-TARBALL: dependencies
+    #
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-tarball-pkg.tar.gz" ]; then
         echo && echo "|> Error: it was not possible to find the kata tarball. Exiting now..."
         echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
@@ -1058,14 +1061,38 @@ unpack_kata() {
     echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
     echo && echo
 
-    # decompress the kata-core.tar.gz
-    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-core.tar.gz" -C /app/microvms/); then
-        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-core.tar.gz into the path /app/microvms/ . Exiting now..."
+    # decompress the kata-tarball-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-tarball-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
         echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
         echo && echo
         return 1
     fi
-    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-core.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
+
+    # ==============
+    # KATA-BIN:
+    #
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-bin-pkg.tar.gz" ]; then
+        echo && echo "|> Error: it was not possible to find the [KATA-BIN] tarball. Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully found the [KATA-BIN] tarball. Proceeding..."
+    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
+    echo && echo
+
+    # decompress the kata-bin-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-bin-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-bin-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
+        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-bin-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
     echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
     echo && echo
 }
@@ -1084,25 +1111,25 @@ unpack_microvms() {
     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
     echo && echo
 
-    ### if ! unpack_firecracker; then
-    ###     echo && echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
-    ###     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    ###     echo && echo
-    ###     return 1
-    ### fi
-    ### echo "|> Sucessfully unpacked firecracker-containerd with the [unpack_firecracker] function. Proceeding..."
-    ### echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    ### echo && echo
+    if ! unpack_firecracker; then
+        echo && echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked firecracker-containerd with the [unpack_firecracker] function. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
+    echo && echo
 
-    ### if ! unpack_kata; then
-    ###     echo && echo "|> Error: could not unpack kata. Exiting now..."
-    ###     echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
-    ###     echo && echo
-    ###     return 1
-    ### fi
-    ### echo "|> Sucessfully unpacked kata. Proceeding..."
-    ### echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
-    ### echo && echo
+    if ! unpack_kata; then
+        echo && echo "|> Error: could not unpack kata. Exiting now..."
+        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+        echo && echo
+        return 1
+    fi
+    echo "|> Sucessfully unpacked kata. Proceeding..."
+    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
+    echo && echo
 
 }
 
