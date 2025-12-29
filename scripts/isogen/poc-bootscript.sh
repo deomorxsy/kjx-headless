@@ -60,6 +60,17 @@ echo && echo
 # cp /mnt/virtio-test/poc-bootscript.sh /app
 # MODE="-main" . /app/poc-bootscript.sh
 
+MDPB_DIAG_FILE="/modprobe-diagnostics.txt"
+
+# setup k3s crictl configuration file
+#OLD_K3S_CRICTL_CONF_FILE="/var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml"
+mkdir -p /app/k3s-config
+K3S_CRICTL_CONF_FILE="/app/k3s-config/crictl.yaml"
+export K3S_CRICTL_CONF_FILE
+
+K3S_AGENT_CONF_FILE="/etc/rancher/k3s/agent-config.yaml"
+export K3S_AGENT_CONF_FILE
+
 isogen_initramfs_adapter_starter() {
     # from ./scripts/isogen/poc-bootscript.sh
 
@@ -160,16 +171,6 @@ isogen_initramfs_adapter_starter() {
 # mkdir -p "${VIRTIO_PASSTHRU_DIR}"
 # mount -t 9p -o trans=virtio hostshare "${VIRTIO_PASSTHRU_DIR}"
 # module diagnostics file
-MDPB_DIAG_FILE="/modprobe-diagnostics.txt"
-
-# setup k3s crictl configuration file
-#OLD_K3S_CRICTL_CONF_FILE="/var/lib/rancher/k3s/data/cb3f5c92b6adfd5917414d1bb3622a60abec60b103aa6f4faddd48356682e9c3/bin/crictl.yaml"
-mkdir -p /app/k3s-config
-K3S_CRICTL_CONF_FILE="/app/k3s-config/crictl.yaml"
-export K3S_CRICTL_CONF_FILE
-
-K3S_AGENT_CONF_FILE="/etc/rancher/k3s/agent-config.yaml"
-export K3S_AGENT_CONF_FILE
 
 kata_linkage() {
     if ! (ln -s /opt/kata/bin/kata-runtime /usr/local/bin/kata-runtime); then
@@ -1001,7 +1002,7 @@ tracer_type_caller() {
 }
 
 unpack_gvisor() {
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" ]; then
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-tarball-pkg.tar.gz" ]; then
         echo && echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
         echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
@@ -1011,14 +1012,14 @@ unpack_gvisor() {
     echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
     echo && echo
 
-    # decompress the gvisor-core.tar.gz
-    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-core.tar.gz" -C /app/microvms/); then
-        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path /app/microvms/ . Exiting now..."
+    # decompress the gvisor-tarball-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-tarball-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
         echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
         echo && echo
         return 1
     fi
-    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-core.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
     echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
     echo && echo
 }
