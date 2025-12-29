@@ -72,6 +72,10 @@ TRACERS_BPFTRACE_TARBALL="./artifacts/packaging/bpftrace-tarball-pkg.tar.gz"
 PACKAGING_IPTABLES_TARBALL="./artifacts/packaging/iptables-tarball-pkg.tar.gz"
 PACKAGING_SHADOW_TARBALL="./artifacts/packaging/shadow-tarball-pkg.tar.gz"
 
+# HLCR, LLCR, QEMUKJX
+PACKAGING_PODMAN_TARBALL="./artifacts/packaging/podman-tarball-pkg.tar.gz"
+PACKAGING_QEMUKJX_TARBALL="./artifacts/packaging/qemukjx-tarball-pkg.tar.gz"
+
 # ======================
 # BOOTSCRIPTS
 # ======================
@@ -357,6 +361,393 @@ artifacts_builder() {
 
     fi
 
+}
+
+core_poc_packaging() {
+
+    # ================================
+    # Microvms
+    #
+    # ================================
+    # # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
+    ### if ! [ -f ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} ]; then
+    ###     echo "|> Warning: MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} does not exist in this filepath. Attempting to generate it:"
+    ###     echo && echo
+    ###     #return 1
+    ###     if ! microvm_poc_firecracker; then
+    ###         echo "|> Error: could not run the [microvm_poc_firecracker] function! Exiting now..."
+    ###         echo && echo
+    ###         return 1
+    ###     fi
+    ### fi
+    ### case "${LOG_VERBOSE}" in
+    ### "yes")
+    ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+    ###     printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+    ###     echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} filepath. ...[PASSED]"
+    ###     echo && echo
+    ###     ;;
+    ### esac
+    ### echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # returns if the [MICROVM_GVISOR_TARBALL] filepath does not exist
+    if ! [ -f ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! microvm_poc_gvisor; then
+            echo "|> Error: could not run the [microvm_poc_gvisor] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        echo "|> create the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_GVISOR_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+
+    # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
+    if ! [ -f "${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Warning: MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! microvm_poc_firecracker; then
+            echo "|> Error: could not run the [microvm_poc_firecracker] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_FIRECRACKER_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo && echo
+
+    # =================
+    # Kata-Containers
+    #
+    # returns if the [MICROVM_KATA_TARBALL] filepath does not exist
+    if ! [ -f ${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} ] || ! [ -f ${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: either [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] or [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! microvm_poc_kata; then
+            echo "|> Error: could not run the [microvm_poc_kata] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        echo "|> Does the the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] and [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy MICROVM_KATA_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_KATA_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+
+    # Copy MICROVM_KATA_BIN to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_KATA_BIN}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]."
+    echo && echo
+
+    # =======================
+    # TRACERS: BPFTRACE
+    #
+    # returns if the [TRACERS_BPFTRACE_TARBALL] filepath does not exist
+    if ! [ -f ${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="bpftrace" . ./scripts/entrypoints/tracers-aio.sh); then
+            echo "|> Error: could not run the [tracers-aio.sh] script to build [bpftrace] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [tracers-aio.sh] script to build [bpftrace] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 12\n"
+        echo "|> create the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
+        echo "|> copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
+    # =======================
+    # PACKAGING: IPTABLES
+    #
+    # returns if the [PACKAGING_IPTABLES_TARBALL] filepath does not exist
+    if ! [ -f ${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
+            echo "|> Error: could not run the [usgp-man.sh] script to build [iptables] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [usgp-man.sh] script to build [iptables] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
+        echo "|> create the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 14\n"
+        echo "|> copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
+    # =====================
+    # PACKAGING: SHADOW
+
+    # returns if the [PACKAGING_SHADOW_TARBALL] filepath does not exist
+    if ! [ -f ${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
+            echo "|> Error: could not run the [usgp-man.sh] script to build [shadow] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [usgp-man.sh] script to build [shadow] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 15\n"
+        echo "|> create the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 16\n"
+        echo "|> copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
+    # Copy the POC_BOOTSCRIPT to the VIRTFS_ART_PATH so it becomes available on the guest vm
+    if ! cp "${POC_BOOTSCRIPT}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-EMPTY_VARIABLE}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 17\n"
+        echo "|> copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]} ."
+    echo && echo
+
+    # ===================
+    # HLCR packaging
+
+    if ! [ -f ${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! hlcr_poc_podman; then
+            echo "|> Error: could not run the [hlcr_poc_podman] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        echo "|> create the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy PACKAGING_PODMAN_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${PACKAGING_PODMAN_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+
+    # ====================
+    # PACKAGING: QEMUKJX
+
+    if ! [ -f ${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! qemukjx_poc; then
+            echo "|> Error: could not run the [qemukjx_poc] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        echo "|> create the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy PACKAGING_QEMUKJX_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${PACKAGING_QEMUKJX_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        echo "|> copy the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
 }
 
 random_mac() {
@@ -1392,311 +1783,13 @@ airgap_k3s() {
     esac
     printf "\n|> Successfully copied the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. \n\n"
 
-    # ================================
-    # Microvms
-    #
-    # ================================
-    # # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
-    ### if ! [ -f ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} ]; then
-    ###     echo "|> Warning: MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} does not exist in this filepath. Attempting to generate it:"
-    ###     echo && echo
-    ###     #return 1
-    ###     if ! microvm_poc_firecracker; then
-    ###         echo "|> Error: could not run the [microvm_poc_firecracker] function! Exiting now..."
-    ###         echo && echo
-    ###         return 1
-    ###     fi
-    ### fi
-    ### case "${LOG_VERBOSE}" in
-    ### "yes")
-    ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-    ###     printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
-    ###     echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} filepath. ...[PASSED]"
-    ###     echo && echo
-    ###     ;;
-    ### esac
-    ### echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
-
-    # returns if the [MICROVM_GVISOR_TARBALL] filepath does not exist
-    if ! [ -f ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} ]; then
-        echo "|> Warning: MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
-        echo && echo
-        #return 1
-        if ! microvm_poc_gvisor; then
-            echo "|> Error: could not run the [microvm_poc_gvisor] function! Exiting now..."
-            echo && echo
-            return 1
-        fi
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
-        echo "|> create the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully created the [MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}] filepath."
-
-    # Will only run if the previous work.
-    # Copy MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH
-    if ! cp "${MICROVM_GVISOR_TARBALL}" "${VIRTFS_ART_PATH}"; then
-        echo "|> Error: it was not possible to copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
-        echo "|> copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
-    echo && echo
-
-    # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
-    if ! [ -f "${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}" ]; then
-        echo "|> Warning: MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL does not exist in this filepath. Attempting to generate it:"
-        echo && echo
-        #return 1
-        if ! microvm_poc_firecracker; then
-            echo "|> Error: could not run the [microvm_poc_firecracker] function! Exiting now..."
-            echo && echo
-            return 1
-        fi
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
-        echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
-
-    # Will only run if the previous work.
-    # Copy MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH
-    if ! cp "${MICROVM_FIRECRACKER_TARBALL}" "${VIRTFS_ART_PATH}"; then
-        echo "|> Error: it was not possible to copy the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
-        echo "|> copy the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
-    echo && echo
-
-    # =================
-    # Kata-Containers
-    #
-    # returns if the [MICROVM_KATA_TARBALL] filepath does not exist
-    if ! [ -f ${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} ] || ! [ -f ${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]} ]; then
-        echo "|> Warning: either [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] or [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] does not exist in this filepath. Attempting to generate it:"
-        echo && echo
-        #return 1
-        if ! microvm_poc_kata; then
-            echo "|> Error: could not run the [microvm_poc_kata] function! Exiting now..."
-            echo && echo
-            return 1
-        fi
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
-        echo "|> Does the the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] and [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] filepath. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully created the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath."
-
-    # Will only run if the previous work.
-    # Copy MICROVM_KATA_TARBALL to the VIRTFS_ART_PATH
-    if ! cp "${MICROVM_KATA_TARBALL}" "${VIRTFS_ART_PATH}"; then
-        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
-        echo "|> copy the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
-    echo && echo
-
-    # Copy MICROVM_KATA_BIN to the VIRTFS_ART_PATH
-    if ! cp "${MICROVM_KATA_BIN}" "${VIRTFS_ART_PATH}"; then
-        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
-        echo "|> copy the [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]."
-    echo && echo
-
-    # =======================
-    # TRACERS: BPFTRACE
-    #
-    # returns if the [TRACERS_BPFTRACE_TARBALL] filepath does not exist
-    if ! [ -f ${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} ]; then
-        echo "|> Warning: TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
-        echo && echo
-        #return 1
-        if ! (MODE="bpftrace" . ./scripts/entrypoints/tracers-aio.sh); then
-            echo "|> Error: could not run the [tracers-aio.sh] script to build [bpftrace] tarball! Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Sucessfully called the [tracers-aio.sh] script to build [bpftrace] tarball! ...[PASSED]"
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 12\n"
-        echo "|> create the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully created the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] filepath."
-
-    if ! (cp "${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: it was not possible to copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
-        echo "|> copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
-    echo && echo
-
-    # =======================
-    # PACKAGING: IPTABLES
-    #
-    # returns if the [PACKAGING_IPTABLES_TARBALL] filepath does not exist
-    if ! [ -f ${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} ]; then
-        echo "|> Warning: PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
-        echo && echo
-        #return 1
-        if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
-            echo "|> Error: could not run the [usgp-man.sh] script to build [iptables] tarball! Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Sucessfully called the [usgp-man.sh] script to build [iptables] tarball! ...[PASSED]"
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
-        echo "|> create the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully created the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] filepath."
-
-    if ! (cp "${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: it was not possible to copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 14\n"
-        echo "|> copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
-    echo && echo
-
-    # =====================
-    # PACKAGING: SHADOW
-
-    # returns if the [PACKAGING_SHADOW_TARBALL] filepath does not exist
-    if ! [ -f ${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} ]; then
-        echo "|> Warning: PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
-        echo && echo
-        #return 1
-        if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
-            echo "|> Error: could not run the [usgp-man.sh] script to build [shadow] tarball! Exiting now..."
-            echo && echo
-            return 1
-        fi
-        echo "|> Sucessfully called the [usgp-man.sh] script to build [shadow] tarball! ...[PASSED]"
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 15\n"
-        echo "|> create the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully created the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] filepath."
-
-    if ! (cp "${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
-        echo "|> Error: it was not possible to copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 16\n"
-        echo "|> copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
-    echo && echo
-
-    # Copy the POC_BOOTSCRIPT to the VIRTFS_ART_PATH so it becomes available on the guest vm
-    if ! cp "${POC_BOOTSCRIPT}" "${VIRTFS_ART_PATH}"; then
-        echo "|> Error: it was not possible to copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-EMPTY_VARIABLE}. Exiting now... "
-        echo && echo
-        return 1
-    fi
-    case "${LOG_VERBOSE}" in
-    "yes")
-        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 17\n"
-        echo "|> copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
-        echo && echo
-        ;;
-    esac
-    echo "|> Successfully copied the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]} ."
-    echo && echo
-
     # Either copy the k3s-squashfs tarball OR the k3s-squashfs image into the VIRTFS_ART_PATH
     # (./scripts/isogen/demo.sh's squash_k3s)
     # (./scripts/sandbox/run-qemu.sh's squash_k3s)
+
+    # ====================
+    # PACKAGING: core_poc_packaging
+    #
 
     # Mind that this will need fuse-overlayfs since the -initrd flag
     # runs an initramfs.cpio.gz over ramfs/tmpfs, that is, on RAM, and not
