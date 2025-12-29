@@ -383,7 +383,7 @@ core_poc_packaging() {
     ### case "${LOG_VERBOSE}" in
     ### "yes")
     ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-    ###     printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+    ###     printf "\n|> SCOPE: [core_poc_packaging], CHECK: 10\n"
     ###     echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} filepath. ...[PASSED]"
     ###     echo && echo
     ###     ;;
@@ -404,7 +404,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 01\n"
         echo "|> create the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -421,7 +421,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 02\n"
         echo "|> copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
         echo && echo
         ;;
@@ -443,7 +443,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 10\n"
         echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -460,7 +460,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 03\n"
         echo "|> copy the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. ...[PASSED]"
         echo && echo
         ;;
@@ -485,7 +485,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 04\n"
         echo "|> Does the the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] and [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -502,7 +502,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 05\n"
         echo "|> copy the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
         echo && echo
         ;;
@@ -519,7 +519,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 06\n"
         echo "|> copy the [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]. ...[PASSED]"
         echo && echo
         ;;
@@ -545,7 +545,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 12\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 07\n"
         echo "|> create the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -560,7 +560,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 08\n"
         echo "|> copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
         echo && echo
         ;;
@@ -586,7 +586,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 13\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 09\n"
         echo "|> create the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -601,7 +601,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 14\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 10\n"
         echo "|> copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
         echo && echo
         ;;
@@ -627,7 +627,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 15\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 11\n"
         echo "|> create the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -642,7 +642,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 16\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 12\n"
         echo "|> copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
         echo && echo
         ;;
@@ -659,7 +659,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 17\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 13\n"
         echo "|> copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
         echo && echo
         ;;
@@ -683,7 +683,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 14\n"
         echo "|> create the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -700,7 +700,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 15\n"
         echo "|> copy the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
         echo && echo
         ;;
@@ -724,7 +724,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 10\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 16\n"
         echo "|> create the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
         echo && echo
         ;;
@@ -741,7 +741,7 @@ core_poc_packaging() {
     case "${LOG_VERBOSE}" in
     "yes")
         printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
-        printf "\n|> SCOPE: airgap_k3s, CHECK: 11\n"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 17\n"
         echo "|> copy the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
         echo && echo
         ;;
@@ -1790,6 +1790,14 @@ airgap_k3s() {
     # ====================
     # PACKAGING: core_poc_packaging
     #
+
+    if ! (core_poc_packaging); then
+        echo "|> Error: could not run the [core_poc_packaging] function. Exiting now..."
+        echo "SCOPE: airgap_k3s, CHECK: 10"
+        return 1
+    fi
+    echo "|> Sucessfully ran the [core_poc_packaging] function. Proceeding..."
+    echo "SCOPE: airgap_k3s, CHECK: 10"
 
     # Mind that this will need fuse-overlayfs since the -initrd flag
     # runs an initramfs.cpio.gz over ramfs/tmpfs, that is, on RAM, and not
