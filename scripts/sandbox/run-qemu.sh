@@ -36,8 +36,8 @@ VIRTFS_ART_PATH="./artifacts/qemu-sink"
 # asciinema recording file path
 ASCII_DATE="$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-")"
 #RUNISO_RECORDING_PATH="./artifacts/run-qemu_runiso_$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-").cast"
-RUNISO_RECORDING_PATH="./artifacts/run-qemu_runiso_${ASCII_DATE}.cast"
-AIRGAP_RECORDING_PATH="./artifacts/run-qemu_airgap_${ASCII_DATE}.cast"
+RUNISO_RECORDING_PATH="./artifacts/recording/run-qemu_runiso_${ASCII_DATE}.cast"
+AIRGAP_RECORDING_PATH="./artifacts/recording/run-qemu_airgap_${ASCII_DATE}.cast"
 
 # default recording state
 IS_RECORDING="NO"
