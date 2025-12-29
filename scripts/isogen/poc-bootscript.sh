@@ -173,36 +173,70 @@ isogen_initramfs_adapter_starter() {
 # module diagnostics file
 
 kata_linkage() {
-    if ! (ln -s /opt/kata/bin/kata-runtime /usr/local/bin/kata-runtime); then
-        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to [/usr/local/bin/kata-runtime]. Exiting now..."
+    if ! (ln -s /opt/kata/bin/kata-runtime "${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-runtime); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-runtime]. Exiting now..."
         return 1
     fi
-    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to [/usr/local/bin/kata-runtime]. Proceeding..."
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-runtime]. Proceeding..."
 
-    if ! (ln -s /opt/kata/bin/containerd-shim-kata-v2 /usr/local/bin/containerd-shim-kata-v2); then
-        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] t/usr/local/bin/containerd-shim-kata-v2o []. Exiting now..."
+    if ! (ln -s /opt/kata/bin/containerd-shim-kata-v2 "${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/containerd-shim-kata-v2); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] t"${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/containerd-shim-kata-v2o []. Exiting now..."
         return 1
     fi
-    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] t/usr/local/bin/containerd-shim-kata-v2o []. Proceeding..."
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] t"${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/containerd-shim-kata-v2o []. Proceeding..."
 
-    if ! (ln -s /opt/kata/bin/kata-monitor /usr/local/bin/kata-monitor); then
-        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to [/usr/local/bin/kata-monitor]. Exiting now..."
+    if ! (ln -s /opt/kata/bin/kata-monitor "${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-monitor); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-monitor]. Exiting now..."
         return 1
     fi
-    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to [/usr/local/bin/kata-monitor]. Proceeding..."
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-monitor]. Proceeding..."
 
-    if ! (ln -s /opt/kata/bin/kata-collect-data.sh /usr/local/bin/kata-collect-data.sh); then
-        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to [/usr/local/bin/kata-collect-data.sh]. Exiting now..."
+    if ! (ln -s /opt/kata/bin/kata-collect-data.sh "${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-collect-data.sh); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-collect-data.sh]. Exiting now..."
         return 1
     fi
-    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to [/usr/local/bin/kata-collect-data.sh]. Proceeding..."
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/kata-collect-data.sh]. Proceeding..."
 
     # will be made available through [qonq_qemukjx]
-    ### if ! (ln -s /opt/kata/bin/qemu-system-x86_64 /usr/local/bin/qemu-system-x86_64); then
-    ###     echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to [/usr/local/bin/qemu-system-x86_64]. Exiting now..."
+    ### if ! (ln -s /opt/kata/bin/qemu-system-x86_64 "${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/qemu-system-x86_64); then
+    ###     echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/qemu-system-x86_64]. Exiting now..."
     ###     return 1
     ### fi
-    ### echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to [/usr/local/bin/qemu-system-x86_64]. Proceeding..."
+    ### echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to ["${ROOTFS_PATH:-[EMPTY_VARIABLE]}"/usr/local/bin/qemu-system-x86_64]. Proceeding..."
+
+}
+
+kata_linkage() {
+    if ! (ln -s /opt/kata/bin/kata-runtime "${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-runtime"); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-runtime]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-runtime] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-runtime]. Proceeding..."
+
+    if ! (ln -s /opt/kata/bin/containerd-shim-kata-v2 "${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/containerd-shim-kata-v2"); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] t${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/containerd-shim-kata-v2o []. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/containerd-shim-kata-v2] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/containerd-shim-kata-v2]. Proceeding..."
+
+    if ! (ln -s /opt/kata/bin/kata-monitor "${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-monitor"); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-monitor]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-monitor] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-monitor]. Proceeding..."
+
+    if ! (ln -s /opt/kata/bin/kata-collect-data.sh "${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-collect-data.sh"); then
+        echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-collect-data.sh]. Exiting now..."
+        return 1
+    fi
+    echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/kata-collect-data.sh] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/kata-collect-data.sh]. Proceeding..."
+
+    # will be made available through [qonq_qemukjx]
+    ### if ! (ln -s /opt/kata/bin/qemu-system-x86_64 ${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/qemu-system-x86_64); then
+    ###     echo "|> Error: could not create a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/qemu-system-x86_64]. Exiting now..."
+    ###     return 1
+    ### fi
+    ### echo "|> Sucessfully created a [SYMLINK] (symbolic/soft-link) from [/opt/kata/bin/qemu-system-x86_64] to [${ROOTFS_PATH:-[EMPTY_VARIABLE]}/usr/local/bin/qemu-system-x86_64]. Proceeding..."
 
 }
 
@@ -1001,138 +1035,6 @@ tracer_type_caller() {
     return
 }
 
-unpack_gvisor() {
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-tarball-pkg.tar.gz" ]; then
-        echo && echo "|> Error: it was not possible to find the gvisor tarball. Exiting now..."
-        echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully found the gvisor tarball. Proceeding..."
-    echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-    echo && echo
-
-    # decompress the gvisor-tarball-pkg.tar.gz
-    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/gvisor-tarball-pkg.tar.gz" -C /app/microvms/); then
-        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
-        echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the gvisor-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
-    echo "|> SCOPE: [unpack_gvisor], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    echo && echo
-}
-
-unpack_firecracker() {
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-tarball-pkg.tar.gz" ]; then
-        echo && echo "|> Error: it was not possible to find the firecracker tarball. Exiting now..."
-        echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully found the firecracker tarball. Proceeding..."
-    echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-    echo && echo
-
-    # decompress the firecracker-tarball-pkg.tar.gz
-    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-tarball-pkg.tar.gz" -C /app/microvms/); then
-        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
-        echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
-    echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    echo && echo
-}
-
-unpack_kata() {
-    # ==============
-    # KATA-TARBALL: dependencies
-    #
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-tarball-pkg.tar.gz" ]; then
-        echo && echo "|> Error: it was not possible to find the kata tarball. Exiting now..."
-        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully found the kata tarball. Proceeding..."
-    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-    echo && echo
-
-    # decompress the kata-tarball-pkg.tar.gz
-    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-tarball-pkg.tar.gz" -C /app/microvms/); then
-        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
-        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
-    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    echo && echo
-
-    # ==============
-    # KATA-BIN:
-    #
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-bin-pkg.tar.gz" ]; then
-        echo && echo "|> Error: it was not possible to find the [KATA-BIN] tarball. Exiting now..."
-        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully found the [KATA-BIN] tarball. Proceeding..."
-    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-    echo && echo
-
-    # decompress the kata-bin-pkg.tar.gz
-    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/kata-bin-pkg.tar.gz" -C /app/microvms/); then
-        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-bin-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
-        echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the kata-bin-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
-    echo "|> SCOPE: [unpack_kata], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    echo && echo
-}
-
-unpack_microvms() {
-
-    mkdir -p /app/microvms
-
-    if ! unpack_gvisor; then
-        echo && echo "|> Error: could not unpack gvisor. Exiting now..."
-        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully unpacked gvisor. Proceeding..."
-    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 01"
-    echo && echo
-
-    if ! unpack_firecracker; then
-        echo && echo "|> Error: could not unpack firecracker-containerd with the [unpack_firecracker] function. Exiting now..."
-        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully unpacked firecracker-containerd with the [unpack_firecracker] function. Proceeding..."
-    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 02"
-    echo && echo
-
-    if ! unpack_kata; then
-        echo && echo "|> Error: could not unpack kata. Exiting now..."
-        echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
-        echo && echo
-        return 1
-    fi
-    echo "|> Sucessfully unpacked kata. Proceeding..."
-    echo "|> SCOPE: [unpack_microvms], file: [./scripts/isogen/poc-bootscript.sh], check 03"
-    echo && echo
-
-}
-
 # here lies the k3s airgap images
 unsquash_squashfs_sdb() {
 
@@ -1214,7 +1116,7 @@ spec:
   restartPolicy: Never
 
 PIEST
-    ) | tee ./app/piest.yaml
+    ) | tee ./app/llcr-runc.yaml
 }
 
 _main_scope() {
@@ -1542,52 +1444,55 @@ EOF
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
     echo && echo
 
+    # ===================
+    # UNPACK: BPFTRACE
+
     # bpftrace dependencies, libclang from llvm17, podman dependencies
-    #cp /app/archive.tar.gz /app/shared-deps/
+    #cp /app/bpftrace-tarball-pkg.tar.gz /app/shared-deps/
 
     # copy the tarball of the shared dependencies
-    ### if ! (cp /app/archive.tar.gz /app/shared-deps/); then
-    ###     echo && echo "|> Error: could not copy the [/app/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
+    ### if ! (cp /app/bpftrace-tarball-pkg.tar.gz /app/shared-deps/); then
+    ###     echo && echo "|> Error: could not copy the [/app/bpftrace-tarball-pkg.tar.gz] file to [/app/shared-deps]. Exiting now..."
     ###     echo && echo
     ###     return 1
     ### fi
-    ### echo "|> Sucessfully copied the [/app/archive.tar.gz] file to [/app/shared-deps]. Proceeding..."
+    ### echo "|> Sucessfully copied the [/app/bpftrace-tarball-pkg.tar.gz] file to [/app/shared-deps]. Proceeding..."
     ### echo && echo
 
     # copy the tarball of the shared dependencies
-    if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz" /app/shared-deps/); then
-        echo && echo "|> Error: could not copy the [${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/archive.tar.gz] file to [/app/shared-deps]. Exiting now..."
+    if ! (cp "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/bpftrace-tarball-pkg.tar.gz" /app/shared-deps/); then
+        echo && echo "|> Error: could not copy the [${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/bpftrace-tarball-pkg.tar.gz] file to [/app/shared-deps]. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
         echo && echo
         return 1
     fi
-    echo "|> Sucessfully copied the [/app/archive.tar.gz] file to [/app/shared-deps]. Proceeding..."
+    echo "|> Sucessfully copied the [/app/bpftrace-tarball-pkg.tar.gz] file to [/app/shared-deps]. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 13"
     echo && echo
 
     cd /app/shared-deps/ || return
 
     if ! (
-        (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep lib -m 1)
-        (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep usr -m 1)
-        (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/archive.tar.gz" | grep musl -m 1)
+        (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/bpftrace-tarball-pkg.tar.gz" | grep lib -m 1) &&
+            (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/bpftrace-tarball-pkg.tar.gz" | grep usr -m 1) &&
+            (tar -tvf "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/bpftrace-tarball-pkg.tar.gz" | grep musl -m 1)
     ); then
-        echo && echo "|> Error: either lib or usr or musl were not found on the contents of this archive.tar.gz "
+        echo && echo "|> Error: either lib or usr or musl were not found on the contents of this bpftrace-tarball-pkg.tar.gz "
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 14"
         echo && echo
         return 1
     fi
-    echo "|> Successfully: found the [lib] and [usr] directories alongside with musl on the contents of this [archive.tar.gz]. Proceeding..."
+    echo "|> Successfully: found the [lib] and [usr] directories alongside with musl on the contents of this [bpftrace-tarball-pkg.tar.gz]. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 14"
     echo && echo
 
-    if ! (tar -xvf ./archive.tar.gz); then
-        echo && echo "|> Error: could not decompress the [./archive.tar.gz] filepath. Exiting now..."
+    if ! (tar -xvf ./bpftrace-tarball-pkg.tar.gz); then
+        echo && echo "|> Error: could not decompress the [./bpftrace-tarball-pkg.tar.gz] filepath. Exiting now..."
         echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 15"
         echo && echo
         return 1
     fi
-    echo "|> Successfully decompressed the [./archive.tar.gz] filepath. Proceeding..."
+    echo "|> Successfully decompressed the [./bpftrace-tarball-pkg.tar.gz] filepath. Proceeding..."
     echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 15"
     echo && echo
 
@@ -1641,15 +1546,13 @@ EOF
     # ===============================
     # Microvms setup
     # FUNCTION CALL
-    if ! unpack_microvms; then
-        echo && echo "|> Error: cannot run the [unpack_microvms] function. Exiting now..."
-        echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 20"
-        echo && echo
+
+    if ! (MODE="microvms" . ./scripts/isogen/packaging.sh); then
+        echo "|> Error: could not call the [microvms] function of packaging. Exiting now..."
         return 1
     fi
-    echo "|> Sucessfully ran the [unpack_microvms] function. Proceeding..."
-    echo "|> SCOPE: main, file: [./scripts/isogen/poc-bootscript.sh], check: 20"
-    echo && echo
+    echo "|> Sucessfully called the [microvms] function of packaging. Proceeding..."
+    #
 
     #============================================
 
