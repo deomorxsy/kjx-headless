@@ -6,16 +6,18 @@ SQ_SQUASHFS="/tmp/kjx_squashfs"
 SQ_OVERLAY="/tmp/kjx_overlay"
 
 # Create squashfs destination paths
-mkdir -pv "$SQ_ROOTFS"
-mkdir -pv "$SQ_SQUASHFS"
-mkdir -pv "$SQ_OVERLAY/upperdir/usr/local/bin/"
+mkdir -pv "${SQ_ROOTFS:-[EMPTY_VARIABLE]}"
+mkdir -pv "${SQ_SQUASHFS:-[EMPTY_VARIABLE]}"
+mkdir -pv "${SQ_OVERLAY:-[EMPTY_VARIABLE]}/upperdir/usr/local/bin/"
 
-mkdir -pv "$SQ_OVERLAY/upperdir"
-mkdir -pv "$SQ_OVERLAY/workdir"
-mkdir -pv "$SQ_OVERLAY/merged"
+mkdir -pv "${SQ_OVERLAY:-[EMPTY_VARIABLE]}/upperdir"
+mkdir -pv "${SQ_OVERLAY:-[EMPTY_VARIABLE]}/workdir"
+mkdir -pv "${SQ_OVERLAY:-[EMPTY_VARIABLE]}/merged"
 
 # This includes kernel modules
-BUILDER_ROOTFS_DIR="${HOME:-[EMPTY_STR]}/Downloads/kjxh-artifacts/another/newfrdir"
+BUILDER_ROOTFS_DIR="${HOME:-[EMPTY_VARIABLE]}/Downloads/kjxh-artifacts/another/newfrdir"
+
+BUILDER_QEMUKJX_TARBALL=
 
 if [ "$(basename "$PWD")" = "kjx-headless" ] && [ -d "$ROOTFS_PATH" ]; then
     cp -r "$BUILDER_ROOTFS_DIR"/* "$ROOTFS_PATH"
