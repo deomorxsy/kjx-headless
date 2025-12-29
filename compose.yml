@@ -157,10 +157,11 @@ services:
         - "localhost:5000/eltorito:latest"
     stop_signal: SIGINT
   kernel:
+    container_name: kernel
     build:
       context: "./deploy/isogen/kernel/"
       tags:
-        - "localhost:5000/linux_build:latest"
+        - "localhost:5000/kernel:latest"
     stop_signal: SIGINT
   libbpfgo:
     build:
