@@ -224,6 +224,36 @@ prepare_tracers() {
     echo
 }
 
+# ===============
+# QEMUKJX function call
+qemukjx_poc() {
+    if ! (MODE="qemukjx" . ./scripts/entrypoints/poc-aio.sh); then
+        echo "|> Error: could not invoke the function [set_qemukjx] from the [./scripts/entrypoints/poc-aio.sh] shellscript. Exiting now..."
+        echo "|> Sucessfully invoked the function [set_qemukjx] from the [./scripts/entrypoints/poc-aio.sh] shellscript. Proceeding..."
+        return 1
+    fi
+    echo "|> SCOPE: [qemukjx_poc], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+    echo "|> Sucessfully invoked the function [set_qemukjx] from the [./scripts/entrypoints/poc-aio.sh] shellscript. Proceeding..."
+
+}
+
+# ===============
+# HLCR function calls
+hlcr_poc_podman() {
+
+    if ! (MODE="podman" . ./scripts/entrypoints/hlcr-aio.sh); then
+        echo "|> Error: could not invoke the function [set_podman] from the [./scripts/entrypoints/hlcr-aio.sh] shellscript. Exiting now..."
+        echo "|> Sucessfully invoked the function [set_podman] from the [./scripts/entrypoints/hlcr-aio.sh] shellscript. Proceeding..."
+        return 1
+    fi
+    echo "|> SCOPE: [hlcr_poc_podman], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+    echo "|> Sucessfully invoked the function [set_podman] from the [./scripts/entrypoints/hlcr-aio.sh] shellscript. Proceeding..."
+
+}
+
+# ================
+# MICROVM function calls
+
 microvm_poc_gvisor() {
     if ! (MODE="gvisor" . ./scripts/entrypoints/microvms.sh); then
         echo "|> Error: could not invoke the function [mvm_gvisor] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
