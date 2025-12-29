@@ -96,7 +96,7 @@ kernel_tarball() {
 
     # copy kernel tarball into the ./artifacts/isogen directory.
     mkdir -p ./artifacts/isogen
-    if ! (podman cp linux_build:/app/artifacts/ko_tarball.tar.gz "${PKG_TEMP_KERNEL:-[EMPTY_VARIABLE]}"); then
+    if ! (podman cp kernel:/app/artifacts/ko_tarball.tar.gz "${PKG_TEMP_KERNEL:-[EMPTY_VARIABLE]}"); then
         echo "|> Error: could not copy the kernel tarball to the kernel_CPIO_GZ=${PKG_TEMP_KERNEL:-[EMPTY_VARIABLE]} filepath. Exiting now..."
         echo "|> SCOPE: [kernel_tarball], file: [./scripts/packages/kernel-setup.sh], check: 08"
         return 1
