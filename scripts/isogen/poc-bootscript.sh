@@ -1025,7 +1025,7 @@ unpack_gvisor() {
 }
 
 unpack_firecracker() {
-    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-core.tar.gz" ]; then
+    if ! [ -f "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-tarball-pkg.tar.gz" ]; then
         echo && echo "|> Error: it was not possible to find the firecracker tarball. Exiting now..."
         echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
         echo && echo
@@ -1035,14 +1035,14 @@ unpack_firecracker() {
     echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 01"
     echo && echo
 
-    # decompress the firecracker-core.tar.gz
-    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-core.tar.gz" -C /app/microvms/); then
-        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-core.tar.gz into the path /app/microvms/ . Exiting now..."
+    # decompress the firecracker-tarball-pkg.tar.gz
+    if ! (tar -xvf "${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]}/firecracker-tarball-pkg.tar.gz" -C /app/microvms/); then
+        echo && echo "|> Error: could not enter VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-tarball-pkg.tar.gz into the path /app/microvms/ . Exiting now..."
         echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
         echo && echo
         return 1
     fi
-    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-core.tar.gz into the path /app/microvms/ . Proceeding..."
+    echo "|> Sucessfully entered VIRTIO_PASSTHRU_DIR=${VIRTIO_PASSTHRU_DIR:-[EMPTY_VARIABLE]} and decompress the firecracker-tarball-pkg.tar.gz into the path /app/microvms/ . Proceeding..."
     echo "|> SCOPE: [unpack_firecracker], file: [./scripts/isogen/poc-bootscript.sh], check 02"
     echo && echo
 }
