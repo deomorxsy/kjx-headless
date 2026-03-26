@@ -7,7 +7,8 @@ edition = "2021"
 ayaya-common = { path = "../ayaya-common" }
 
 aya-ebpf = { workspace = true }
-aya-log-ebpf = { workspace = true }
+aya-log = { workspace = true }
+#aya-log-ebpf = { workspace = true }
 
 [build-dependencies]
 which = { workspace = true }
