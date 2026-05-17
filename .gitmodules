@@ -108,3 +108,6 @@
 [submodule "assets/visualization/makefile2graph"]
 	path = assets/visualization/makefile2graph
 	url = git@github.com:lindenb/makefile2graph.git
+[submodule "scripts/formalize/kjx-formalize"]
+	path = scripts/formalize/kjx-formalize
+	url = git@github.com:deomorxsy/kjx-formalize.git
