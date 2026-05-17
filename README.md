@@ -1,6 +1,5 @@
 ### kjx-headless
-> Setting up a custom headless busybox/LFS distro
-
+> Setting up a custom headless busybox/LFS distro.
 
 
 | **Category** | **CI** |
@@ -143,9 +142,9 @@ Todo:
 - [ALFS](https://www.linuxfromscratch.org/alfs/)
 - [Cross Linux from Scratch](https://trac.clfs.org/)
 - [Embedded Linux from Scratch](https://bootlin.com/doc/legacy/elfs/embedded_lfs.pdf)
-- Dragora Linux [Handbook](http://www.dragora.org/download/web-handbook/) || [archive](https://archive.fo/FQekg)
-- VoidLinux [docs](https://docs.voidlinux.org/)
-- Alpine User [Handbook](https://docs.alpinelinux.org/user-handbook/0.1a/index.html)
+- [Dragora Linux Handbook](http://www.dragora.org/download/web-handbook/) || [archive](https://archive.fo/FQekg)
+- [VoidLinux docs](https://docs.voidlinux.org/)
+- [Alpine User Handbook](https://docs.alpinelinux.org/user-handbook/0.1a/index.html)
 - [TinyEmu](https://bellard.org/tinyemu/readme.txt)
 - [Hardened Gentoo](https://wiki.gentoo.org/wiki/Project:Hardened)
 - [Linux From Scratch on the Raspberry Pi](https://intestinate.com/pilfs/about.html)
@@ -157,3 +156,6 @@ Todo:
 - [youki tests!](https://github.com/containers/youki/blob/main/tests/k8s/Dockerfile)
 - guni1192's [cromwell runntime](https://github.com/guni1192/cromwell)
 - innobead's firecracker scripts from [kubefire](https://github.com/innobead/kubefire)
+
+
+PS: THESE INSTRUCTIONS ARE PROVIDED AS-IS AND WITHOUT WARRANTY. ALL USERS ACCEPT FULL RESPONSIBILITY AND LIABILITY IN THE EVENT OF SYSTEM FAILURE, DATA LOSS, OR ANY OTHER FAILURE OR LOSS RESULTING FROM THESE INSTRUCTIONS.
