@@ -255,3 +255,7 @@ busybox-basecont
 # AUTOMATICALLY GENERATED AT [./scripts/entrypoints/microvms.sh]
 deploy/microvm/kata/Dockerfile.kata.dummy
 
+# youki tests
+artifacts/youki/*
+artifacts/youki/rootfs/*
+
