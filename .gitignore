@@ -259,3 +259,5 @@ deploy/microvm/kata/Dockerfile.kata.dummy
 artifacts/youki/*
 artifacts/youki/rootfs/*
 
+# mirror of this repo
+assets/gitlab/
