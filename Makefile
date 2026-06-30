@@ -268,7 +268,7 @@ bwc:
 .PHONY: setcap
 setcap:
 	gcc -Wall -o ./scripts/libkjx/cap_example ./scripts/libkjx/setcap.c -lcap
-    # gcc -Wall -o cap_example setcap.c -lcap -static -fPIE -pie
+# gcc -Wall -o cap_example setcap.c -lcap -static -fPIE -pie
 
 
 # generate stack call graph
