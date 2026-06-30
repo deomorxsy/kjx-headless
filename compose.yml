@@ -498,9 +498,14 @@ services:
     command: |
       echo hmm
     stop_signal: SIGINT
+  busybox_rootfs:
+    container_name: busybox_rootfs
+    image: alpine:3.22
   # youki
   qonq_youki:
     container_name: qonq_youki
+    depends_on:
+      - busybox_rootfs
     environment:
       - git_hash
     build:
