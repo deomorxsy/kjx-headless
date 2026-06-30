@@ -5,7 +5,7 @@ abstract: "deploy, trace and monitor a busybox/LFS based distro."
 authors:
 - name: deomorxsy
   orcid: https://orcid.org/0009-0002-8685-3460
-version: 2.0.4
-doi: none
+version: v1.0.0
+doi: 10.5281/zenodo.20807933
 date-released: 2024-06-06
 url: "https://github.com/deomorxsy/kjx-headless"
