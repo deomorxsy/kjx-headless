@@ -65,31 +65,36 @@ vmlinux:
 #
 
 localstack:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build localstack
 
 initramfs:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build initramfs
 
 kernel:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build kernel
 
 bzImage:
 	. ./scripts/gen-bzimage.sh
 
-.PHONY: dropbear
-dropbear:
-	MODE="-builder" . ./scripts/entrypoints/build-dropbear.sh
-	#. ./scripts/ccr.sh; checker; \
+# Adjust to qonq-packaging later
+.PHONY: rootfs
+rootfs:
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
+	docker compose -f ./compose.yml --progress=plain build rootfs
+# .PHONY: dropbear
+# dropbear:
+# 	MODE="-builder" . ./scripts/entrypoints/build-dropbear.sh
+	#CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	#docker compose -f ./compose.yml --progress=plain build dropbear
 	#docker compose -f ./compose.yml --progress=plain build --no-cache dropbear
 
+# =============================
+# isogen/iso9660
+# =============================
 
-builda_qemu:
-	. ./scripts/ccr.sh; checker; \
-	docker compose -f ./compose.yml --progress=plain build builda_qemu
 
 # builds the project and fetch binaries for qemu-storage-daemon on qemu automation for the builder
 .PHONY: qonq
@@ -98,7 +103,7 @@ qonq:
 
 .PHONY: isogen
 isogen:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build --no-cache isogen_new && \
 	docker compose images | grep isogen | awk '{ print $4 }' && \
@@ -129,7 +134,7 @@ contname=$(finalbase)$(semver)
 
 #generate: check_build_timestamp
 generate:
-	. ./scripts/ccr.sh; checker;  \
+	CCR_MODE="-checker" . ./scripts/ccr.sh;  \
 	docker start registry; \
 	docker create --userns=auto --cap-drop=ALL --cap-add=CAP_SYS_ADMIN,CAP_DAC_OVERRIDE --rm --name kjx_isogen $(podman images | head | grep isogen_new | awk 'NR==2 {print $3}') 2>&1 | grep "already in use"; \
 	if [ $$? -eq 0 ]; then \
@@ -151,7 +156,7 @@ generate:
 #system-test-iso, STI
 sti:
 	chmod +x ./scripts/fuse-blkexp.sh
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build iso_system_test
 
 #docker run -d -p 5000:5000 --name registry registry:latest \
@@ -159,7 +164,7 @@ sti:
 
 mock_sti:
 	chmod +x ./scripts/fuse-blkexp.sh;
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker start registry && \
 	docker compose -f ./compose.yml --progress=plain build mock_ist && \
 	docker compose images | awk 'NR==2 { print $4 }' && \
@@ -169,7 +174,7 @@ mock_sti:
 #podman create -rm --name mock_ist localhost:5000/mock_ist:latest 2>&1 | grep "already in use"
 # solve  ImagePullBackOff
 kube_mock:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker create --name mock_ist localhost:5000/mock_ist:latest 2>&1 | grep "already in use";  \
 	if [ $? -eq 0 ]; then echo hmmm && \
 	docker start registry && \
@@ -198,7 +203,7 @@ kube_mock:
 # Observability and Monitoring
 #
 exporter:
-	. ./scripts/ccr.sh; checker; \
+	CCR_MODE="-checker" . ./scripts/ccr.sh; \
 	docker compose -f ./compose.yml --progress=plain build exporter
 
 heatmap:
@@ -233,7 +238,7 @@ k8s:
 
 # ===============
 # ISO9660 build phase creation with mount namespaces and squashfs
-.PHONY: iso
+#.PHONY: iso
 
 # ==============
 # ISO9660 runtime phase with mount namespaces, libguestfs and squashfs
@@ -263,7 +268,7 @@ bwc:
 .PHONY: setcap
 setcap:
 	gcc -Wall -o ./scripts/libkjx/cap_example ./scripts/libkjx/setcap.c -lcap
-    # gcc -Wall -o cap_example setcap.c -lcap -static -fPIE -pie
+# gcc -Wall -o cap_example setcap.c -lcap -static -fPIE -pie
 
 
 # generate stack call graph
@@ -351,24 +356,6 @@ hpota:
 hpota_runner:
 	MODE="runner" . ./scripts/tracers/hpota.sh
 
-# =========
-# qemu builder runtime
-
-.PHONY: qemu_builder
-qemu_builder:
-	. ./scripts/sandbox/run-qemu.sh -d
-
-# airgap k3s inside QEMU
-.PHONY: airgap
-airgap:
-	. ./scripts/sandbox/run-qemu.sh -airgap
-
-
-# generate k3s dependencies
-.PHONY: squash
-squash:
-	. ./scripts/sandbox/run-qemu.sh -squash
-
 
 # ======== boot related
 
@@ -377,7 +364,7 @@ squash:
 eltorito:
 	#. ./scripts/usfs.sh
 	# --rm -it
-	. ./scripts/ccr.sh; checker && \
+	CCR_MODE="-checker" . ./scripts/ccr.sh && \
 	docker run -d --name eltorito-builder  \
 		-v "$$PWD/scripts:/app/scripts/" \
 		alpine:3.20 \
@@ -393,13 +380,9 @@ eltorito:
 
 .PHONY: itoeltor
 itoeltor:
-	. ./scripts/ccr.sh; checker && \
+	CCR_MODE="-checker" . ./scripts/ccr.sh && \
 	docker compose -f ./compose.yml --progress=plain build grub
 
-# GOTO: airgap instead
-.PHONY: runiso
-runiso:
-	. ./scripts/sandbox/run-qemu.sh -runiso
 
 # zig-wasm-typescript-deno-bpf
 .PHONY: zwtd-bpf
@@ -424,38 +407,31 @@ libbpfgo:
 
 # ==============
 # Microvms
+#
+# uses: qonq-qdb
 # ==============
-.PHONY: kata
-kata:
-	MODE="builder" . ./scripts/entrypoints/microvms.sh
+.PHONY: qonq_microvm
+qonq_microvm:
+	MODE="tarball" . ./scripts/entrypoints/microvms.sh
 
-.PHONY: gvisor
-gvisor:
-	MODE="builder" . ./scripts/entrypoints/microvms.sh
+.PHONY: qonq_kata
+qonq_kata:
+	MODE="kata" . ./scripts/entrypoints/microvms.sh
 
-.PHONY: firecracker
-firecracker:
-	MODE="builder" . ./scripts/entrypoints/microvms.sh
+.PHONY: qonq_gvisor
+qonq_gvisor:
+	MODE="gvisor" . ./scripts/entrypoints/microvms.sh
 
+.PHONY: qonq_firecracker
+qonq_firecracker:
+	MODE="firecracker" . ./scripts/entrypoints/microvms.sh
 
-# ===========
-# HLCR: High-Level Container Runtime
-# ==============
-.PHONY: podman
-podman:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
+###
+# firecracker-containerd setup, translated
+# from Makefile syntax to ash
+.PHONY: fr-demo-network
+	MODE="fr-demo-network" . ./scripts/sandbox/firecracker-startup.sh
 
-.PHONY: runc
-runc:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
-
-.PHONY: crun
-crun:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
-
-.PHONY: youki
-youki:
-	MODE="builder" . ./scripts/entrypoints/hlcr.sh
 
 # ==========================
 # Fetch-GHA Artifacts logic
@@ -464,22 +440,200 @@ youki:
 #
 .PHONY: fa-kernel
 fa-kernel:
+	MODE="-kernel" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-initramfs
 fa-initramfs:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-initramfs" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-ssh-rootfs
-fa-ssh-rootfs:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+fa-rootfs:
+	MODE="-rootfs" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-qonq-qdb
 fa-qonq-qdb:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-qonq-qdb" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-beetor
 fa-beetor:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-beetor" . ./scripts/ci-cd/fa-gha.sh
 .PHONY: fa-runit
 fa-runit:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
-.PHONY: fa-iso
-fa-iso:
-	MODE="" . ./scripts/ci-cd/fa-gha.sh
+	MODE="-runit" . ./scripts/ci-cd/fa-gha.sh
+# .PHONY: fa-iso
+# fa-iso:
+# 	MODE="-iso" . ./scripts/ci-cd/fa-gha.sh
+
+.PHONY: iso9660
+iso9660:
+	MODE="isogen" . ./scripts/tryout.sh
+
+
+# ===============
+# Packaging
+#
+.PHONY: qonq_shadow
+qonq_shadow:
+	MODE="shadow" . ./scripts/packages/usgp-man.sh
+
+.PHONY: qonq_iptables
+qonq_iptables:
+	MODE="iptables" . ./scripts/packages/usgp-man.sh
+
+
+# ===========
+# HLCR: High-Level Container Runtime
+#
+# uses: qonq-qdb
+# ==============
+.PHONY: qonq_hlcr
+qonq_hlcr:
+	MODE="tarball" . ./scripts/entrypoints/hlcr-aio.sh
+
+.PHONY: qonq_docker
+qonq_docker:
+	MODE="docker" . ./scripts/entrypoints/hlcr-aio.sh
+
+.PHONY: qonq_podman
+qonq_podman:
+	MODE="podman" . ./scripts/entrypoints/hlcr-aio.sh
+
+.PHONY: qonq_crio
+qonq_crio:
+	MODE="crio" . ./scripts/entrypoints/hlcr-aio.sh
+
+# ===========
+# LLCR: High-Level Container Runtime
+# ==============
+.PHONY: qonq_llcr
+qonq_llcr:
+	MODE="tarball" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_runc
+qonq_runc:
+	MODE="runc" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_crun
+qonq_crun:
+	MODE="crun" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_containerd
+qonq_containerd:
+	MODE="containerd" . ./scripts/entrypoints/llcr-aio.sh
+
+.PHONY: qonq_youki
+qonq_youki:
+	MODE="youki" . ./scripts/entrypoints/llcr-aio.sh
+
+# ==============
+# tracers qonq
+# ==============
+.PHONY: qonq_bpftrace
+qonq_bpftrace:
+	MODE="bpftrace" . ./scripts/entrypoints/tracers-aio.sh
+
+
+# ==============
+# QEMUKJX: build the environment to run
+# the ISOGEN scripts
+# ==============
+.PHONY: qonq_qemukjx
+qonq_qemukjx:
+	MODE="qemukjx" . ./scripts/entrypoints/poc-aio.sh
+
+# qemu builder runtime
+# .PHONY: qemu_builder
+# qemu_builder:
+# 	MODE="-d" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+# =============
+# ISOGEN environment: the one
+# created by [qemukjx],
+# that will create the
+# [ISO9660] image
+#
+
+.PHONY: isogen_setvars
+isogen_setvars:
+	MODE="-isogen_setvars" . ./scripts/isogen/set-vars.sh
+
+.PHONY: isogen_scaff
+isogen_scaff:
+	MODE="-isogen_scaff" . ./scripts/isogen/scaffolding.sh
+
+.PHONY: isogen_rootafail
+isogen_rootafail:
+	MODE="-isogen_rootafail" . ./scripts/isogen/rootfs.sh
+
+.PHONY: isogen_squasha
+isogen_squasha:
+	MODE="-isogen_squasha" . ./scripts/isogen/squasha.sh
+
+.PHONY: isogen_packaja
+isogen_packaja:
+	MODE="-isogen_packaja" . ./scripts/isogen/packaging.sh
+
+.PHONY: isogen_itarun
+isogen_itarun:
+	MODE="-isogen_itarun" . ./scripts/isogen/runit.sh
+
+.PHONY: isogen_setacontainers
+isogen_setacontainers:
+	MODE="-isogen_setacontainers" . ./scripts/isogen/oci-cri.sh
+
+.PHONY: isogen_buildakernel
+isogen_buildakernel:
+	MODE="-isogen_buildakernel" . ./scripts/isogen/bzImage.sh
+
+.PHONY: isogen_inita
+isogen_inita:
+	MODE="-isogen_inita" . ./scripts/isogen/initramfs.sh
+
+.PHONY: isogen_sting
+isogen_sting:
+	MODE="-isogen_sting" . ./scripts/isogen/beetor.sh
+
+.PHONY: isogen_bootaeloada
+isogen_bootaeloada:
+	MODE="-isogen_bootaeloada" . ./scripts/isogen/bootloaders.sh
+
+.PHONY: isogen_isaisa
+isogen_isaisa:
+	MODE="-isogen_isaisa" . ./scripts/isogen/iso9660.sh
+
+# ===========
+# RUNISO environment: the one that will run
+# the [ISO9660] image created by [isogen].
+# Tied to ./scripts/sandbox/run-qemu.sh
+
+# GOTO: airgap instead
+.PHONY: runiso
+runiso:
+	MODE="-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+.PHONY: record-runiso
+record-runiso:
+	MODE="-record-runiso" . ./scripts/sandbox/run-qemu.sh
+	# MODE="-record-runiso" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+# airgap k3s inside QEMU
+.PHONY: airgap
+airgap:
+	MODE="-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+.PHONY: record-airgap
+record-airgap:
+	MODE="-record-airgap" . ./scripts/sandbox/run-qemu.sh
+	# MODE="-record-airgap" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+# airgap k3s inside QEMU
+.PHONY: airgap_clean
+airgap_clean:
+	MODE="-airgap_clean" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+
+# generate k3s dependencies
+.PHONY: squash
+squash:
+	MODE="-squash" LOG_VERBOSE="yes" . ./scripts/sandbox/run-qemu.sh
+
+
+
+
 

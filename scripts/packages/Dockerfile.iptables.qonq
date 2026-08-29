@@ -1,0 +1,111 @@
+#!/bin/sh
+FROM alpine:3.22 AS builder
+
+COPY ./scripts/packages/iptables-setup.sh /app/scripts/iptables-setup.sh
+COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
+
+WORKDIR /app
+# STEP 1
+
+# bash for lwrap
+RUN <<EOF
+apk upgrade && apk update && \
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+
+# libmnl:Library for minimalistic netlink
+# libnftnl: Netfilter library providing interface to the nf_tables subsystem
+# libxtables: Linux kernel firewall, NAT and packet mangling tools (xtables library)
+# iptables: Linux kernel firewall, NAT and packet mangling tools
+# conntrack-tools: Connection tracking userspace tools
+
+# iptables
+apk add libmnl libnftnl libxtables ip6tables iptables conntrack-tools
+
+
+# libnetfilter_cthelper: A Netfilter netlink library for connection tracking helpers
+# libnetfilter_cttimeoutconntrack: Library for the connection tracking timeout infrastructure
+# libnetfilter_queue: API to packets that have been queued by the kernel packet filter
+# libnfnetlink: low-level library for netfilter related kernel/userspace communication
+
+# conntrack
+apk add \
+    libnetfilter_conntrack \
+    libnetfilter_cthelper \
+    libnetfilter_cttimeout \
+    libnetfilter_queue \
+
+EOF
+
+# setup iptables, conntrack and netfilter options
+# (linked with musl) shared objects,
+# dynamic linked binaries and dotfiles/config-files
+RUN <<EOF
+
+if ! (MODE="iptables-tarball" . /app/scripts/iptables-setup.sh); then
+    printf "\n|> Error: could not execute the [iptables-tarball] function from the iptables-setup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run [iptables-tarball] from iptables-setup.sh. Proceeding..."
+
+if ! (ls -allhtr "/iptables-tarball-pkg.tar.gz"); then
+    echo "|> IPTABLES-TARBALL NOT FOUND. EXITING..."
+    return 1
+fi
+echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
+
+EOF
+
+### # create the iptables musl-based shared objects tarball
+### RUN <<EOF
+###
+### if ! (MODE="iptables-so" . /app/scripts/iptables-setup.sh); then
+###     printf "\n|> Error: could not execute the iptables-so function from the iptables-setup.sh shellscript. Exiting now...\n\n"
+###     return 1
+### fi
+### printf "\n|> Succesfully run iptables-so from iptables-setup.sh. Proceeding..."
+###
+### if ! (ls -allhtr "/app/iptables-so-pkg.tar.gz"); then
+###     echo "|> SO TARBALL NOT FOUND. EXITING..."
+###     return 1
+### fi
+### echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
+###
+### EOF
+###
+### # create the iptables musl-based dynamically linked tarball
+### RUN <<EOF
+###
+### mkdir -p /app
+###
+### if ! (MODE="iptables-bin" . /app/scripts/iptables-setup.sh); then
+###     printf "\n|> Error: could not execute the iptables-bin function from the iptables-setup.sh shellscript. Exiting now...\n\n"
+###     return 1
+### fi
+### printf "\n|> Succesfully run iptables-bin from iptables-setup.sh. Proceeding..."
+###
+### if ! (ls -allhtr "/app/iptables-bin-pkg.tar.gz"); then
+###     echo "|> BIN TARBALL NOT FOUND. EXITING..."
+###     return 1
+### fi
+### echo "|> FOUND THE BIN TARBALL \O/ ...[PASSED]"
+###
+### EOF
+
+
+FROM alpine:3.22 AS relay
+
+WORKDIR /app/
+## COPY --from=builder "/app/iptables-so-pkg.tar.gz" .
+## COPY --from=builder "/app/iptables-bin-pkg.tar.gz" .
+
+COPY --from=builder "/iptables-tarball-pkg.tar.gz" .
+
+ENTRYPOINT ["/bin/sh"]

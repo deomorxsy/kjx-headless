@@ -1,0 +1,50 @@
+FROM alpine:3.22 AS builder
+
+COPY ./scripts/packages/bpftrace-setup.sh /app/scripts/packages/bpftrace-setup.sh
+COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
+
+WORKDIR /app
+# STEP 1
+RUN <<EOF
+
+#apk add musl bpftrace
+apk upgrade && apk update
+    apk add bpftrace musl
+
+### (
+### cat <<HMM
+### http://dl-cdn.alpinelinux.org/alpine/edge/main
+### http://dl-cdn.alpinelinux.org/alpine/edge/community
+### http://dl-cdn.alpinelinux.org/alpine/edge/testing
+### HMM
+### ) > /etc/apk/repositories
+###
+### apk upgrade && apk update && \
+###     apk add bpftrace
+
+if ! MODE="bpftrace-tarball" . /app/scripts/packages/bpftrace-setup.sh; then
+    printf "\n|> Error: could not execute the bpftrace-tarball function from the bpftrace-setup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run bpftrace-tarball from bpftrace-setup.sh. Proceeding..."
+
+
+EOF
+
+FROM alpine:3.22 AS relay
+
+
+WORKDIR /app/
+
+# copy bpftrace dynamic linked binaries, shared objects and dotfiles/config-files
+COPY --from=builder "/bpftrace-tarball-pkg.tar.gz" /app
+
+
+RUN <<EOF
+
+ls -allhtr /app
+
+EOF
+
+
+ENTRYPOINT ["/bin/sh"]

@@ -4,7 +4,7 @@ USER root
 
 WORKDIR /app/
 # COPY ./trace/libbpf-core/ /app/
-COPY ./trace/libbpf-core/ /app/
+COPY . /app/
 
 
 

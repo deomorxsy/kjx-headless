@@ -1,8 +1,9 @@
 #version: "3.8"
 #
 volumes:
-    prometheus_data: {}
-    grafana_data: {}
+  prometheus_data: {}
+  grafana_data: {}
+  qemu_kjx: {}
 
 services:
   # zig-wasm-typescript-deno-bpf
@@ -70,15 +71,7 @@ services:
       printf "\n|> List of environment variables:\n\n"
       env
     stop_signal: SIGINT
-  builda_qemu:
-      container_name: qemu_kjx
-      build:
-        context: "."
-        dockerfile: "./Dockerfile"
-        tags:
-          - "localhost:5000/qemu_kjx:latest"
-      entrypoint: ["/bin/sh", "-c"]
-      command: /scripts/bq-entrypoint.sh
+
   isogen_new:
     build:
       context: "."
@@ -134,39 +127,41 @@ services:
       - git_hash
     build:
       context: "."
-      dockerfile: "./assets/busybox/Dockerfile"
+      dockerfile: "./deploy/isogen/busybox/Dockerfile"
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
         - "localhost:5000/initramfs:latest"
     stop_signal: SIGINT
-  dropbear:
+  rootfs:
+    container_name: rootfs
     environment:
       - git_hash
     build:
       context: "."
-      dockerfile: "./assets/dropbear/Dockerfile"
+      dockerfile: "./deploy/isogen/rootfs/Dockerfile"
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
-        - "localhost:5000/dropbear:latest"
+        - "localhost:5000/rootfs:latest"
     stop_signal: SIGINT
   grub:
     environment:
       - git_hash
     build:
       context: "."
-      dockerfile: "./assets/grub/Dockerfile"
+      dockerfile: "./deploy/isogen/grub/Dockerfile"
       args:
         GIT_COMPOSE_SHA: "${GIT_COMMIT_HASH:-none}"
       tags:
         - "localhost:5000/eltorito:latest"
     stop_signal: SIGINT
   kernel:
+    container_name: kernel
     build:
-      context: "./assets/kernel/"
+      context: "./deploy/isogen/kernel/"
       tags:
-        - "localhost:5000/linux_build:latest"
+        - "localhost:5000/kernel:latest"
     stop_signal: SIGINT
   libbpfgo:
     build:
@@ -195,7 +190,6 @@ services:
         - "localhost:5000/hpota:latest"
     stop_signal: SIGINT
 
-
   # =======================
   # AWS provider emulation
   # =======================
@@ -214,8 +208,8 @@ services:
     container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
     image: localstack/localstack
     ports:
-      - "127.0.0.1:4566:4566"            # LocalStack Gateway
-      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+      - "127.0.0.1:4566:4566" # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559" # external services port range
     environment:
       #- DEBUG=${DEBUG:-0}
       - DEBUG=$${1:-0}
@@ -290,7 +284,7 @@ services:
       apk upgrade && apk update && \
       apk add dune ocaml musl-dev && \
       eval $(opam env --switch=utop)
- #
+  #
   # ========================
   # android cross-compilation
   # build with xmake
@@ -305,7 +299,7 @@ services:
         - "localhost:5000/android:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
   final_core:
     environment:
@@ -317,7 +311,7 @@ services:
         - "localhost:5000/android:latest"
     entrypoint: ["/bin/sh", "-c"]
     command: |
-        echo hmm
+      echo hmm
     stop_signal: SIGINT
 
   # ========================
@@ -337,7 +331,7 @@ services:
     stop_signal: SIGINT
 
   # standalone prometheus
-  node-exporter:  # prometheus node-exporter
+  node-exporter: # prometheus node-exporter
     image: prom/node-exporter:latest
     container_name: node-exporter
     restart: unless-stopped
@@ -346,10 +340,10 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     ports:
       - 9100:9100
   prometheus:
@@ -360,11 +354,232 @@ services:
       - ./prom-metrics.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
     ports:
       - 9090:9090
+  # =============
+  # microvms
+  # =============
+  gvisor:
+    container_name: gvisor
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./deploy/microvm/gvisor/Dockerfile"
+      tags:
+        - "localhost:5000/gvisor:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
 
+  kata:
+    container_name: kata
+    # volumes:
+    #   - ./artifacts/microvms/kata-static-3.24.0-amd64.tar.zst:/helper/:ro
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./deploy/microvm/kata/Dockerfile.kata.dummy"
+      #dockerfile: "./deploy/microvm/kata/Dockerfile.kata.qonq"
+      tags:
+        - "localhost:5000/kata:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # on a host this will depend on
+  # a networking setup with iptables.
+  firecracker:
+    container_name: firecracker
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./deploy/microvm/firecracker/Dockerfile"
+      tags:
+        - "localhost:5000/firecracker:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  # ============
+  # Packaging
+  # ============
+  qonq_shadow:
+    container_name: qonq_shadow
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.shadow.qonq"
+      tags:
+        - "localhost:5000/qonq_shadow:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  qonq_iptables:
+    container_name: qonq_iptables
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.iptables.qonq"
+      tags:
+        - "localhost:5000/qonq_iptables:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  qonq_qemukjx:
+    container_name: qonq_qemukjx
+    volumes:
+      - qemu_kjx:/app/qemu-kjx/:ro
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.qemukjx.qonq"
+      tags:
+        - "localhost:5000/qonq_qemukjx:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmmm
+
+  # ===============
+  # llcr packaging
+  # ==============
+
+  # crun
+  qonq_crun:
+    container_name: qonq_crun
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.crun.qonq"
+      tags:
+        - "localhost:5000/qonq_crun:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  # runc
+  qonq_runc:
+    container_name: qonq_runc
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.runc.qonq"
+      tags:
+        - "localhost:5000/qonq_runc:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  # containerd
+  qonq_containerd:
+    container_name: qonq_containerd
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.containerd.qonq"
+      tags:
+        - "localhost:5000/qonq_containerd:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+  busybox_rootfs:
+    container_name: busybox_rootfs
+    image: alpine:3.22
+  # youki
+  qonq_youki:
+    container_name: qonq_youki
+    depends_on:
+      - busybox_rootfs
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.youki.qonq"
+      tags:
+        - "localhost:5000/qonq_youki:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # ===============
+  # hlcr packaging
+  # ===============
+
+  # podman
+  qonq_podman:
+    container_name: qonq_podman
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.podman.qonq"
+      tags:
+        - "localhost:5000/qonq_podman:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # docker
+  qonq_docker:
+    container_name: qonq_docker
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.docker.qonq"
+      tags:
+        - "localhost:5000/qonq_docker:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # crio
+  qonq_crio:
+    container_name: qonq_crio
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.crio.qonq"
+      tags:
+        - "localhost:5000/qonq_crio:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT
+
+  # ===============
+  # tracer packaging
+  # ===============
+  qonq_bpftrace:
+    container_name: qonq_bpftrace
+    environment:
+      - git_hash
+    build:
+      context: "."
+      dockerfile: "./scripts/packages/Dockerfile.bpftrace.qonq"
+      tags:
+        - "localhost:5000/qonq_bpftrace:latest"
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo hmm
+    stop_signal: SIGINT

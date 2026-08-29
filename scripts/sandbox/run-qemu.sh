@@ -1,27 +1,777 @@
 #!/bin/sh
+
+# ====================
 #
+# Global variables
+#
+# Checks if the current directory is root of the repository
+KJXPATH=$(basename "$PWD")
+# Raw Virtual Disk Sparse file path
+RVDSF_EULAB="./utils/storage/eulab-hd"
+
+# utils directory path for the raw image
+K3S_SQUASHFS_IMAGE_PATH="./utils/storage/k3s-tarball-squashfs.img"
+# k3s airgap image path and basenames
+K3S_AIRGAP_PATH="./artifacts/k3s-airgap"
+K3S_AIRGAP_TARBALL_GZ="${K3S_AIRGAP_PATH}/k3s-airgap-images-amd64.tar.gz"
+K3S_AIRGAP_TARBALL_GZ_NAME="k3s-airgap-images-amd64.tar.gz"
+K3S_AIRGAP_TAR_NAME="k3s-airgap-images-amd64.tar"
+
+# /tmp directories to unpack and squashfs
+K3S_UNPACK_TMP="/tmp/k3s-unpack"
+K3S_SQUASHFS_FILE="/tmp/k3s-tarball.squashfs"
+
+# mount point for the k3s-squashfs
+MOUNTPOINT_K3S_SQUASHFS="/mnt/k3s-squashfs"
+
+# OCI image artifact from the conversion using skopeo
+SKOPEO_TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
+# ===========
+# Virtio utils
+# virtfs path
+VIRTFS_ART_PATH="./artifacts/qemu-sink"
+
+# =====================
+# Recording variables
+# asciinema recording file path
+ASCII_DATE="$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-")"
+#RUNISO_RECORDING_PATH="./artifacts/run-qemu_runiso_$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-").cast"
+RUNISO_RECORDING_PATH="./artifacts/recording/run-qemu_runiso_${ASCII_DATE}.cast"
+AIRGAP_RECORDING_PATH="./artifacts/recording/run-qemu_airgap_${ASCII_DATE}.cast"
+
+# default recording state
+IS_RECORDING="NO"
+
+# ======================
+# Packaging or INFRA artifacts
+# ======================
+#
+# Artifacts variables
+ANODA_INITRAMFS="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
+MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
+
+# Microvm artifact variables
+#MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
+#MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-containerd.tar.gz"
+#MICROVM_KATA_TARBALL="./artifacts/microvms/kata-containerd.tar.gz"
+
+MICROVM_GVISOR_TARBALL="./artifacts/microvms/gvisor-tarball-pkg.tar.gz"
+MICROVM_FIRECRACKER_TARBALL="./artifacts/microvms/firecracker-tarball-pkg.tar.gz"
+MICROVM_KATA_TARBALL="./artifacts/microvms/kata-tarball-pkg.tar.gz"
+MICROVM_KATA_BIN="./artifacts/microvms/kata-bin-pkg.tar.gz"
+
+export MICROVM_GVISOR_TARBALL
+export MICROVM_FIRECRACKER_TARBALL
+export MICROVM_KATA_TARBALL
+export MICROVM_KATA_BIN
+
+# Tracers artifact variables
+TRACERS_BPFTRACE_TARBALL="./artifacts/packaging/bpftrace-tarball-pkg.tar.gz"
+
+# User Management artifacts
+PACKAGING_IPTABLES_TARBALL="./artifacts/packaging/iptables-tarball-pkg.tar.gz"
+PACKAGING_SHADOW_TARBALL="./artifacts/packaging/shadow-tarball-pkg.tar.gz"
+
+# HLCR, LLCR, QEMUKJX
+PACKAGING_PODMAN_TARBALL="./artifacts/packaging/podman-tarball-pkg.tar.gz"
+PACKAGING_QEMUKJX_TARBALL="./artifacts/packaging/qemukjx-tarball-pkg.tar.gz"
+
+# ======================
+# BOOTSCRIPTS
+# ======================
+
+# poc-bootscript filepath
+POC_BOOTSCRIPT="./scripts/isogen/poc-bootscript.sh"
+
+prepare_packaging() {
+
+    # Packaging
+
+    # setup user and groups management with shadow, doas and others
+    if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
+        echo "|> Error: it was not possible to setup user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Exiting now..."
+        echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully ran the setup for user and groups management with the ./scripts/packages/usgp-man.sh shellscript. Proceeding..."
+    echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+    echo && echo
+
+    # setup iptables, conntrack, netfilter, bpf and other network things for k3s and OCI-CRI.
+    if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
+        echo "|> Error: it was not possible to run the usgp-man shellscript to build iptables dependencies. Exiting now..."
+        echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+        echo && echo
+        return 1
+    fi
+    echo "|> Successfully ran the usgp-man shellscript to build iptables dependencies. Proceeding..."
+    echo "|> SCOPE: [prepare_packaging], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+    echo && echo
+
+    # setup podman shared objects
+    if ! [ -f "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}/podman-archive.tar.gz" ]; then
+
+        # MODE="podman-deps" . ./scripts/isogen/qonq-qdb.sh
+        MODE="podman-deps" . ./scripts/qonq-qdb.sh
+
+    fi
+
+    # prepre bpftrace shared objects (just for the flamegraph and log2 histograms)
+
+    # setup firecracker dependencies
+    ## iptables/networking already met
+    ##
+
+}
+
+prepare_rootfs() {
+
+    if (CCR_MODE="-checker" . ./scripts/ccr.sh && docker compose -f ./compose.yml --progress=plain build --no-cache rootfs); then
+        echo "|> Error: could not run the [./deploy/isogen/rootfs/Dockerfile] script to build the rootfs (based on dropbear ssh and others). Exiting now..."
+        echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+        return 1
+    fi
+    echo "|> Sucessfully ran the [./deploy/isogen/rootfs/Dockerfile] script to build the rootfs (based on dropbear ssh and others). Exiting now..."
+    echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+
+    if ! prepare_packaging; then
+        echo "|> Error: could not run the [prepare_packaging] function. Exiting now..."
+        echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+        return 1
+    fi
+    echo "|> Sucessfully ran the [prepare_packaging] function. Proceeding..."
+    echo "|> SCOPE: [prepare_rootfs], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+
+}
+
+airgap_clean() {
+
+    CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT="/tmp/k3s-tarball.squashfs"
+    CLEAN_K3S_TARBALL_IMAGE="./utils/storage/k3s-tarball-squashfs.img"
+    CLEAN_GVISOR_TARBALL="./artifacts/microvms/gvisor-core.tar.gz"
+    #CLEAN_BPFTRACE_TARBALL="./artifacts/packaging/bpftrace-tarball-pkg.tar.gz"
+
+    if [ -f "${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Artifact found. Attempting to remove now..."
+        echo && echo
+
+        if ! (rm "${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}"); then
+            echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Exiting now..."
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully removed the [${CLEAN_K3S_TARBALL_SQUASHFS_ARTIFACT:-[EMPTY_VARIABLE]}]. Proceeding..."
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+        echo && echo
+
+        return
+    fi
+
+    if [ -f "${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Artifact found. Attempting to remove now..."
+        echo && echo
+
+        if ! (rm "${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}"); then
+            echo "|> Error: could not remove [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Exiting now..."
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 02"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully removed [${CLEAN_K3S_TARBALL_IMAGE:-[EMPTY_VARIABLE]}]. Proceeding..."
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 02"
+        echo && echo
+
+        return
+    fi
+
+    if [ -f "${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Artifact found. Attempting to remove now..."
+        echo && echo
+
+        if ! (rm "${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}"); then
+            echo "|> Error: could not remove [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
+            echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully removed [${CLEAN_GVISOR_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
+        echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
+        echo && echo
+
+        return
+
+    fi
+
+    ### if [ -f "${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}" ]; then
+    ###     echo "|> Artifact found. Attempting to remove now..."
+    ###     echo && echo
+
+    ###     if ! (rm "${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}"); then
+    ###         echo "|> Error: could not remove [${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}]. Exiting now..."
+    ###         echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
+    ###         echo && echo
+    ###         return 1
+    ###     fi
+    ###     echo "|> Sucessfully removed [${CLEAN_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}]. Proceeding..."
+    ###     echo "|> SCOPE: [airgap_clean], file: [./scripts/sandbox/run-qemu.sh], CHECK: 03"
+    ###     echo && echo
+
+    ###     return
+
+    ### fi
+
+}
+
+prepare_tracers() {
+    echo
+}
+
+# ===============
+# QEMUKJX function call
+qemukjx_poc() {
+    if ! (MODE="qemukjx" . ./scripts/entrypoints/poc-aio.sh); then
+        echo "|> Error: could not invoke the function [set_qemukjx] from the [./scripts/entrypoints/poc-aio.sh] shellscript. Exiting now..."
+        echo "|> Sucessfully invoked the function [set_qemukjx] from the [./scripts/entrypoints/poc-aio.sh] shellscript. Proceeding..."
+        return 1
+    fi
+    echo "|> SCOPE: [qemukjx_poc], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+    echo "|> Sucessfully invoked the function [set_qemukjx] from the [./scripts/entrypoints/poc-aio.sh] shellscript. Proceeding..."
+
+}
+
+# ===============
+# HLCR function calls
+hlcr_poc_podman() {
+
+    if ! (MODE="podman" . ./scripts/entrypoints/hlcr-aio.sh); then
+        echo "|> Error: could not invoke the function [set_podman] from the [./scripts/entrypoints/hlcr-aio.sh] shellscript. Exiting now..."
+        echo "|> Sucessfully invoked the function [set_podman] from the [./scripts/entrypoints/hlcr-aio.sh] shellscript. Proceeding..."
+        return 1
+    fi
+    echo "|> SCOPE: [hlcr_poc_podman], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+    echo "|> Sucessfully invoked the function [set_podman] from the [./scripts/entrypoints/hlcr-aio.sh] shellscript. Proceeding..."
+
+}
+
+# ================
+# MICROVM function calls
+
+microvm_poc_gvisor() {
+    if ! (MODE="gvisor" . ./scripts/entrypoints/microvms.sh); then
+        echo "|> Error: could not invoke the function [mvm_gvisor] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+        echo "|> Sucessfully invoked the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Proceeding..."
+        return 1
+    fi
+    echo "|> SCOPE: [microvm_poc_gvisor], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+    echo "|> Sucessfully invoked the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Proceeding..."
+
+}
+
+microvm_poc_firecracker() {
+    if ! (MODE="firecracker" . ./scripts/entrypoints/microvms.sh); then
+        echo "|> Error: could not invoke the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+        echo "|> SCOPE: [microvm_poc_firecracker], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+        return 1
+    fi
+    echo "|> Sucessfully invoked the function [mvm_firecracker] from the [./scripts/entrypoints/microvms.sh] shellscript. Proceeding..."
+    echo "|> SCOPE: [microvm_poc_firecracker], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+}
+
+microvm_poc_kata() {
+    if ! (MODE="kata" . ./scripts/entrypoints/microvms.sh); then
+        echo "|> Error: could not invoke the function [mvm_kata] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+        echo "|> SCOPE: [microvm_poc_kata], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+        return 1
+    fi
+    echo "|> Sucessfully invoked the function [mvm_kata] from the [./scripts/entrypoints/microvms.sh] shellscript. Exiting now..."
+    echo "|> SCOPE: [microvm_poc_kata], file: [./scripts/sandbox/run-qemu.sh], CHECK: 01"
+}
+
+artifacts_builder() {
+
+    if ! "${ANODA_INITRAMFS}"; then
+
+        case "${ISOGEN_ART}" in
+        # scaffolding
+        "-scaff")
+            if ! MODE="-scaff" . ./scripts/isogen/scaffolding.sh; then
+                return 1
+            fi
+            ;;
+        # Retrieve bzImage artifact from previous actions workflow
+        "-buildakernel")
+            if ! MODE="-buildakernel" . ./scripts/isogen/bzImage.sh; then
+                return 1
+            fi
+            ;;
+        # Retrieve initramfs artifact from previous actions workflow
+        "-inita")
+            if ! MODE="-inita" . ./scripts/isogen/initramfs.sh; then
+                return 1
+            fi
+            ;;
+        # Retrieve dropbear-based ssh-enabled-rootfs artifact from previous actions workflow
+        "-rootafail")
+            if ! MODE="-rootafail". ./scripts/isogen/rootfs.sh; then
+                return 1
+            fi
+            ;;
+        # Retrieve qonq-qdb packaging
+        "-packaja")
+            if ! MODE="-packaja". ./scripts/isogen/packaging.sh; then
+                return 1
+            fi
+            ;;
+        # Retrieve beetor_bwc signal-based tracing orchestration from previous actions workflow
+        "-sting")
+            if ! MODE="-sting" . ./scripts/isogen/beetor.sh; then
+                return 1
+            fi
+            ;;
+        # Retrieve runit service tree
+        "-itarun")
+            if ! MODE="-itarun" . ./scripts/isogen/runit.sh; then
+                return 1
+            fi
+            ;;
+        # Bootloaders setup
+        "-bootaeloada")
+            if ! MODE="-bootaeloada" . ./scripts/isogen/bootloaders.sh; then
+                return 1
+            fi
+            ;;
+        # Build ISO9660
+        "-isaisa")
+            if ! MODE="-isaisa" . ./scripts/isogen/iso9660.sh; then
+                return 1
+            fi
+            ;;
+        "*")
+            echo && echo "|> Error: ISOGEN_ART is not a valid artifact option. Options are:"
+            echo
+            echo "Exiting now..."
+            echo
+            return 1
+            ;;
+        esac
+        echo "|> The artifact ${ISOGEN_ART} was built with success."
+        echo
+
+    fi
+
+}
+
+core_poc_packaging() {
+
+    # ================================
+    # Microvms
+    #
+    # ================================
+    # # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
+    ### if ! [ -f ${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} ]; then
+    ###     echo "|> Warning: MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} does not exist in this filepath. Attempting to generate it:"
+    ###     echo && echo
+    ###     #return 1
+    ###     if ! microvm_poc_firecracker; then
+    ###         echo "|> Error: could not run the [microvm_poc_firecracker] function! Exiting now..."
+    ###         echo && echo
+    ###         return 1
+    ###     fi
+    ### fi
+    ### case "${LOG_VERBOSE}" in
+    ### "yes")
+    ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+    ###     printf "\n|> SCOPE: [core_poc_packaging], CHECK: 10\n"
+    ###     echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL} filepath. ...[PASSED]"
+    ###     echo && echo
+    ###     ;;
+    ### esac
+    ### echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # returns if the [MICROVM_GVISOR_TARBALL] filepath does not exist
+    if ! [ -f ${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! microvm_poc_gvisor; then
+            echo "|> Error: could not run the [microvm_poc_gvisor] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 01\n"
+        echo "|> create the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy MICROVM_GVISOR_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_GVISOR_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 02\n"
+        echo "|> copy the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_GVISOR_TARBALL=${MICROVM_GVISOR_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+
+    # returns if the [MICROVM_FIRECRACKER_TARBALL] filepath does not exist
+    if ! [ -f "${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}" ]; then
+        echo "|> Warning: MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! microvm_poc_firecracker; then
+            echo "|> Error: could not run the [microvm_poc_firecracker] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 10\n"
+        echo "|> create the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_FIRECRACKER_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the MICROVM_FIRECRACKER_TARBALL=${MICROVM_FIRECRACKER_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 03\n"
+        echo "|> copy the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_FIRECRACKER_TARBALL=$MICROVM_FIRECRACKER_TARBALL to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH."
+    echo && echo
+
+    # =================
+    # Kata-Containers
+    #
+    # returns if the [MICROVM_KATA_TARBALL] filepath does not exist
+    if ! [ -f ${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]} ] || ! [ -f ${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: either [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] or [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! microvm_poc_kata; then
+            echo "|> Error: could not run the [microvm_poc_kata] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 04\n"
+        echo "|> Does the the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] and [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy MICROVM_KATA_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_KATA_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 05\n"
+        echo "|> copy the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+
+    # Copy MICROVM_KATA_BIN to the VIRTFS_ART_PATH
+    if ! cp "${MICROVM_KATA_BIN}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 06\n"
+        echo "|> copy the [MICROVM_KATA_BIN=${MICROVM_KATA_BIN:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [MICROVM_KATA_TARBALL=${MICROVM_KATA_TARBALL}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH}]."
+    echo && echo
+
+    # =======================
+    # TRACERS: BPFTRACE
+    #
+    # returns if the [TRACERS_BPFTRACE_TARBALL] filepath does not exist
+    if ! [ -f ${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="bpftrace" . ./scripts/entrypoints/tracers-aio.sh); then
+            echo "|> Error: could not run the [tracers-aio.sh] script to build [bpftrace] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [tracers-aio.sh] script to build [bpftrace] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 07\n"
+        echo "|> create the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 08\n"
+        echo "|> copy the TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [TRACERS_BPFTRACE_TARBALL=${TRACERS_BPFTRACE_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
+    # =======================
+    # PACKAGING: IPTABLES
+    #
+    # returns if the [PACKAGING_IPTABLES_TARBALL] filepath does not exist
+    if ! [ -f ${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="iptables" . ./scripts/packages/usgp-man.sh); then
+            echo "|> Error: could not run the [usgp-man.sh] script to build [iptables] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [usgp-man.sh] script to build [iptables] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 09\n"
+        echo "|> create the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 10\n"
+        echo "|> copy the PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [PACKAGING_IPTABLES_TARBALL=${PACKAGING_IPTABLES_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
+    # =====================
+    # PACKAGING: SHADOW
+
+    # returns if the [PACKAGING_SHADOW_TARBALL] filepath does not exist
+    if ! [ -f ${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! (MODE="shadow" . ./scripts/packages/usgp-man.sh); then
+            echo "|> Error: could not run the [usgp-man.sh] script to build [shadow] tarball! Exiting now..."
+            echo && echo
+            return 1
+        fi
+        echo "|> Sucessfully called the [usgp-man.sh] script to build [shadow] tarball! ...[PASSED]"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 11\n"
+        echo "|> create the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    if ! (cp "${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}" "${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}"); then
+        echo "|> Error: it was not possible to copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 12\n"
+        echo "|> copy the PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the [PACKAGING_SHADOW_TARBALL=${PACKAGING_SHADOW_TARBALL:-[EMPTY_VARIABLE]}] to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]."
+    echo && echo
+
+    # Copy the POC_BOOTSCRIPT to the VIRTFS_ART_PATH so it becomes available on the guest vm
+    if ! cp "${POC_BOOTSCRIPT}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-EMPTY_VARIABLE}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 13\n"
+        echo "|> copy the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the POC_BOOTSCRIPT=${POC_BOOTSCRIPT:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]} ."
+    echo && echo
+
+    # ===================
+    # HLCR packaging
+
+    if ! [ -f ${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! hlcr_poc_podman; then
+            echo "|> Error: could not run the [hlcr_poc_podman] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 14\n"
+        echo "|> create the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy PACKAGING_PODMAN_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${PACKAGING_PODMAN_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 15\n"
+        echo "|> copy the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the PACKAGING_PODMAN_TARBALL=${PACKAGING_PODMAN_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+
+    # ====================
+    # PACKAGING: QEMUKJX
+
+    if ! [ -f ${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} ]; then
+        echo "|> Warning: PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} does not exist in this filepath. Attempting to generate it:"
+        echo && echo
+        #return 1
+        if ! qemukjx_poc; then
+            echo "|> Error: could not run the [qemukjx_poc] function! Exiting now..."
+            echo && echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 16\n"
+        echo "|> create the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} filepath. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully created the [PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]}] filepath."
+
+    # Will only run if the previous work.
+    # Copy PACKAGING_QEMUKJX_TARBALL to the VIRTFS_ART_PATH
+    if ! cp "${PACKAGING_QEMUKJX_TARBALL}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL:-[EMPTY_VARIABLE]} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. Exiting now... "
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: [core_poc_packaging], CHECK: 17\n"
+        echo "|> copy the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}. ...[PASSED]"
+        echo && echo
+        ;;
+    esac
+    echo "|> Successfully copied the PACKAGING_QEMUKJX_TARBALL=${PACKAGING_QEMUKJX_TARBALL} to the VIRTFS_ART_PATH=${VIRTFS_ART_PATH}."
+    echo && echo
+}
+
 random_mac() {
 
-#check_shell=$(ps -p $$ | awk "NR==2" | awk '{ print $4 }')
+    #check_shell=$(ps -p $$ | awk "NR==2" | awk '{ print $4 }')
 
-rh1=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
-rh2=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
-rh3=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
-rh4=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
+    rh1=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
+    rh2=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
+    rh3=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
+    rh4=$(head -c 64 /dev/urandom | tr -cd 0-9 | head -c 20)
 
-bubo=$(command -v busybox)
-MACADDRESS=$($bubo printf "52:54:%02x:%02x:%02x:%02x" \
-    "$rh1" "$rh2" \
-    "$rh3" "$rh4")
+    bubo=$(command -v busybox)
+    MACADDRESS=$($bubo printf "52:54:%02x:%02x:%02x:%02x" \
+        "$rh1" "$rh2" \
+        "$rh3" "$rh4")
 
-export MACADDRESS
-printf "\n\n%s\n" "${MACADDRESS}"
+    export MACADDRESS
+    printf "\n\n%s\n" "${MACADDRESS}"
 
-# printf -v macaddr "52:54:%02x:%02x:%02x:%02x" \
-#     $(( RANDOM & 0xff )) \
-#     $(( RANDOM & 0xff )) \
-#     $(( RANDOM & 0xff )) \
-#     $(( RANDOM & 0xff ))
+    # printf -v macaddr "52:54:%02x:%02x:%02x:%02x" \
+    #     $(( RANDOM & 0xff )) \
+    #     $(( RANDOM & 0xff )) \
+    #     $(( RANDOM & 0xff )) \
+    #     $(( RANDOM & 0xff ))
 }
 
 kjx() {
@@ -38,17 +788,18 @@ kjx() {
     random_mac
 
     qemu-system-x86_64 \
-    -kernel "$HOME/Downloads/kjx-headless/bzImage" \
-    -initrd "$HOME/Downloads/kjx-headless/initramfs.cpio.gz" \
-    -enable-kvm \
-    -m 1024 \
-    -append 'console=ttyS0 root=/dev/sda selinux=0 earlyprintk net.ifnames=0' \
-    -nographic \
-    -no-reboot \
-    -drive file="./utils/storage/eulab-hd",format=raw \
-    -net nic,model=virtio,macaddr="$macaddr" \
-    -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
-    -s -S
+        -kernel "$HOME/Downloads/kjx-headless/bzImage" \
+        -initrd "$HOME/Downloads/kjx-headless/initramfs.cpio.gz" \
+        -enable-kvm \
+        -m 1024 \
+        -append 'console=ttyS0 root=/dev/sda selinux=0 earlyprintk net.ifnames=0' \
+        -nographic \
+        -no-reboot \
+        -drive file="./utils/storage/eulab-hd",format=raw \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
+        -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
+        -s -S
+
 }
 
 debug() {
@@ -60,17 +811,17 @@ debug() {
     random_mac
 
     qemu-system-x86_64 \
-    -kernel "$HOME/Downloads/kjx-headless/bzImage" \
-    -initrd "$HOME/Downloads/kjx-headless/initramfs.cpio.gz" \
-    -enable-kvm \
-    -m 1024 \
-    -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0' \
-    -nographic \
-    -no-reboot \
-    -drive file="./utils/storage/eulab-hd",format=raw \
-    -net nic,model=virtio,macaddr="$macaddr" \
-    -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
-    -s -S
+        -kernel "$HOME/Downloads/kjx-headless/bzImage" \
+        -initrd "$HOME/Downloads/kjx-headless/initramfs.cpio.gz" \
+        -enable-kvm \
+        -m 1024 \
+        -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0' \
+        -nographic \
+        -no-reboot \
+        -drive file="./utils/storage/eulab-hd",format=raw \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
+        -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
+        -s -S
 }
 
 thirdver() {
@@ -85,23 +836,22 @@ thirdver() {
     # ./artifacts/distro/mar.initramfs.cpio.gz
     # ./artifacts/distro/mar.initramfs.cpio.gz
     qemu-system-x86_64 \
-    -kernel ./artifacts/bzImage \
-    -initrd ./artifacts/ssh-rootfs/ssh-rootfs-revised.cpio_0.3.1.gz \
-    -enable-kvm \
-    -m 1024 \
-    -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0' \
-    -nographic \
-    -no-reboot \
-    -drive file="./utils/storage/eulab-hd",format=raw \
-    -net nic,model=virtio,macaddr="$macaddr" \
-    -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0
+        -kernel ./artifacts/bzImage \
+        -initrd ./artifacts/ssh-rootfs/ssh-rootfs-revised.cpio_0.3.1.gz \
+        -enable-kvm \
+        -m 1024 \
+        -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0' \
+        -nographic \
+        -no-reboot \
+        -drive file="./utils/storage/eulab-hd",format=raw \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
+        -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0
     #-serial pty
     #-s -S
 
     # clean up bridge
     /bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_bridge
     #echo runqemu1
-
 
     /bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_cap
     #echo runqemu2
@@ -110,170 +860,38 @@ thirdver() {
     #echo HMMMMMMMMM
 }
 
-
 repack_switch() {
 
-# check for ./.github/workflows/dropbear.yml artifact
-if [ -f ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz ]; then
+    # check for ./.github/workflows/dropbear.yml artifact
+    if [ -f ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz ]; then
 
-    # clean the rootfs tree if it exists
-    rm -rf ./artifacts/ssh-rootfs/fakerootdir/* && \
+        # clean the rootfs tree if it exists
+        rm -rf ./artifacts/ssh-rootfs/fakerootdir/* &&
 
-    # decompress gunzip and then cpio to the specified path
-    gzip -cd ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz | cpio -idmv -D ./artifacts/ssh-rootfs/fakerootdir/
+            # decompress gunzip and then cpio to the specified path
+            gzip -cd ./artifacts/ssh-rootfs/rootfs-with-ssh.cpio.gz | cpio -idmv -D ./artifacts/ssh-rootfs/fakerootdir/
 
-    ssh-keygen -t ed25519 -C "dropbear" -f ./artifacts/ssh-keys/kjx-keys -N ""
-    cat ./artifacts/ssh-keys/kjx-keys.pub >> ./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/authorized_keys
-    #./artifacts/dropbear/~/Downloads/dropbear-image/modified/fakerootdir/etc/dropbear/authorized_keys
+        ssh-keygen -t ed25519 -C "dropbear" -f ./artifacts/ssh-keys/kjx-keys -N ""
+        cat ./artifacts/ssh-keys/kjx-keys.pub >>./artifacts/ssh-rootfs/fakerootdir/etc/dropbear/authorized_keys
+        #./artifacts/dropbear/~/Downloads/dropbear-image/modified/fakerootdir/etc/dropbear/authorized_keys
 
+        # enter dir just to run find
+        cd ./artifacts/ssh-rootfs/fakerootdir/ || return &&
 
+            # patch the specified file with anything
+            #
+            ROOTFS_SEMVER=0.2.1
+        # create revised cpio.gz rootfs tarball
+        find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 >../ssh-rootfs-revised.cpio_"$ROOTFS_SEMVER".gz &&
+            echo done!!
 
-    # enter dir just to run find
-    cd ./artifacts/ssh-rootfs/fakerootdir/ || return && \
+    else
+        printf "\n|> tarball file not found inside ./artifacts/ssh-rootfs. Attempting to download...\n"
 
-    # patch the specified file with anything
-    #
-    ROOTFS_SEMVER=0.2.1
-    # create revised cpio.gz rootfs tarball
-    find . -print0 | busybox cpio --null -ov --format=newc | gzip -9 > ../ssh-rootfs-revised.cpio_"$ROOTFS_SEMVER".gz && \
-    echo done!!
+        wget
+    fi
 
-else
-    printf "\n|> tarball file not found inside ./artifacts/ssh-rootfs. Attempting to download...\n"
-
-    wget
-fi
-
-
-echo
-}
-
-
-patch_k3s() {
-
-fakerootdir="/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
-
-(
-cat <<EOF
-version = 2
-
-[plugins."io.containerd.internal.v1.opt"]
-  path = "/var/lib/rancher/k3s/agent/containerd"
-[plugins."io.containerd.grpc.v1.cri"]
-  stream_server_address = "127.0.0.1"
-  stream_server_port = "10010"
-  enable_selinux = false
-  enable_unprivileged_ports = true
-  enable_unprivileged_icmp = true
-  device_ownership_from_security_context = false
-  sandbox_image = "rancher/mirrored-pause:3.6"
-
-[plugins."io.containerd.grpc.v1.cri".containerd]
-  snapshotter = "overlayfs"
-  disable_snapshot_annotations = true
-
-[plugins."io.containerd.grpc.v1.cri".cni]
-  bin_dir = "/var/lib/rancher/k3s/data/cni"
-  conf_dir = "/var/lib/rancher/k3s/agent/etc/cni/net.d"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-  runtime_type = "io.containerd.runc.v2"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-  BinaryName = "/usr/bin/runc"
-  SystemdCgroup = false
-
-[plugins."io.containerd.grpc.v1.cri".registry]
-  config_path = "/var/lib/rancher/k3s/agent/etc/containerd/certs.d"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."crun"]
-  runtime_type = "io.containerd.runc.v2"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."crun".options]
-  BinaryName = "/usr/bin/crun"
-  SystemdCgroup = false
-
-# gVisor: https://gvisor.dev/
-[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.gvisor]
-  runtime_type = "io.containerd.runsc.v1"
-  BinaryName = "/usr/local/bin/runsc"
-# Kata Containers: https://katacontainers.io/
-[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata]
-  runtime_type = "io.containerd.kata.v2"
-  BinaryName = "/usr/local/bin/kata-runtime
-
-
-EOF
-) | tee /var/lib/rancher/k3s/agent/containerd/config.toml.tmpl
-
-
-# "/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl"
-
-    # setup the k3s toml
-( cat <<EOF
-version = 3
-[plugins."io.containerd.cri.v1.runtime".containerd]
-  default_runtime_name = "crun"
-  [plugins."io.containerd.cri.v1.runtime".containerd.runtimes]
-    # crun: https://github.com/containers/crun
-    [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.crun]
-      runtime_type = "io.containerd.runc.v2"
-      [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.crun.options]
-        BinaryName = "/usr/local/bin/crun"
-    # gVisor: https://gvisor.dev/
-    [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.gvisor]
-      runtime_type = "io.containerd.runsc.v1"
-    # Kata Containers: https://katacontainers.io/
-    [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata]
-      runtime_type = "io.containerd.kata.v2"
-EOF
-) | tee ./artifacts/custom-rc.toml.tmpl
-
-# setup the kind runtimeClass for each
-( cat <<EOF
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: runc
-handler: runc
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: crun
-handler: crun
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: gvisor
-handler: gvisor
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: kata
-handler: kata
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: youki
-handler: youki
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: wasmtime
-handler: wasmtime
----
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: wasmedge
-handler: wasmedge
-EOF
-) | ./k3s kubectl apply -f -
-
+    echo
 }
 
 dropbear() {
@@ -292,26 +910,19 @@ dropbear() {
     #  /home/asari/Downloads/initramfs/initramfs.cpio.gz
 
     DROBE="./artifacts/ssh-rootfs/ssh-rootfs-revised.cpio_0.3.2.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/ssh-rootfs-revised_0.3.3.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v5.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v6.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v7.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v8.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v9.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v10.cpio.gz"
     ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v13.cpio.gz"
 
     qemu-system-x86_64 \
-    -kernel ./artifacts/bzImage \
-    -initrd "$ANODA" \
-    -enable-kvm \
-    -m 1024 \
-    -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0' \
-    -nographic \
-    -no-reboot \
-    -drive file="./utils/storage/eulab-hd",format=raw \
-    -net nic,model=virtio,macaddr="$macaddr" \
-    -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0
+        -kernel ./artifacts/bzImage \
+        -initrd "$ANODA" \
+        -enable-kvm \
+        -m 1024 \
+        -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0' \
+        -nographic \
+        -no-reboot \
+        -drive file="./utils/storage/eulab-hd",format=raw \
+        -net nic,model=virtio,macaddr="${MACADDRESS:-[EMPTY_VARIABLE]}" \
+        -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0
     #-serial pty
     #-s -S
 
@@ -320,7 +931,6 @@ dropbear() {
     /bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_fallin
     #echo runqemu1
 
-
     /bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_cap
     #echo runqemu2
     #printf "\n=========\nCleaning now...\n============\n"
@@ -328,193 +938,918 @@ dropbear() {
     #echo HMMMMMMMMM
 }
 
+create_rvdsf() {
+
+    # invoke the rvdsf script to create a virtual disk sparse file as needed
+    if ! [ -f "${RVDSF_EULAB}" ]; then
+        printf "\n|> Error: the Raw Virtual Disk Sparse File (RVDSF) path was not found. Attempting to create it...\n\n"
+    fi
+    MODE="-sf" LOG_VERBOSE="yes" . ./scripts/isogen/rvdsf.sh
+
+}
+
 save_registry() {
-# function that saves the registry for
-# containerd
+    # Function that saves the registry itself for containerd to be able to serve images in an
+    # airgap context inside the ISO. Useful for either DMZ, no WAN or running on a guest without
+    # WAN access and without using virtfs.
+    # REGISTRY_PULLER() {
+    #     CCR_MODE="-checker" . ./scripts/ccr.sh && docker pull registry:3.0
+    # }
 
-podman pull docker://registry:3.0
+    # if ! "$REGISTRY_PULLER"; then printf "ERRADO"; fi
 
-REG_NAME=$(podman images | grep registry | awk '{print $3}')
-TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
+    CCR_MODE="-checker"
+    export CCR_MODE
+    #. ./scripts/ccr.sh || printf "\n|> Error: CCR script has failed! \n" && echo
+    #return 1
 
-# This creates a docker-save tarball bundle
-# podman save -o ./artifacts/oci-registry-tarball.tar "$REG_NAME"
+    # if ! docker pull registry:3.0; then printf "ERRADO"; fi
 
-# Check the contents
-# tar tf ./artifacts/oci-registry-tarball.tar | head
+    if ! . ./scripts/ccr.sh ||
+        printf "\n|> Error: CCR script has failed! \n" &&
+        podman pull registry:3.0; then
+        #docker
+        #if ! docker pull registry:3.0; then
+        # will raise an "invalid reference format" if using vanilla docker.
+        # podman, skopeo and buildah does not have this problem.
+        printf "\n|> Error: it was not possible to pull the registry:3.0 OCI image. Exiting now..."
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: save_registry"
+        printf "\n|> CHECK: 01"
+        printf "\n|> pull the registry:3.0 OCI image. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> registry:3.0 OCI image pulled with success.\n\n"
 
-# convert the docker-save tarball bundle to OCI spec so it can
-mkdir -p ./skopeo-test
-## idempotent
-# skopeo copy containers-storage:localhost:5000/registry:3.0 dir:$PWD/skopeo-test/
-skopeo copy containers-storage:localhost:5000/registry:3.0 oci:$PWD/skopeo-test:3.0
+    REG_NAME=$(
+        #CCR_MODE="-checker" . ./scripts/ccr.sh &&
+        #    docker images |
+        podman images |
+            grep "docker.io" |
+            grep "registry" -m 1 |
+            awk '{print $3}'
+    )
 
-# inspect with umoci
-# umoci unpack --image /tmp/oci-layout:myimage /tmp/umoci-rootfs
+    # echo
+    # echo "|> THIS IS REG_NAME=${REG_NAME}"
+    # echo
 
-# list output contents
-ls -allhtr ./skopeo-test/
+    # convert the registry tarball bundle (continers-storage) to the OCI spec at tmp.
+    REGISTRY_NAMING=$(podman images | grep registry | grep docker -m 1 | awk '{print $1}')
+    if ! skopeo copy containers-storage:"${REGISTRY_NAMING}:3.0" oci:/tmp/skopeo-test-registry:3.0; then
+        printf "\n|> Error: it was not possible to copy the registry image bundle from containers-storage (after pull) to oci bundle at tmp. Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: save_registry"
+        printf "\n|> CHECK: 03"
+        printf "\n|> convert the registry tarball bundle (continers-storage) to the OCI spec at tmp. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> skopeo-copy the registry OCI image from containers-storage (after pull) format into oci bundle copied with success.\n\n"
 
-# create tarball
-# tar -C /tmp/oci-registry-tarball -cf /tmp/registry.oci.tar .
-# tar -cf "$TARBALL_ARTIFACT" "$PWD/skopeo-test/"
-tar -C ./skopeo-test -cf "$TARBALL_ARTIFACT" .
+    # create a docker-save compliant tarball bundle
+    # registry size: at around 56MB
+    # skopeo will recognize this as whatis called a "docker-archive"
+    # https://github.com/containers/image/blob/main/docs/containers-transports.5.md
+    ### if ! podman save -o ./artifacts/oci-registry_3.0_tarball.tar "$REG_NAME"; then
+    ###     printf "\n|> Error: it was not possible to create a docker-save compliant tarball bundle (docker-archive format). Exiting now...\n\n"
+    ###     return 1
+    ### fi
+    ### case "${LOG_VERBOSE}" in
+    ### "yes")
+    ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+    ###     printf "\n|> SCOPE: save_registry"
+    ###     printf "\n|> CHECK: 04"
+    ###     printf "\n|> fetch tarball.gz image with said version on the filepath. ...[PASSED]\n"
+    ###     ;;
+    ### esac
+    ### printf "\n|> docker-save compliant tarball bundle created with success.\n\n"
 
+    # Check the contents (todo: sha256sum)
+    ## if ! tar tf ./artifacts/oci-registry_3.0_tarball.tar | head; then
+    ##     printf "\n|> Error: it was not possible to check the contents of the oci registry:3.0 tarball. Exiting now...\n\n"
+    ##     return 1
+    ## fi
+    ## case "${LOG_VERBOSE}" in
+    ## "yes")
+    ##     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+    ##     printf "\n|> SCOPE: save_registry"
+    ##     printf "\n|> CHECK: 03"
+    ##     printf "\n|> check contents of the oci registry:3.0 tarball ...[PASSED]\n"
+    ##     ;;
+    ## esac
+    ## printf "\n|> contents of the oci registry:3.0 tarball checked with success.\n\n"
 
-rm -rf ./skopeo-test
+    ### # convert the docker-save tarball bundle (docker-archive) to OCI spec so it can
+    ### if ! skopeo copy docker-archive:./artifacts/oci-registry_3.0_tarball.tar oci:/tmp/skopeo-test-registry:3.0; then
+    ###     printf "\n|> Error: it was not possible to conver the docker-save tarball bundle to OCI spec. Exiting now..."
+    ###     return 1
+    ### fi
+    ### case "${LOG_VERBOSE}" in
+    ### "yes")
+    ###     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+    ###     printf "\n|> SCOPE: save_registry"
+    ###     printf "\n|> CHECK: 04"
+    ###     printf "\n|> convert the docker-save tarball bundle (docker-archive) to OCI spec. ...[PASSED]\n"
+    ###     ;;
+    ### esac
+    ### printf "\n|> conversion of the docker-save tarball bundle (docker-archive) to OCI spec was done with success.\n\n"
+
+    # create a rootless umoci-unpack from the containers-storage format directory, which is an unpacked filesystem bundle
+    if ! umoci unpack --rootless --image /tmp/skopeo-test-registry:3.0 /tmp/umoci-rootfs; then
+        printf "\n|> Error: could not create a rootless umoci-unpack rootfs from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). Exiting now..."
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: save_registry"
+        printf "\n|> CHECK: 04"
+        printf "\n|> create a rootless umoci-unpack from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> created a rootless umoci-unpack from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle) with success.\n\n"
+
+    # list output contents
+    ls -allhtr /tmp/skopeo-test-registry
+
+    # create tarball from the containers-storage format unpacked filesystemm bundle
+    if ! (tar -C /tmp/skopeo-test-registry -cf "${SKOPEO_TARBALL_ARTIFACT}" .); then
+        printf "\n|> Error: could not create tarball from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: save_registry"
+        printf "\n|> CHECK: 05"
+        printf "\n|> created a tarball from the containers-storage format tarball bundle with success. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> created a tarball from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle) with success.\n\n"
+
+    # cleanup: remove the umoci-rootfs (the unpacked filesystem bundle) directory at tmp
+    if [ -d /tmp/umoci-rootfs ]; then
+        if ! rm -rf /tmp/umoci-rootfs; then
+            printf "\n|> Error: could not remove the the umoci-unpack directory AT TMP-UMOCI-ROOTFS from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). Exiting now...\n\n"
+            return 1
+        fi
+        case "${LOG_VERBOSE}" in
+        "yes")
+            printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+            printf "\n|> SCOPE: save_registry"
+            printf "\n|> CHECK: 06"
+            printf "\n|> remove the umoci-rootfs runtime bundle artifact dir at tmp. ...[PASSED]\n"
+            ;;
+        esac
+        printf "\n|> removed the umoci-unpack directory AT TMP-UMOCI-ROOTFS from the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle) with success.\n\n"
+    fi
+
+    # cleanup: remove the containers-storage format tarball bundle directory
+    if [ -d /tmp/skopeo-test-registry ]; then
+        if ! rm -rf /tmp/skopeo-test-registry; then
+            printf "\n|> Error: could not removed the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). Exiting now...\n\n"
+            return 1
+        fi
+        case "${LOG_VERBOSE}" in
+        "yes")
+            printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+            printf "\n|> SCOPE: save_registry"
+            printf "\n|> CHECK: 07"
+            printf "\n|> remove the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle). ...[PASSED]\n"
+            ;;
+        esac
+        printf "\n|> remove the [containers-storage] format directory (the OCI image for the registry:3.0 container's unpacked filesystem bundle) with success.\n\n"
+    fi
+
+}
+
+fetch_k3s() {
+    # fetch the base OCI/CRI images for an k3s
+    # airgap cluster since it might be inside a DMZ.
+
+    OLD_K3S_VERSION=""
+    K3S_VERSION="v1.34.2"
+
+    K3S_AIRGAP_URI="https://github.com/k3s-io/k3s/releases/download/v1.34.2%2Bk3s1/k3s-airgap-images-amd64.tar.gz"
+    K3S_AIRGAP_URI_SHA256SUM="https://github.com/k3s-io/k3s/releases/download/v1.34.2%2Bk3s1/k3s-airgap-images-amd64.sha256sum"
+
+    K3S_AIRGAP_PATH="./artifacts/k3s-airgap/outro"
+    K3S_AIRGAP_TARBALL_GZ="${K3S_AIRGAP_PATH}/k3s-airgap-images_${K3S_VERSION}-amd64.tar.gz"
+    K3S_AIRGAP_TARGZ_SHA256SUM="${K3S_AIRGAP_PATH}/k3s-airgap-images_${K3S_VERSION}-amd64.sha256sum"
+
+    # make sure the k3s airgap path exists
+    if ! [ -d "${K3S_AIRGAP_PATH}" ]; then
+        mkdir -p "${K3S_AIRGAP_PATH}" &&
+            printf "\n|> Creating k3s airgap path...\n\n"
+        # idempotent
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: fetch_k3s"
+        printf "\n|> CHECK: 01"
+        printf "\n|> make sure the k3s airgap path exists...[PASSED]\n"
+        ;;
+    esac
+
+    # Fetch tarball.gz images and name it with said version
+    if ! wget -O "${K3S_AIRGAP_TARBALL_GZ}" "${K3S_AIRGAP_URI}"; then
+        printf "\n|> Error: could not download the k3s airgap tarball.gz. Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: fetch_k3s"
+        printf "\n|> CHECK: 02"
+        printf "\n|> fetch tarball.gz image with said version on the filepath...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> k3s airgap tarball.gz download has finished.\n\n"
+
+    # Fetch tarball.gz images SHA256SUM and name it with said version
+    if ! wget -O "${K3S_AIRGAP_TARGZ_SHA256SUM}" "${K3S_AIRGAP_URI_SHA256SUM}"; then
+        printf "\n|> Error: could not download the k3s airgap tarball.gz SHA256SUM. Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: fetch_k3s"
+        printf "\n|> CHECK: 03"
+        printf "\n|> fetch tarball.gz image SHA256SUM with said version on the filepath...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> k3s airgap tarball.gz SHA256SUM download has finished.\n\n"
+
+    # Check the SHA256SUM if it is the correct tarball
+    cd "${K3S_AIRGAP_PATH}" || return
+    FILECHECK=$(sha256sum "${K3S_AIRGAP_TARBALL_GZ}")
+    cd - || return
+
+    ORIGINALSHA=$(grep "${K3S_AIRGAP_TARBALL_GZ}" ./artifacts/wget-checksums.txt | awk '{print $1}')
+
+    if ! [ "${FILECHECK}" = "${ORIGINALSHA}" ]; then
+        echo "checksum failed: files are different."
+        return 1
+    fi
+    echo "checksum success: files are valid."
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: fetch_k3s"
+        printf "\n|> CHECK: 04"
+        printf "\n|> check the SHA256SUM if it is the correct tarball...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Checksum check was successful.\n\n"
 
 }
 
 squash_k3s() {
-# here goes both the airgap images and the registry so containerd can
+    # PS-2: kind of unecessary since with virtio/virtfs
+    # the artifact can be shared between host and guest without
+    # relying on the qemu device.
 
-KJXPATH=$(basename "$PWD")
+    # PS-1: here goes both the airgap images and the registry so containerd can
+    # gunzip,
+    KJXPATH=$(basename "$PWD")
 
-# REG_FILE_PATH="./artifacts/oci-registry-tarball.tar"
-OCI_SKOPEO_IMG="./skopeo-test"
-#TARBALL_ARTIFACT="./skopeo-convert-registry.oci.tar"
-TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
-REG_BUILD_DIR="/tmp/k3s-unpack/"
+    SKOPEO_TARBALL_ARTIFACT="/tmp/skopeo-convert-registry.oci.tar"
 
-if ! [ -f "$TARBALL_ARTIFACT" ]; then
-    save_registry
-fi
+    # k3s airgap image path and basenames
+    K3S_AIRGAP_PATH="./artifacts/k3s-airgap"
+    K3S_AIRGAP_TARBALL_GZ="${K3S_AIRGAP_PATH}/k3s-airgap-images-amd64.tar.gz"
+    K3S_AIRGAP_TARBALL_GZ_NAME="k3s-airgap-images-amd64.tar.gz"
+    K3S_AIRGAP_TAR_NAME="k3s-airgap-images-amd64.tar"
 
-if [ "$KJXPATH" = "kjx-headless" ]; then
+    # /tmp directories to unpack and squashfs
+    K3S_UNPACK_TMP="/tmp/k3s-unpack"
+    K3S_SQUASHFS_FILE="/tmp/k3s-tarball.squashfs"
 
-    mkdir -p /tmp/k3s-unpack
+    #K3S_SQUASHFS_IMAGE_PATH="./utils/storage/k3s-tarball-squashfs.img"
 
-    # copy the save_registry function artifact to the directory
-    cp "$TARBALL_ARTIFACT" "$REG_BUILD_DIR"
+    # mount point for the k3s-squashfs
+    MOUNTPOINT_K3S_SQUASHFS="/mnt/k3s-squashfs"
 
+    # moved to caller scope, on airgap
+    # now, the squas_k3s function is called only
+    # after the conditional branch for save_registry.
+    #
+    # if ! [ -f "${SKOPEO_TARBALL_ARTIFACT}" ]; then
+    #     printf "\n|> skopeo tarball artifact was not found. Running the [ save_registry ] function now...\n\n"
+    #     save_registry
+    # fi
+    # case "${LOG_VERBOSE}" in
+    # "yes")
+    #     printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+    #     printf "\n|> SCOPE: squash_k3s"
+    #     printf "\n|> CHECK: 01"
+    #     printf "\n|> Does the SKOPEO_TARBALL_ARTIFACT filepath exists?...[PASSED]\n\n"
+    #     ;;
+    # esac
 
-    # copy the airgap tarball gzip-ed and then gunzip it
-    cp ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz /tmp/k3s-unpack/
-    cd /tmp/k3s-unpack/ || return
-    # gzip -c ./k3s-airgap-images-amd64.tar.gz > ./k3s-airgap-images-amd64.tar && \
-    gunzip -c ./k3s-airgap-images-amd64.tar.gz > ./k3s-airgap-images-amd64.tar && \
-        ls -allhtr ./k3s-airgap-images-amd64.tar && \
-        rm ./k3s-airgap-images-amd64.tar.gz
+    # check if k3s airgap tarball.gz already exists.
+    if ! [ -f "${K3S_AIRGAP_TARBALL_GZ}" ]; then
+        printf "\n|> k3s airgap tarball.gz was not found. Attempting to run the [ fetch_k3s ] function now...\n\n"
+        fetch_k3s
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 02"
+        printf "\n|> Does the K3S_AIRGAP_TARBALL_GZ filepath exists?...[PASSED]\n\n"
+        ;;
+    esac
 
+    # check if PWD is the root of the repository
+    if ! [ "${KJXPATH}" = "kjx-headless" ]; then
+        # printf "\n|> Error: not on the root of the kjx-headless repository. Exiting now..."
+        printf "\n|> Error: outside of the path root directory. Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 03"
+        printf "\n|> Is PWD the root of the kjx-headless repository?...[PASSED]\n\n"
+        ;;
+    esac
+
+    #if [ "${KJXPATH}" = "kjx-headless" ]; then
+
+    # make sure the K3S_UNPACK_TMP directory exists
+    mkdir -p "${K3S_UNPACK_TMP}"
+
+    # Copy the save_registry function artifact to the directory
+    if ! cp "${SKOPEO_TARBALL_ARTIFACT}" "${K3S_UNPACK_TMP}"; then
+        printf "\n|> Error: could not copy save_registry function artifact to the directory "
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 05"
+        printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Copied the save_registry function artifact to the directory. ...[PASSED]"
+
+    # copy the k3s airgap tarball files into the umoci-unpack
+    if ! cp "${K3S_AIRGAP_TARBALL_GZ}" "${K3S_UNPACK_TMP}"; then
+        printf "\n|> Error: could not copy the k3s airgap tarball files into the umoci unpack"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 06"
+        printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
+        ;;
+    esac
+
+    cd "${K3S_UNPACK_TMP}" || return
+
+    if ! gunzip -c "${K3S_AIRGAP_TARBALL_GZ_NAME}" >"${K3S_AIRGAP_TAR_NAME}"; then
+        printf "\n|> Error: it was not possible to unzip the tar.gz tarball of the K3S_AIRGAP_TARBALL_GZ_NAME. Exiting now...\n\n"
+        cd - || return
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 07"
+        printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
+        ;;
+    esac
+
+    ls -allhtr "${K3S_AIRGAP_TAR_NAME}"
+
+    if ! rm "${K3S_AIRGAP_TARBALL_GZ_NAME}"; then
+        printf "\n|> Error: it was not possible to remove the K3S_AIRGAP_TARBALL_GZ_NAME artifact. Exiting now...\n\n"
+        cd - || return
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 08"
+        printf "\n|> handle the airgap tarball gzip-ed, gunzip it and finish cleaning. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Removed the K3S_AIRGAP_TARBALL_GZ_NAME artifact. ...[PASSED] \n\n"
+
+    # Exit the dir anyway
     cd - || return
-    #gzip ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz -c /tmp/k3s-unpack/
 
-    #tar -xzf ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz -C /tmp/k3s-unpack
-    mksquashfs /tmp/k3s-unpack /tmp/k3s-tarball.squashfs -comp zstd
+    # Create a mksquashfs from k3s-unpack tmp directory
+    if ! mksquashfs "${K3S_UNPACK_TMP}" "${K3S_SQUASHFS_FILE}" -comp zstd; then
+        printf "|> Error: it was not possible to create a mksquashfs from the k3s-unpack tmp directory at the %s filepath. Exiting now..." "${K3S_SQUASHFS_FILE:-[EMPTY_VARIABLE]}"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 05"
+        printf "\n|> create a mksquashfs from k3s-unpack tmp directory. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully created a mksquashfs from k3s-unpack tmp directory.\n\n"
 
-    #mksquashfs ./artifacts/k3s-airgap/k3s-airgap-images-amd64.tar.gz /tmp/k3s-tarball.squashfs -comp zstd
-    dd if=/dev/zero of=./utils/storage/k3s-tarball-squashfs.img bs=1M count=200
-    mkfs.ext4 ./utils/storage/k3s-tarball-squashfs.img
+    # Create raw image for it to be added as drive input for QEMU
+    # with unconditional branch
+    if ! [ -d "$(dirname "${K3S_SQUASHFS_IMAGE_PATH}")" ]; then
+        printf "\n|> Error: the directory path %s does not exist. Attempting to create dir...\n\n" "$(dirname "${K3S_SQUASHFS_IMAGE_PATH}")"
+        mkdir -p "$(dirname "${K3S_SQUASHFS_IMAGE_PATH}")"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 06"
+        printf "\n|> create the K3S_SQUASHFS_IMAGE_PATH. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully created the K3S_SQUASHFS_IMAGE_PATH. \n\n"
 
+    # create a raw image with dd.
+    if ! dd if=/dev/zero of="${K3S_SQUASHFS_IMAGE_PATH}" bs=1M count=200; then
+        printf "|> Error: dd failed with exit code %s. Exiting now...\n" $?
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 07"
+        printf "\n|> create a raw image with dd. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully created a raw image with dd.\n\n"
 
-    mkdir -p /mnt/k3s-squashfs
+    # format the k3s squashfs image path filename with the ext4 filesystem
+    # deps:
+    if ! mkfs.ext4 "${K3S_SQUASHFS_IMAGE_PATH}"; then
+        printf "|> Error: mkfs.ext4 failed with exit code %s\n" $?
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 08"
+        printf "\n|> format the k3s squashfs image filepath with the ext4 filesystem. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully formatted the k3s squashfs image filepath image with a ext4 filesystem with mkfs.ext4.\n\n"
 
-    sudo mount -o loop ./utils/storage/k3s-tarball-squashfs.img /mnt/k3s-squashfs/
-    #sudo cp /tmp/k3s-tarball.squashfs /mnt/k3s-squashfs/
-    sudo cp /tmp/k3s-tarball.squashfs /mnt/k3s-squashfs
+    mkdir -p "${MOUNTPOINT_K3S_SQUASHFS}"
 
-    # clean artifacts
-    rm /tmp/k3s-tarball.squashfs
-    rm -rf /tmp/k3s-unpack/
+    # Create mountpoint directory and create a loop mount with the k3s squashfs image path
+    if ! sudo mount -o loop "${K3S_SQUASHFS_IMAGE_PATH}" "${MOUNTPOINT_K3S_SQUASHFS}"; then
+        printf "\n|> Error: it was not possible to create MOUNTPOINT_K3S_SQUASHFS directory and a loop mount of K3S_SQUASHFS_IMAGE_PATH at MOUNTPOINT_K3S_SQUASHFS. Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 09"
+        printf "\n|> create mountpoint dir and a loop mount with the k3s squashfs image path. ...[PASSED]\n"
+        ;;
+    esac
+    echo && echo "|> Successfully created a loop mount of K3S_SQUASHFS_IMAGE_PATH=$K3S_SQUASHFS_IMAGE_PATH at MOUNTPOINT_K3S_SQUASHFS=$MOUNTPOINT_K3S_SQUASHFS."
+    echo && echo
 
-    # unmount loopback device
-    sudo umount /mnt/k3s-squashfs/
+    # Copy the K3S_SQUASHFS_FILE to the MOUNTPOINT_K3S_SQUASHFS mount point path
+    # available at [/dev/sdb on /mnt/airgap-registry-image type ext4 (rw,relatime)]
+    # reference: ./scripts/isogen/poc-bootscript.sh
 
-else
-    printf "\n|> Error: outside of the path root directory. Exiting now...\n\n"
-fi
+    ls -allhtr $K3S_SQUASHFS_FILE
+    ls -allhtr $MOUNTPOINT_K3S_SQUASHFS
+    echo "HEREEEEEEEEEEEEEEEEEEEEE HEEEEEEEEEEEEEEEEEEEEEEEEEEEERE"
 
+    if ! sudo cp "${K3S_SQUASHFS_FILE}" "${MOUNTPOINT_K3S_SQUASHFS}"; then
+        echo
+        echo "|> Error: it was not possible to copy the K3S_SQUASHFS_FILE=$K3S_SQUASHFS_FILE to the MOUNTPOINT_K3S_SQUASHFS=$MOUNTPOINT_K3S_SQUASHFS. Exiting now..."
+        echo && echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK 10"
+        printf "\n|> copy the K3S_SQUASHFS_FILE to the MOUNTPOINT_K3S_SQUASHFS. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully copied the K3S_SQUASHFS_FILE to the MOUNTPOINT_K3S_SQUASHFS. \n\n"
+
+    # Copy the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH mount point path
+    # available at [hostshare on /mnt/virtio-test type 9p (rw,relatime,access=client,trans=virtio)
+    # reference: ./scripts/isogen/poc-bootscript.sh
+
+    # check permissions
+    ls -allhtr $K3S_SQUASHFS_FILE
+
+    if ! sudo cp "${K3S_SQUASHFS_FILE}" "${VIRTFS_ART_PATH}"; then
+        echo "|> Error: it was not possible to copy the K3S_SQUASHFS_FILE=$K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH=$VIRTFS_ART_PATH. Exiting now... "
+        echo "|> SCOPE: squash_k3s, CHECK: 09"
+        echo
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK: 09"
+        printf "\n|> copy the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully copied the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. \n\n"
+
+    # cleanup: artifacts and their directories
+    if ! [ -f "${K3S_SQUASHFS_FILE}" ]; then
+        if ! rm "${K3S_SQUASHFS_FILE}"; then
+            printf "\n|> Error: was not possible to remove %s" $K3S_SQUASHFS_FILE
+            return 1
+        fi
+        echo "|> Removed ${K3S_SQUASHFS_FILE} with success."
+    fi
+    if [ -d "${K3S_UNPACK_TMP}" ]; then
+        if ! rm -rf "${K3S_UNPACK_TMP}"; then
+            printf "\n|> Error: it was not possible to remove %s" $K3S_UNPACK_TMP
+            return 1
+        fi
+        echo "|> Removed ${K3S_UNPACK_TMP} with success."
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK 10"
+        printf "\n|> clean artifacts. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully cleaned the artifacts.\n\n"
+
+    # cleanup: unmount loopback device
+    if ! (sudo umount "${MOUNTPOINT_K3S_SQUASHFS}"); then
+        printf "\n|> Error: it was not possible to unmount the loopback device. Exiting now..."
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: squash_k3s"
+        printf "\n|> CHECK 11"
+        printf "\n|> unmount loopback device. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully unmounted the loopback device.\n\n"
+
+    #else
+    #    printf "\n|> Error: outside of the path root directory. Exiting now...\n\n"
+    #fi
 
 }
 
+# Function to manually test configuration
+# with an airgap k3s build.
+# todo: virtfs
 airgap_k3s() {
 
-    # setup bridge
+    #K3S_SQUASHFS_IMAGE_PATH="./utils/storage/k3s-tarball-squashfs.img"
+
+    # Setup bridge
     /bin/sh ./scripts/sandbox/net-qemu_myifup.sh fallin
 
     printf "\n=========\nSetting up the bridge...\n============\n\n"
 
-    # generate a macaddr
-    random_mac
-
-    if ! [ -f ./utils/storage/k3s-tarball-squashfs.img ]; then
-        squash_k3s
+    # Generate a macaddr
+    if ! random_mac; then
+        printf "\n|> It was not possible to generate a macaddr. Exiting now..."
+        return 1
     fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 01"
+        printf "\n|> Generating a macaddr... [PASSED]\n"
+        ;;
+    esac
+    printf "\n|> macaddr generated with success.\n\n"
 
-    # ANODA is the initramfs.cpio.gz that serves temporarily as a rootfs
+    # check if PWD is the root of the repository
+    if ! [ "${KJXPATH}" = "kjx-headless" ]; then
+        printf "|> Error: not on the root of the kjx-headless repository. Change dir and try again.\nExiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 02"
+        printf "\n|> Is PWD the root of the repository?... [PASSED]\n"
+        ;;
+    esac
+    printf "\n|> success: the PWD DOES correspond to the root of the repository.\n\n"
+
+    # independent call to save_registry
+    if ! [ -f "${SKOPEO_TARBALL_ARTIFACT}" ]; then
+        printf "\n|> skopeo tarball artifact was not found. Calling the [ save_registry ] function now...\n\n"
+        if ! save_registry; then
+            printf "\n|> Error: it was not possible to call [save_registry] and create the SKOPEO_TARBALL_ARTIFACT."
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 03"
+        printf "\n|> Does the SKOPEO_TARBALL_ARTIFACT filepath exists?...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> success: the SKOPEO_TARBALL_ARTIFACT filepath exists.\n\n"
+
+    # it will only run if the k3s squashfs image does not exist.
+    #if [ "${KJXPATH}" = "kjx-headless" ]; then
+    # Check if raw image exists at utils
+
+    if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
+        #&& ! [ -f "${SKOPEO_TARBALL_ARTIFACT}" ]; then
+        # Check if Skopeo OCI conversion image artifact exists
+        # so it gets generated every run as needed
+        printf "\n|> Error: the filepath %s does not exist. Attempting to create it..." "${K3S_SQUASHFS_IMAGE_PATH:-[EMPTY_VARIABLE]}"
+        #"${SKOPEO_TARBALL_ARTIFACT:-[EMPTY_VARIABLE]}"
+
+        if ! squash_k3s; then
+            echo && echo "|> SCOPE: airgap_k3s, CHECK: 04"
+            echo "|> Error: it was not possible to create the K3S_SQUASHFS_IMAGE_PATH=$K3S_SQUASHFS_IMAGE_PATH filepath. Exiting now..."
+            echo
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 04"
+        printf "\n|> check if raw image exists at utils. ... [PASSED]\n"
+        ;;
+    esac
+    printf "\n|> success: the raw image DOES exists at utils.\n\n"
+
+    # Check if raw virtual disk sparse file exists at utils
+    #if ! [ -f "${RVDSF_EULAB}" ]; then
+    #    printf "\n|> Error: raw virtual disk sparse file does not exist. Attempting to create now..."
+
+    if ! create_rvdsf; then
+        printf "\n|> Error: the Raw Virtual Disk Sparse File (RVDSF) path was not found. Attempting to create it...\n\n"
+        return 1
+    fi
+    #fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 04"
+        printf "\n|> Does RVDSF filepath exists?...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> checked if the RVDSF filepath exists.\n\n"
+
+    ######## ANODA ###########
     #
-    # this one enables cgroupsv2 only, without cgroupsv1
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v13.cpio.gz"
-
-    # this one have containerd dynamically linked against musl
-    #ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v14.cpio.gz"
-
-    # this one have fuse-overlayfs
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v15.cpio.gz"
+    # PS: ANODA is the initramfs.cpio.gz that serves temporarily as a rootfs
     #
-    # this one have bpftrace
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v16.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v18.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v19.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v20.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v21.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v22.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v23.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v24.cpio.gz"
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v25.cpio.gz"
+    # v13: This one enables cgroupsv2 only, without cgroupsv1
+    #   rootfs_v13.cpio.gz"
+    #
+    # v14: This one have containerd dynamically linked against musl
+    #   rootfs_v14.cpio.gz"
+    #
+    # v15: This one have fuse-overlayfs
+    #   rootfs_v15.cpio.gz"
+    #
+    # v16-v25: These already one have bpftrace
+    #   rootfs_v16.cpio.gz
+    #   ...
+    #   ...
+    #   rootfs_v25.cpio.gz
 
-    # new kernel modules properly setup
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v26.cpio.gz"
+    # v26: New kernel modules properly setup
+    #   rootfs_v26.cpio.gz"
 
-    # gvisor runsv, kata and crun binaries enabled
-    # ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v27.cpio.gz"
+    # v27: gvisor runsv, kata and crun binaries enabled
+    #   rootfs_v27.cpio.gz"
 
-    # full podman dynamic binaries and shared objects
-    ANODA="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
+    CALL_TO_QONQ_QDB() {
+        echo "Dependencies for the initramfs and rootfs"
+    }
 
+    # v28: Full podman dynamic binaries and shared objects
+    ANODA_INITRAMFS="/home/asari/Downloads/kjxh-artifacts/another/rootfs_v28.cpio.gz"
+    if ! [ -f "${ANODA_INITRAMFS}" ]; then
+        printf "\n|> Error: missing initramfs.cpio.gz (passing as a rootfs) - Not found in given path!\n\n"
+        printf "\n|> Exiting now...\n\n"
 
-    # PS: this kernel image needs to have squashfs support.
-    #KERNEL_IMAGE="./artifacts/bzImage"
-    #KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/bzImage"
-    #MEMCG_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/2_memcg-kernel/bzImage"
-    #OVERLAYFS_KERNEL_IMG="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
-    # OVERLAY_KO="$HOME/Downloads/kjxh-artifacts/3_overlay_support/bzImage"
+        # call the initramfs.cpio.gz builder function
+        ISOGEN_ART="initramfs"
+        export ISOGEN_ART
+        if ! artifacts_builder; then
+            echo && echo "|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+            echo "|> SCOPE: from airgap_k3s, calling artifacts_builder with ISOGEN_ART=$ISOGEN_ART"
+            echo
+            return 1
+        fi
+        case "${LOG_VERBOSE}" in
+        "yes")
+            printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+            echo "|> SCOPE: from airgap_k3s, calling artifacts_builder with ISOGEN_ART=$ISOGEN_ART"
+            echo "|> call the initramfs.cpio.gz builder function (airgap_k3s) with ISOGEN_ART=$ISOGEN_ART . ...[PASSED]"
+            echo
+            ;;
+        esac
+        printf "\n|> the initramfs.cpio.gz do in fact exist.\n\n"
 
-    # OVERLAY_CONFIGZ_KO="$HOME/Downloads/kjxh-artifacts/4_bzImage_kos/bzImage"
-    # NETBZ="$HOME/Downloads/kjxh-artifacts/5_last-k3s/bzImage"
-    # MISSING="$HOME/Downloads/kjxh-artifacts/7_missing/bzImage"
-    # ORDERED="$HOME/Downloads/kjxh-artifacts/8_ordered/bzImage"
-    # ORDERED="./assets/module_kernel_build/lfs/lib/modules/6.6.22/build/arch/x86/boot/bzImage"
-    # TIDY="$HOME/Downloads/kjxh-artifacts/9_tidying/bzImage"
-    FUSE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 05"
+        printf "\n|> check if the initramfs.cpio.gz exists ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> the initramfs.cpio.gz do in fact exist.\n\n"
+
+    # PS: this kernel image needs to have the kernel modules *.ko,
+    # then squashfs, memcg, fuse, overlayfs support.
+    # Also user namagement (shadow-setup) and iptables related (iptales-setup) configuration
+    MANUAL_AIRGAP_BZIMAGE="$HOME/Downloads/kjxh-artifacts/10_fuse-support/bzImage"
+    if ! [ -f "${MANUAL_AIRGAP_BZIMAGE}" ]; then
+        printf "\n|> Error: missing bzImage kernel - Not found in given path!\n\n"
+
+        ISOGEN_ART="-buildakernel"
+        export ISOGEN_ART
+        if ! artifacts_builder; then
+            echo && echo "|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+            echo "|> SCOPE: from airgap_k3s, calling artifacts_builder with ISOGEN_ART=$ISOGEN_ART"
+            echo
+            return 1
+        fi
+        printf "\n|> Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 06"
+        printf "\n|> setup the kernel bzImage with some kernel modules and other k3s dependencies.  ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> checked for kernel modules and other k3s dependencies on the kernel bzImage. \n\n"
+
+    # create the virtfs directory path to be shared between host and guest
+    # if ! [ -d "${VIRTFS_ART_PATH}" ]; then
+    #     mkdir -p "${VIRTFS_ART_PATH}" &&
+    #         printf "\n|> Creating virtfs artifact directory...\n\n"
+    # f
+    # idempotent
+    if ! mkdir -p "${VIRTFS_ART_PATH}"; then
+        printf "\n|> Creating virtfs artifact directory...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 07"
+        printf "\n|> Create the virtfs directory path to be shared between host and guest. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> created the virtfs directory to be shared between host and guest. \n\n"
+
+    # Copy the registry to serve the images locally to the single-node k3s cluster
+    if ! cp "${SKOPEO_TARBALL_ARTIFACT}" "${VIRTFS_ART_PATH}"; then
+        printf "\n|>SCOPE: airgap_k3s, file: [./scripts/sandbox/run-qemu.sh], CHECK: 08"
+        printf "\n|> Error: could not copy the SKOPEO_TARBALL_ARTIFACT into the VIRTFS_ART_PATH. Exiting now... \n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|>SCOPE: airgap_k3s, file: [./scripts/sandbox/run-qemu.sh], CHECK: 08"
+        printf "\n|> copy the registry to serve the images locally to the single-node k3s cluster. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> copied the registry tarball into the virtfs directory successfully. \n\n"
+
+    if ! sudo cp "${K3S_SQUASHFS_FILE}" "${VIRTFS_ART_PATH}"; then
+        echo
+        echo "|> Error: it was not possible to copy the [K3S_SQUASHFS_FILE=${K3S_SQUASHFS_FILE:-[EMPTY_VARIABLE]} to the [VIRTFS_ART_PATH=${VIRTFS_ART_PATH:-[EMPTY_VARIABLE]}]. Exiting now..."
+        printf "\n|>SCOPE: airgap_k3s, file: [./scripts/sandbox/run-qemu.sh], check: 09"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 09"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 09"
+        printf "\n|> copy the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> Successfully copied the K3S_SQUASHFS_FILE to the VIRTFS_ART_PATH. \n\n"
+
+    # Either copy the k3s-squashfs tarball OR the k3s-squashfs image into the VIRTFS_ART_PATH
+    # (./scripts/isogen/demo.sh's squash_k3s)
+    # (./scripts/sandbox/run-qemu.sh's squash_k3s)
+
+    # ====================
+    # PACKAGING: core_poc_packaging
+    #
+
+    if ! (core_poc_packaging); then
+        echo "|> Error: could not run the [core_poc_packaging] function. Exiting now..."
+        echo "SCOPE: airgap_k3s, CHECK: 10"
+        return 1
+    fi
+    echo "|> Sucessfully ran the [core_poc_packaging] function. Proceeding..."
+    echo "SCOPE: airgap_k3s, CHECK: 10"
 
     # Mind that this will need fuse-overlayfs since the -initrd flag
     # runs an initramfs.cpio.gz over ramfs/tmpfs, that is, on RAM, and not
     # in a filesystem storage. For overlayfs only, use the ISO.
     qemu-system-x86_64 \
-        -kernel "$FUSE" \
-        -initrd "$ANODA" \
+        -kernel "${MANUAL_AIRGAP_BZIMAGE}" \
+        -initrd "${ANODA_INITRAMFS}" \
         -enable-kvm \
         -m 3072 \
         -append 'console=ttyS0 root=/dev/sda earlyprintk net.ifnames=0 cgroup_no_v1=all' \
         -nographic \
         -no-reboot \
-        -drive file="./utils/storage/eulab-hd",format=raw \
-        -drive file="./utils/storage/k3s-tarball-squashfs.img",format=raw \
+        -drive file="${RVDSF_EULAB}",format=raw \
+        -drive file="${K3S_SQUASHFS_IMAGE_PATH}",format=raw \
         -net nic,model=virtio,macaddr="${MACADDRESS}" \
         -net tap,helper=/usr/lib/qemu/qemu-bridge-helper,br=vmbr0 \
-        -virtfs local,path=./artifacts/qemu-sink/,mount_tag=hostshare,security_model=mapped-xattr
-        # -virtfs local,path="./artifacts/qemu-sink/",security_model=mapped-xattr \
-        #-serial
-        # -s -S
-        #-serial pty
-        #-s -S
+        -virtfs local,path="${VIRTFS_ART_PATH}",mount_tag=hostshare,security_model=mapped-xattr
+    # -virtfs local,path="./artifacts/qemu-sink/",security_model=mapped-xattr \
+    #-serial
+    # -s -S
+    #-serial pty
+    #-s -S
 
     # clean up bridge
-    /bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_fallin
+    if ! (/bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_fallin); then
+        printf "\n|> Error: it was not possible to cleanup the bridge. Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 07"
+        printf "\n|> cleanup the bridge.  ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> cleaning up the bridge.\n\n"
 
     # clean capabilities
-    /bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_cap
+    if ! (/bin/sh ./scripts/sandbox/net-qemu_myifup.sh clean_cap); then
+        printf "\n|> Error: it was not possible to cleanup the capabilities. Exiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> FUNCTION CALL: ./scripts/sandbox/run-qemu.sh"
+        printf "\n|> SCOPE: airgap_k3s"
+        printf "\n|> CHECK: 08"
+        printf "\n|> cleanup the capabilities.  ...[PASSED]\n"
+        ;;
+    esac
+    printf "\n|> cleaning up the capabilities.\n\n"
 
 }
 
@@ -524,30 +1859,194 @@ configure_vm_ssh() {
 
 }
 
-# run the final iso artifact
+# run the final iso artifact (POC)
+## the ISO artifact will not include every option,
+## just the default distro, relying into virtfs instead.
 runiso() {
 
-# CURRENT_ISO="./artifacts/kjx-headless_v2.iso"
-CURRENT_ISO="./artifacts/kjx-headless_v3.iso"
+    CURRENT_ISO="./artifacts/kjx-headless_v3.iso"
+    OLD_ISO="./artifacts/kjx-headless.iso"
 
-OLD_ISO="./artifacts/kjx-headless.iso"
+    # check if PWD is the root of the repository
+    if ! [ "${KJXPATH}" = "kjx-headless" ]; then
+        printf "|> Error: not on the root of the kjx-headless repository. Change dir and try again.\nExiting now...\n\n"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> Is PWD the root of the repository?... [PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 01"
+        ;;
+    esac
+    printf "\n|> success: the PWD DOES correspond to the root of the repository.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 01"
 
-qemu-system-x86_64 \
-    -m 1024 \
-    -cdrom "$CURRENT_ISO" \
-    -boot d \
-    -enable-kvm \
-    -nographic \
-    -no-reboot \
-    -cpu host \
-    -serial mon:stdio \
-    -drive file="./utils/storage/eulab-hd",format=raw \
-    -drive file="./utils/storage/k3s-tarball-squashfs.img",format=raw
+    # independent call to save_registry
+    if ! [ -f "${SKOPEO_TARBALL_ARTIFACT}" ]; then
+        printf "\n|> skopeo tarball artifact was not found. Calling the [ save_registry ] function now...\n\n"
+        if ! save_registry; then
+            printf "\n|> Error: it was not possible to call [save_registry] and create the SKOPEO_TARBALL_ARTIFACT."
+            return 1
+        fi
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> Does the SKOPEO_TARBALL_ARTIFACT filepath exists?...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+        ;;
+    esac
+    printf "\n|> success: the SKOPEO_TARBALL_ARTIFACT filepath exists.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 02"
+
+    if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
+        printf "\n|> Error: the filepath %s does not exist. Attempting to create it..." "${K3S_SQUASHFS_IMAGE_PATH:-[EMPTY_VARIABLE]}"
+
+        if ! squash_k3s; then
+            echo "|> Error: it was not possible to create the $K3S_SQUASHFS_IMAGE_PATH filepath. Exiting now..."
+            echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
+            return 1
+        fi
+        echo "|> Sucessfully created the $K3S_SQUASHFS_IMAGE_PATH filepath. Exiting now..."
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> check if raw image exists at utils. ... [PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
+        ;;
+    esac
+    printf "\n|> success: the raw image DOES exists at utils.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 03"
+
+    # Check if raw virtual disk sparse file exists at utils
+    if ! create_rvdsf; then
+        printf "\n|> Error: the Raw Virtual Disk Sparse File (RVDSF) path was not found. Attempting to create it...\n\n"
+        return 1
+    fi
+    #fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> Does RVDSF filepath exists?...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 04"
+        ;;
+    esac
+    printf "\n|> checked if the RVDSF filepath exists.\n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 04"
+
+    # create the virtfs directory path to be shared between host and guest
+    if ! [ -d "${VIRTFS_ART_PATH}" ]; then
+        mkdir -p "${VIRTFS_ART_PATH}" &&
+            printf "\n|> Creating virtfs artifact directory...\n\n"
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> Create the virtfs directory path to be shared between host and guest. ...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 05"
+        ;;
+    esac
+    printf "\n|> created the virtfs directory to be shared between host and guest. \n\n"
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 05"
+
+    # Copy the registry to serve the images locally to the single-node k3s cluster
+    if ! cp "${SKOPEO_TARBALL_ARTIFACT}" "${VIRTFS_ART_PATH}"; then
+        printf "\n|> Error: could not copy the SKOPEO_TARBALL_ARTIFACT into the VIRTFS_ART_PATH. Exiting now... \n\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 06"
+        return 1
+    fi
+    case "${LOG_VERBOSE}" in
+    "yes")
+        printf "\n|> copy the registry to serve the images locally to the single-node k3s cluster. ...[PASSED]\n"
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 06"
+        ;;
+    esac
+    printf "\n|> copied the registry tarball into the virtfs directory successfully. \n\n"
+
+    mkdir -p ./artifacts/burn-runiso
+
+    if ! prepare_rootfs; then
+        echo "|> Error: could not run the function [prepare_rootfs]. Exiting now..."
+        echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 07"
+        return 1
+    fi
+    echo "|> Sucessfully ran the function [prepare_rootfs]. Proceeding..."
+    echo "|> SCOPE: [runiso], file [./scripts/sandbox/run-qemu.sh]; check: 07"
+
+    ### # it will only run if the k3s squashfs image does not exist.
+    ### if [ "${KJXPATH}" = "kjx-headless" ]; then
+    ###     # Check if raw image exists at utils
+    ###     if ! [ -f "${K3S_SQUASHFS_IMAGE_PATH}" ]; then
+    ###         squash_k3s
+    ###     fi
+
+    ###     # Check if raw virtual disk sparse file exists at utils
+    ###     if ! [ -f "${RVDSF_EULAB}" ]; then
+    ###         create_rvdsf
+    ###     fi
+    ### fi
+
+    qemu-system-x86_64 \
+        -m 1024 \
+        -cdrom "${CURRENT_ISO}" \
+        -boot d \
+        -enable-kvm \
+        -nographic \
+        -no-reboot \
+        -cpu host \
+        -serial mon:stdio \
+        -drive file="${RVDSF_EULAB}",format=raw \
+        -drive file="${K3S_SQUASHFS_IMAGE_PATH}",format=raw \
+        -virtfs local,path="${VIRTFS_ART_PATH}",mount_tag=hostshare,security_model=mapped-xattr
+
+}
+
+record_airgap() {
+    # creates a file at "${AIRGAP_RECORDING_PATH}"
+    IS_RECORDING="YES"
+
+    if [ "${IS_RECORDING}" = "YES" ]; then
+        if ! command -v asciinema; then
+            printf "\n|> Error: asciinema was not found. Nothing to be done.\n|> Exiting now...\n\n" &&
+                return 1
+        fi
+        printf "\n|> Recording section is in course. Invoking asciinema...\n\n" &&
+            asciinema rec "${AIRGAP_RECORDING_PATH}" --command="make airgap" &&
+
+            #if [ "${IS_RECORDING}" = "YES" ]; then
+            # asciinema stop && \
+            exec <&- &&
+            printf "\n|> Stop recording the asciinema section. Exiting now...\n\n"
+        #fi
+    fi
+
+    # runiso
+
+}
+
+record_runiso() {
+    # creates a file at "${RUNISO_RECORDING_PATH}"
+    IS_RECORDING="YES"
+
+    if [ "${IS_RECORDING}" = "YES" ]; then
+        if ! command -v asciinema; then
+            printf "\n|> Error: asciinema was not found. Nothing to be done.\n|> Exiting now...\n\n" &&
+                return 1
+        fi
+        printf "\n|> Recording section is in course. Invoking asciinema...\n\n" &&
+            asciinema rec "${RUNISO_RECORDING_PATH}" --command="make runiso" &&
+
+            #if [ "${IS_RECORDING}" = "YES" ]; then
+            # asciinema stop && \
+            exec <&- &&
+            printf "\n|> Stop recording the asciinema section. Exiting now...\n\n"
+        #fi
+    fi
+
+    # runiso
 
 }
 
 print_usage() {
-cat <<-END >&2
+    cat <<-END >&2
 USAGE: run-qemu [-options]
                 - thirdver
                 - dropbear
@@ -568,30 +2067,34 @@ END
 
 }
 
-
 # Check the argument passed from the command line
-if [ "$1" = "firstver" ]; then
+if [ "${MODE}" = "firstver" ]; then
     firstver
-elif [ "$1" = "macaddr" ]; then
+elif [ "${MODE}" = "macaddr" ]; then
     macaddr
-elif [ "$1" = "thirdver" ] || [ "$1" = "-t" ] || [ "$1" = "--thirdver" ] ; then
+elif [ "${MODE}" = "thirdver" ] || [ "${MODE}" = "-t" ] || [ "${MODE}" = "--thirdver" ]; then
     thirdver
-elif [ "$1" = "dropbear" ] || [ "$1" = "-d" ] || [ "$1" = "--dropbear" ] ; then
+elif [ "${MODE}" = "dropbear" ] || [ "${MODE}" = "-d" ] || [ "${MODE}" = "--dropbear" ]; then
     dropbear
-elif [ "$1" = "kjx" ]; then
+elif [ "${MODE}" = "kjx" ]; then
     kjx
-elif [ "$1" = "--airgap" ] || [ "$1" = "-ag" ] || [ "$1" = "-airgap" ] ; then
+elif [ "${MODE}" = "--airgap" ] || [ "${MODE}" = "-ag" ] || [ "${MODE}" = "-airgap" ]; then
     airgap_k3s
-elif [ "$1" = "--squash" ] || [ "$1" = "-sq" ] || [ "$1" = "-sq" ] || [ "$1" = "-squash" ]; then
+elif [ "${MODE}" = "--airgap_clean" ] || [ "${MODE}" = "-agc" ] || [ "${MODE}" = "-airgap_clean" ]; then
+    airgap_clean
+elif [ "${MODE}" = "--squash" ] || [ "${MODE}" = "-sq" ] || [ "${MODE}" = "-sq" ] || [ "${MODE}" = "-squash" ]; then
     squash_k3s
-elif [ "$1" = "--runiso" ] || [ "$1" = "-runiso" ] || [ "$1" = "runiso" ] ; then
+elif [ "${MODE}" = "--runiso" ] || [ "${MODE}" = "-runiso" ] || [ "${MODE}" = "runiso" ]; then
     runiso
-elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+elif [ "${MODE}" = "--record-runiso" ] || [ "${MODE}" = "-record-runiso" ] || [ "${MODE}" = "record-runiso" ]; then
+    record_runiso
+elif [ "${MODE}" = "--record-airgap" ] || [ "${MODE}" = "-record-airgap" ] || [ "${MODE}" = "record-airgap" ]; then
+    record_airgap
+elif [ "${MODE}" = "help" ] || [ "${MODE}" = "-h" ] || [ "${MODE}" = "--help" ]; then
     print_usage
-elif [ "$1" = "debug" ]; then
+elif [ "${MODE}" = "debug" ]; then
     debug
 else
     echo "Invalid function name. Please specify one of: function1, function2, function3"
     print_usage
 fi
-

@@ -1,0 +1,90 @@
+FROM alpine:3.22 AS builder
+
+COPY ./scripts/packages/shadow-setup.sh /app/scripts/shadow-setup.sh
+COPY ./scripts/packages/demo-replased.sh /app/scripts/packages/demo-replased.sh
+
+WORKDIR /app
+# STEP 1
+RUN <<EOF
+apk upgrade && apk update && \
+#    apk add shadow
+
+(
+cat <<HMM
+http://dl-cdn.alpinelinux.org/alpine/edge/main
+http://dl-cdn.alpinelinux.org/alpine/edge/community
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+HMM
+) > /etc/apk/repositories
+
+apk upgrade && apk update && \
+    apk add busybox-binsh libbsd musl linux-pam shadow doas
+
+
+### if ! MODE="shadow-so" . /app/scripts/shadow-setup.sh; then
+###     printf "\n|> Error: could not execute the shadow-so function from the shadow-setup.sh shellscript. Exiting now...\n\n"
+###     return 1
+### fi
+### printf "\n|> Succesfully run shadow-so from shadow-setup.sh. Proceeding..."
+
+EOF
+
+RUN <<EOF
+
+if ! (MODE="shadow-tarball" . /app/scripts/shadow-setup.sh); then
+    printf "\n|> Error: could not execute the [shadow-tarball] function from the shadow-setup.sh shellscript. Exiting now...\n\n"
+    return 1
+fi
+printf "\n|> Succesfully run [shadow-tarball] from shadow-setup.sh. Proceeding..."
+
+if ! (ls -allhtr "/shadow-tarball-pkg.tar.gz"); then
+    echo "|> shadow-TARBALL NOT FOUND. EXITING..."
+    return 1
+fi
+echo "|> FOUND THE SO TARBALL \O/ ...[PASSED]"
+
+EOF
+
+
+### # set shadow binaries
+### RUN <<EOF
+###
+### if ! MODE="shadow-bin" . /app/scripts/shadow-setup.sh; then
+###     printf "\n|> Error: could not execute the shadow-bin function from the shadow-setup.sh shellscript. Exiting now...\n\n"
+###     return 1
+### fi
+### printf "\n|> Succesfully run shadow-bin from shadow-setup.sh. Proceeding..."
+###
+### EOF
+
+
+FROM alpine:3.22 AS relay
+
+### ARG SHADOW_SO_DIR="/app/shadow-shared-deps/"
+### ARG SHADOW_BIN_DIR="/app/shadow/usr/bin/"
+###
+### ENV SHADOW_SO_DIR="/app/shadow-shared-deps/"
+### ENV SHADOW_BIN_DIR="/app/shadow/usr/bin/"
+
+WORKDIR /app/
+COPY --from=builder "/shadow-tarball-pkg.tar.gz" /app
+
+RUN ls -allhtr /app
+
+### RUN <<EOF
+### mkdir -p "${SHADOW_SO_DIR}"
+### mkdir -p "${SHADOW_BIN_DIR}"
+### EOF
+
+
+### # copy shadow shared objects
+### COPY --from=builder "/shadow-so-pkg.tar.gz" /app
+###
+### # copy shadow binaries
+### COPY --from=builder "/shadow-bin-pkg.tar.gz" /app
+
+#ls -allhtr "${SHADOW_SO_DIR}"
+#ls -allhtr "${SHADOW_BIN_DIR}"
+
+
+ENTRYPOINT ["/bin/sh"]

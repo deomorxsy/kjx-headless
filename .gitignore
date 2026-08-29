@@ -34,11 +34,16 @@ out.*
 
 # include submodules for nvim-telescope
 assets/unikernels
+assets/tracers
+assets/vm-specs
 assets/oci-cri
 assets/non-oci
+assets/makefile2graph
+assets/visualization
+
 assets/async-profiler/*
 assets/apk-tools
-assets/ebpf_exporter
+# assets/ebpf_exporter
 assets/FlameGraph
 assets/builda.sh
 assets/zstd-test
@@ -94,7 +99,7 @@ trace/hpota/lib/hpota/src/
 trace/hpota/lib/hpota/obj/
 
 # other assets
-assets/makefile2graph
+#assets/makefile2graph
 Dockerfile.stripped
 outfull.svg
 
@@ -137,18 +142,19 @@ capable.bt
 trace/Ftrace/ftrace.sample.out
 
 # Assets
-assets/curl/
+# assets/curl/
 #assets/runit/
 newart/
-assets/blazesym/
-assets/libbpf-bootstrap/
-
+#assets/blazesym/
+# assets/libbpf-bootstrap/
+#
 # Workflows
 #.github/workflows/downloader.yml
 #.github/workflows/qemu.yml
 
 # Kernel assets
 assets/kernel/app/
+deploy/isogen/kernel/app/
 assets/module_kernel_build
 
 # More artifacts
@@ -185,15 +191,6 @@ dadada/*
 # Ftrace files
 set_ftrace_pid
 
-# bcc files
-assets/bcc/
-
-# other misc
-eeeita/
-assets/libbpf/
-assets/bpftool/
-assets/HeatMap/
-
 # do not include iso generated files
 *.iso
 
@@ -212,3 +209,60 @@ artifacts/bwc_off
 
 # virtfs artifacts
 artifacts/qemu-sink/*
+
+# gitmodules
+assets/bootloaders
+assets/tracers
+assets/non-oci
+assets/oci-cri
+assets/visualization
+assets/vm-specs
+# other misc
+eeeita/
+#assets/libbpf/
+#assets/bpftool/
+assets/HeatMap/
+
+# asciinema casts
+artifacts/*.cast
+
+# virtfs, microvms
+virtfstest*
+
+# others
+artifacts/ci-cd/
+artifacts/microvms/
+artifacts/oci-registry_3.0_tarball.tar
+hpota-shellscript.sh
+
+# jvm to ebpf
+trace/jvm/kotlin/yava-kotlin.tar.gz
+
+# libbpf vmlinux
+trace/libbpf-core/bootstrap.skel.h
+trace/libbpf-core/cpu.bpf.o
+trace/libbpf-core/cpu.skel.h
+trace/libbpf-core/vmlinux.h
+
+# other artifacts
+artifacts/packaging/
+artifacts/Dockerfile-dummy.txt
+artifacts/foobartest/
+artifacts/rootless-oci/
+device-mapper_log1.txt
+idk-edited.txt
+sample-proj.c
+beetor.cg.out
+busybox-basecont
+
+
+# KATA DUMMY Dockerfile
+# AUTOMATICALLY GENERATED AT [./scripts/entrypoints/microvms.sh]
+deploy/microvm/kata/Dockerfile.kata.dummy
+
+# youki tests
+artifacts/youki/*
+artifacts/youki/rootfs/*
+
+# mirror of this repo
+assets/gitlab/

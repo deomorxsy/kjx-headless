@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set_vars() {
+#set_vars() {
 QCOW_PATH="./artifacts/foo.qcow2"
 IMAGE_PATH="./artifacts/foo.img"
 INITRAMFS_BASE="./artifacts/netpowered.cpio.gz"
@@ -45,11 +45,11 @@ UPPER_BASE_IMG=$(losetup  | awk 'NR==2 {print $6}')
 KERNEL_BASENAME=$(basename "$KERNEL_PATH")
 INITRAMFS_BASENAME=$(basename "$RAMDISK_PATH")
 SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
-ELTORITO_PATH="./eltorito.img"
+    # at ./assets/grub/Dockerfile
+    ELTORITO_PATH="./eltorito.img"
 ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
 ISO_FINAL_PATH="$PWD/artifacts"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
-
 
 
 SOURCE_ROOTFS_DIR="./artifacts/burn/rootfs"
@@ -58,9 +58,17 @@ ISO_INITRAMFS="initramfs-ssh.cpio.gz"
 
 #
 BUILDER_ROOTFS_DIR="$HOME"/Downloads/kjxh-artifacts/another/newfrdir
-}
 
-set_vars
+# ==========
+# RULE: at a given time, there will not be
+# two ISO9660 files with the same name.
+# ==========
+ISO_FILENAME_DATE="$(date | awk '{print $1"-"$2"-"$3"-"$4"_"$5}' | tr ":" "-")"
+ISO_FINAL_NAME="${ISO_FINAL_PATH}/kjx-headless_${ISO_FILENAME_DATE}.iso"
+
+#}
+
+#set_vars
 
 #scaffolding() {
 # ==================================================================
@@ -75,13 +83,12 @@ set_vars
 # 1. if there is no file IMAGE_PATH, create one
 # workdir /app
 mkdir -p ./artifacts
-if ! [ -f "$IMAGE_PATH" ]; then
+if ! [ -f "${IMAGE_PATH}" ]; then
 
     printf "\n\n======\nCreating image now\n=========\n\n"
-    # qemu-img create -f raw "$IMAGE_PATH" 3G
-    # qemu-img create -f raw "$IMAGE_PATH" 250M
-    qemu-img create -f raw "$IMAGE_PATH" 512M
-
+    qemu-img create -f raw "${IMAGE_PATH}" 512M
+    # qemu-img create -f raw "${IMAGE_PATH}" 3G
+    # qemu-img create -f raw "${IMAGE_PATH}" 250M
 else
     printf "\n\n======\nImage already exists: skipping....\n=========\n\n"
 fi
@@ -266,7 +273,6 @@ mkdir -p "$UPPER_MOUNTPOINT"/rootfs # mkdir a directory for the rootfs
 # busybox-sh based
 # mountns_sasquatch() {
 
-MBR_BIN_PATH="$KJX/sources/bin/syslinux-6.03/bios/mbr/isohdpfx.bin"
 # sink to the mount namespace
 #mkdir -p /tmp/host_dir
 
@@ -1000,9 +1006,9 @@ sudo umount "$EFI_TMPDIR"
 routine=$(uname -m)
 
 
-SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
-ELTORITO_PATH="./eltorito.img"
-ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
+# SYSLINUX_BOOTBIN="./artifacts/distro/syslinux-6.03/bios/core/isolinux.bin"
+# ELTORITO_PATH="./eltorito.img"
+# ISOHDPFX_PATH="./artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin"
 ISO_FINAL_PATH="$PWD/artifacts/kjx-headless.iso"
 EFI_PATH="$ISO_DIR/boot/grub/efi.img"
 
@@ -1331,11 +1337,13 @@ else
 
 fi
 
+
 # 5. Package the final filesystem into an ISO9660 image using xorriso.
 # xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v2.iso \
 #
-    if ! [ -f "$ISO_FINAL_PATH"/kjx-headless_v3.iso ]; then
-    xorriso -as mkisofs -o "$ISO_FINAL_PATH"/kjx-headless_v3.iso \
+    #if ! [ -f "$ISO_FINAL_PATH"/kjx-headless_v3.iso ]; then
+if ! [ -f "${ISO_FINAL_NAME}" ]; then
+    xorriso -as mkisofs -o "${ISO_FINAL_NAME}" \
       -J -l \
       -V "KJX_HEADLESS" \
       -b syslinux/isolinux.bin \
@@ -1346,10 +1354,11 @@ fi
       -eltorito-alt-boot \
         -e boot/grub/efi.img \
         -no-emul-boot \
-        -isohybrid-mbr artifacts/distro/syslinux-6.03/bios/mbr/isohdpfx.bin \
+        -isohybrid-mbr "${ISOHDPFX_PATH}" \
         -isohybrid-gpt-basdat \
-        -r "$ISO_DIR" \
-        -m 'rootfs'
+        -r "{$ISO_DIR}" \
+        -m 'rootfs' && \
+        sleep 15
     else
         printf "\n|> Error: a file was found with the same name. Exiting now...\n"
     fi
@@ -1365,4 +1374,36 @@ fi
 # cp /mnt/output/my_custom.iso "./artifacts/kjx-headless.iso"
 printf "\n=============================="
 printf "\n\n|> ISO Build complete with success! \n\n"
+
+
+print_usage() {
+cat <<-END >&2
+USAGE: fa-gha [-options]
+                - isogen
+                - version
+                - help
+eg,
+MODE="isogen"       . ./fa-gha   # breaks everything but builds the iso.
+MODE="version"      . ./fa-gha   # shows script version
+MODE="help"         . ./fa-gha   # shows this help message
+
+See the man page and example file for more info.
+
+END
+
+}
+
+
+# Check the argument passed from the command line
+if [ "$MODE" = "-isogen" ] || [ "$MODE" = "--isogen" ] || [ "$MODE" = "isogen" ]; then
+    isogen
+elif [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    print_usage
+elif [ "$1" = "version" ] || [ "$1" = "-v" ] || [ "$1" = "--version" ]; then
+    printf "\n|> Version: 1.0.0"
+else
+    echo "Invalid function name. Please specify one of the available functions:"
+    print_usage
+fi
+
 

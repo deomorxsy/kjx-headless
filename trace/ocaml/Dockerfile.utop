@@ -32,6 +32,7 @@ adduser -s /bin/sh -u 1000 -G "${RKD_USER}" \
 
 # certify it will have the correct user:group permissions
 chown -R ${RKD_USER}:${RKD_USER} /home/${RKD_USER}  && \
+cd /home/${RKD_USER}/app || return && \
 
 su "${RKD_USER}" -c "
 
